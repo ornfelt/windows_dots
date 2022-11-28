@@ -1,0 +1,1 @@
+cd "C:\Users\Svea User\Documents\bd\c_core"
