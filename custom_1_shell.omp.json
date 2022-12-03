@@ -24,7 +24,7 @@
       "type": "rprompt",
       "segments": [
         {
-          "foreground": "#ebdbb2",
+          "foreground": "#d3869b",
           "properties": {
             "time_format": "15:04:05"
           },
@@ -33,15 +33,15 @@
           "type": "time"
         },
 		{
-          "foreground": "#ebdbb2",
+          "foreground": "#d3869b",
           "style": "diamond",
-          "template": "<#ebdbb2>| CPU:</> {{ round .PhysicalPercentUsed .Precision }}% ",
+          "template": "<#d3869b>| CPU:</> {{ round .PhysicalPercentUsed .Precision }}% ",
           "type": "sysinfo"
         },
         {
-          "foreground": "#ebdbb2",
+          "foreground": "#d3869b",
           "style": "diamond",
-          "template": "<#ebdbb2>| RAM:</> {{ (div ((sub .PhysicalTotalMemory .PhysicalFreeMemory)|float64) 1000000000.0) }}/{{ (div .PhysicalTotalMemory 1000000000.0) }}GB ",
+          "template": "<#d3869b>| RAM:</> {{ (div ((sub .PhysicalTotalMemory .PhysicalFreeMemory)|float64) 1000000000.0) }}/{{ (div .PhysicalTotalMemory 1000000000.0) }}GB ",
           "type": "sysinfo"
         }
       ]

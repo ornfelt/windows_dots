@@ -89,7 +89,8 @@ noremap <leader>4 "4p
 noremap <leader>5 "5p
 
 " Vimgrep and QuickFix Lists
-nnoremap <M-f> :vimgrep // **/*.txt<left><left><left><left><left><left><left><left><left><left><C-f>i
+"nnoremap <M-f> :vimgrep // **/*.txt<left><left><left><left><left><left><left><left><left><left><C-f>i
+nnoremap <M-f> :vimgrep //g **/*.txt<C-f><Esc>11hi
 " Search all
 nnoremap <M-g> :vimgrep //g **/*.*<C-f><Esc>9hi
 " Search dotfiles
@@ -338,9 +339,7 @@ set columns=210
 set lines=999" cumns=999 "set fullscreen
 "set tw=235
 set tw=188
-imap <C-v> <Esc>"+p
 noremap <M-m> :tabe $myvimrc<cr>
-nnoremap <M-n> :FZF c:/<cr>
 " Copy everything from file into clipboard
 inoremap <C-a> <Esc>gg"*yG
 " Copy selection to clipboard

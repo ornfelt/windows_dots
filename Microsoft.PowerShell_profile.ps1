@@ -29,6 +29,10 @@ Set-Alias -Name .cdc -Value C:\Users\Svea" "User\Documents\WindowsPowerShell\Scr
 Set-Alias -Name .cdp -Value C:\Users\Svea" "User\Documents\WindowsPowerShell\Scripts\cdp.ps1
 Set-Alias -Name .ioq3 -Value C:\Users\Svea" "User\Documents\WindowsPowerShell\Scripts\ioq3.ps1
 Set-Alias -Name .show-wifi -Value C:\Users\Svea" "User\Documents\WindowsPowerShell\Scripts\show-wifi.ps1
+Set-Alias -Name .list_files -Value C:\Users\Svea" "User\Documents\WindowsPowerShell\Scripts\list_files.ps1
+Set-Alias -Name .list_files_gui -Value C:\Users\Svea" "User\Documents\WindowsPowerShell\Scripts\list_files_gui.ps1
+Set-Alias -Name .list_p -Value C:\Users\Svea" "User\Documents\WindowsPowerShell\Scripts\list_processes.ps1
+Set-Alias -Name .list_pm -Value C:\Users\Svea" "User\Documents\WindowsPowerShell\Scripts\list_processes_mem.ps1
 
 # Load all scripts
 #Get-ChildItem (Join-Path ('C:\Users\Svea User\Documents\WindowsPowerShell') \Scripts\) | Where `
