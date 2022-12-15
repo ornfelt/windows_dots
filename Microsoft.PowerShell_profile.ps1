@@ -6,11 +6,11 @@ oh-my-posh init pwsh | Invoke-Expression
 #$omp_config = Join-Path $PSScriptRoot ".\custom_tokyonight_storm.omp.json"
 #oh-my-posh --init --shell pwsh --config $omp_config | Invoke-Expression
 
-$omp_config = Join-Path $PSScriptRoot ".\custom_cobalt2.omp.json"
-oh-my-posh --init --shell pwsh --config $omp_config | Invoke-Expression
-
 #$omp_config = Join-Path $PSScriptRoot ".\powerline.omp.json"
 #oh-my-posh --init --shell pwsh --config $omp_config | Invoke-Expression
+
+$omp_config = Join-Path $PSScriptRoot ".\custom_cobalt2.omp.json"
+oh-my-posh --init --shell pwsh --config $omp_config | Invoke-Expression
 
 # PSReadLine
 Import-Module PSReadLine
