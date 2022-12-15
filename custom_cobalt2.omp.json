@@ -49,10 +49,10 @@
           "type": "path"
         },
         {
-          "background": "#3AD900",
+          "background": "#689d6a",
           "background_templates": [
             "{{ if or (.Working.Changed) (.Staging.Changed) }}#689d6a{{ end }}",
-            "{{ if and (gt .Ahead 0) (gt .Behind 0) }}#ebdbb2{{ end }}",
+            "{{ if and (gt .Ahead 0) (gt .Behind 0) }}#FFCC80{{ end }}",
             "{{ if gt .Ahead 0 }}#B388FF{{ end }}",
             "{{ if gt .Behind 0 }}#B388FF{{ end }}"
           ],
@@ -64,7 +64,7 @@
             "fetch_status": true
           },
           "style": "diamond",
-          "template": " {{ .HEAD }}{{ if .Staging.Changed }}<#FF6F00> \uf046 {{ .Staging.String }}</>{{ end }} ",
+          "template": " {{ .HEAD }}{{ if .Staging.Changed }}<#ebdbb2> \uf046 {{ .Staging.String }}</>{{ end }} ",
           "type": "git"
         }
       ],
