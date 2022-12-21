@@ -5,6 +5,12 @@ Screenshots:
 Current theme:
 ![custom_cobalt2](Screenshots/custom_cobalt2.jpg?raw=true "current")
 
+Git changed:
+![custom_cobalt2](Screenshots/custom_cobalt2_git_changed.jpg?raw=true "current")
+
+Git changed_2:
+![custom_cobalt2](Screenshots/custom_cobalt2_git_changed_2.jpg?raw=true "current")
+
 custom_1_shell:
 ![custom_1_shell](Screenshots/custom_1_shell.jpg?raw=true "custom_1_shell")
 
