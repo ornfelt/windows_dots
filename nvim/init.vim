@@ -168,10 +168,10 @@ noremap <M-0> :tablast<cr>
 "nnoremap <silent> <leader>l :exe "tabn ".g:lasttab<cr>
 "vnoremap <silent> <leader>l :exe "tabn ".g:lasttab<cr>
 nnoremap <leader>o <C-^>
-nnoremap <leader>m :mks! ~/.vim/sessions/s.vim<cr> 
-nnoremap <leader>, :mks! ~/.vim/sessions/s2.vim<cr> 
-nnoremap <leader>. :so ~/.vim/sessions/s.vim<cr> 
-nnoremap <leader>- :so ~/.vim/sessions/s2.vim<cr> 
+nnoremap <leader>m :mks! ~/.vim/sessions/s.vim<cr>
+nnoremap <leader>, :mks! ~/.vim/sessions/s2.vim<cr>
+nnoremap <leader>. :so ~/.vim/sessions/s.vim<cr>
+nnoremap <leader>- :so ~/.vim/sessions/s2.vim<cr>
 
 " Filetype shortcuts
 autocmd FileType html inoremap <i<Tab> <em></em> <Space><++><Esc>/<<Enter>GNi
@@ -197,7 +197,7 @@ autocmd FileType vtxt,vimwiki,wiki,text inoremap line<Tab> ---------------------
 autocmd FileType vtxt,vimwiki,wiki,text inoremap date<Tab> <-- <C-R>=strftime("%Y-%m-%d %a")<CR><Esc>A -->
 autocmd FileType c inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
 
-" Disable tab key for vimwiki (enables autocomplete via tabbing) 
+" Disable tab key for vimwiki (enables autocomplete via tabbing)
 let g:vimwiki_key_mappings = { 'table_mappings': 0 }
 
 " StatusLine
@@ -243,6 +243,11 @@ nmap <leader>r gqG<C-o>zz
 vmap <leader>/ "3y/<C-R>3<CR>
 " Search in highlighted text
 vmap <leader>% /\%V
+
+nmap <leader>f [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]]
+nmap <leader>t <cmd>silent !tmux neww tmux-sessionizer<CR>
+nmap Q <nop>
+
 
 " Undo break points
 "inoremap , ,<c-g>u
