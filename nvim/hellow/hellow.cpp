@@ -1,5 +1,9 @@
-def main():
-    print("Hello cpp!")
+#include <iostream>
 
-if __name__ == "__main__":
-    main()
+using namespace std;
+
+int main()
+{
+	cout << "Hello World";
+	return 0;
+}

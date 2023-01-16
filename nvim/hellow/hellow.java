@@ -1,5 +1,7 @@
-def main():
-    print("ajva")
-
-if __name__ == "__main__":
-    main()
+class hellow
+{
+    public static void main(String args[])
+    {
+        System.out.println("Hello world");
+    }
+}

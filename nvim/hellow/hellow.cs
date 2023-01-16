@@ -1,5 +1,12 @@
-def main():
-    print("Hello cpp!")
+using System;
 
-if __name__ == "__main__":
-    main()
+namespace Hellow {
+
+    class Program {
+
+        static void Main(string[] args) {
+            Console.WriteLine("Hello World!");
+            Console.ReadKey();
+        }
+    }
+}
