@@ -7,6 +7,7 @@ Plug 'preservim/nerdtree'
 Plug 'tpope/vim-surround'
 Plug 'justinmk/vim-sneak'
 Plug 'morhetz/gruvbox'
+"Plug 'catppuccin/nvim', { 'as': 'catppuccin' }
 Plug 'w0ng/vim-hybrid'
 Plug 'vim-syntastic/syntastic'
 Plug 'ap/vim-css-color'
@@ -184,10 +185,19 @@ autocmd FileType java inoremap fore<Tab> for (String s : obj){<Enter><Enter>}<Es
 autocmd FileType java inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
 autocmd FileType java inoremap sout<Tab> System.out.println("");<Esc>?""<Enter>li
 autocmd FileType java inoremap psvm<Tab> public static void main(String[] args){<Enter><Enter>}<Esc>?{<Enter>o
+autocmd FileType java inoremap hellow<Tab> <Esc>:r ~/Documents/WindowsPowerShell/nvim/hellow/hellow.java<Enter><Esc>/hellow<Enter>ciw
+
+autocmd FileType c inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+autocmd FileType c inoremap hellow<Tab> <Esc>:r ~/Documents/WindowsPowerShell/nvim/hellow/hellow.c<Enter>
+autocmd FileType cpp inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+autocmd FileType cpp inoremap hellow<Tab> <Esc>:r ~/Documents/WindowsPowerShell/nvim/hellow/hellow.cpp<Enter>
 
 autocmd FileType cs inoremap sout<Tab> Console.WriteLine("");<Esc>?""<Enter>li
 autocmd FileType cs inoremap fore<Tab> for each (object o : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw
 autocmd FileType cs inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+autocmd FileType cs inoremap hellow<Tab> <Esc>:r ~/Documents/WindowsPowerShell/nvim/hellow/hellow.cs<Enter><Esc>/Hellow<Enter>ciw
+
+autocmd FileType py,python inoremap hellow<Tab> <Esc>:r ~/Documents/WindowsPowerShell/nvim/hellow/hellow.py<Enter>
 
 autocmd FileType sql inoremap fun<Tab> delimiter //<Enter>create function x ()<Enter>returns int<Enter>no sql<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN
 autocmd FileType sql inoremap pro<Tab> delimiter //<Enter>create procedure x ()<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN
@@ -195,7 +205,6 @@ autocmd FileType sql inoremap vie<Tab> create view x as<Enter>select <Esc>/x<Ent
 
 autocmd FileType vtxt,vimwiki,wiki,text inoremap line<Tab> ----------------------------------------------------------------------------------<Enter>
 autocmd FileType vtxt,vimwiki,wiki,text inoremap date<Tab> <-- <C-R>=strftime("%Y-%m-%d %a")<CR><Esc>A -->
-autocmd FileType c inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
 
 " Disable tab key for vimwiki (enables autocomplete via tabbing)
 let g:vimwiki_key_mappings = { 'table_mappings': 0 }
@@ -232,22 +241,19 @@ nmap <leader>ws :%s/\s\+$<cr>
 nmap <leader>wu :%s/\%u200b//g<cr>
 " Remove all hidden characters
 nmap <leader>wb :%s/[[:cntrl:]]//g<cr>
+" Format rest of the text with vim formatting, go back and center screen
+nmap <leader>wf gqG<C-o>zz
 " Replace all weird citation and hypens to regular ones
 nmap <leader>wa :%s/“/"/g <bar> :%s/’/'/g <bar> :%s/—/-/g <bar> :%s/”/"/g
 " Capitalize first letter of each word on visually selected line
 vmap <leader>gu :s/\<./\u&/g<cr>
-" Format rest of the text with vim formatting, go back and center screen
-nmap <leader>r gqG<C-o>zz
-
 " Search for highlighted text
 vmap <leader>/ "3y/<C-R>3<CR>
 " Search in highlighted text
 vmap <leader>% /\%V
-
-nmap <leader>f [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]]
+nmap <leader>r :%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>
 nmap <leader>t <cmd>silent !tmux neww tmux-sessionizer<CR>
 nmap Q <nop>
-
 
 " Undo break points
 "inoremap , ,<c-g>u
@@ -329,11 +335,12 @@ inoremap <C-a> <Esc>gg"*yG
 noremap <C-c> "*y
 "colorscheme hybrid
 colorscheme gruvbox
+"colorscheme catppuccin-mocha
 
 func! CompileRun()
 	exec "w"
 	if &filetype == 'c'
-		exec "!gcc % -o %<"
+		exec "!gcc -Wall % -o %<"
 		exec "!%:r.exe"
 		"exec "!time ./%<"
 	elseif &filetype == 'cpp'
