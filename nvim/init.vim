@@ -107,7 +107,7 @@ nnoremap <M-P> :clast<CR>
 nnoremap <M-b> :copen<CR>
 
 " Neovim FZF
-nnoremap <M-d> :FZF <cr>
+nnoremap <M-d> :FZF ./ <cr>
 " nnoremap <M-d> :FZF ../../..<cr> " Go up a few levels and FZF
 nnoremap <M-a> :FZF ~/<cr>
 nnoremap <M-A> :FZF /<cr>
@@ -327,7 +327,8 @@ set lines=48
 set columns=210
 set lines=999" cumns=999 "set fullscreen
 "set tw=235
-set tw=188
+"set tw=187
+set tw=90
 noremap <M-m> :tabe $myvimrc<cr>
 " Copy everything from file into clipboard
 inoremap <C-a> <Esc>gg"*yG
