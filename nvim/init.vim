@@ -208,6 +208,8 @@ autocmd FileType vtxt,vimwiki,wiki,text inoremap date<Tab> <-- <C-R>=strftime("%
 
 " Disable tab key for vimwiki (enables autocomplete via tabbing)
 let g:vimwiki_key_mappings = { 'table_mappings': 0 }
+" Quit NERDTree on opening file
+let g:NERDTreeQuitOnOpen = 1
 
 " StatusLine
 autocmd BufReadPost,BufRead,BufNewFile,BufWritePost *.* :call GetStatusLine()
@@ -246,7 +248,7 @@ nmap <leader>wf gqG<C-o>zz
 " Replace all weird citation and hypens to regular ones
 nmap <leader>wa :%s/“/"/g <bar> :%s/’/'/g <bar> :%s/—/-/g <bar> :%s/”/"/g
 " Capitalize first letter of each word on visually selected line
-vmap <leader>gu :s/\<./\u&/g<cr>
+vmap <leader>gu :s/\<./\u&/g<cr>:noh<CR>
 " Search for highlighted text
 vmap <leader>/ "3y/<C-R>3<CR>
 " Search in highlighted text
