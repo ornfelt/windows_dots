@@ -1,1 +1,1 @@
-cd "C:\Users\Svea User"
+cd ~
