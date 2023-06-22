@@ -1,1 +1,1 @@
-cd "C:\Users\Svea User\Documents\bd\Food-Flask-Web-App"
+cd "C:\Users\jonas\OneDrive\Documents\Code\WoW-Spell-Editor"

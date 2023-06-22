@@ -1,1 +1,1 @@
-cd "C:\Users\Svea User\Documents\bd\c_core"
+cd "C:\Users\jonas\OneDrive\Documents\Code"
