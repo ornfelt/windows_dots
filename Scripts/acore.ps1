@@ -1,4 +1,4 @@
-$path = "C:\Users\jonas\OneDrive\Documents\Code\acore_wander_06_17\azerothcore-wotlk\build\bin\RelWithDebInfo"
+$path = "C:\Users\jonas\Code2\C++\acore_wander_06_17\acore\build\bin\RelWithDebInfo"
 
 cd $path
 

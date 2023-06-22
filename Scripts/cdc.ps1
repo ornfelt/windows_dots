@@ -1,1 +1,1 @@
-cd "C:\Users\jonas\OneDrive\Documents\Code"
+cd "C:\Users\jonas\Code2"

@@ -1,1 +1,1 @@
-cd "C:\Users\jonas\OneDrive\Documents\Code\WoW-Spell-Editor"
+cd "C:\Users\jonas\Code2\C#\WoW-Spell-Editor"

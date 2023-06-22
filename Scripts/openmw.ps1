@@ -1,4 +1,4 @@
-$path = "C:\mw\openmw\MSVC2022_64\RelWithDebInfo"
+$path = "C:\mw\MSVC2022_64\RelWithDebInfo"
 
 #cd $path
 
