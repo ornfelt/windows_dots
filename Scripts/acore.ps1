@@ -1,4 +1,5 @@
-$path = "C:\Users\jonas\Code2\C++\acore_wander_06_17\acore\build\bin\RelWithDebInfo"
+#$path = "C:\Users\jonas\Code2\C++\acore_06_26\acore_06_26\build\bin\RelWithDebInfo"
+$path = "C:\Users\jonas\Code2\C++\acore_06_26\acore_06_26\build_eluna\bin\RelWithDebInfo"
 
 cd $path
 
