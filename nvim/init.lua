@@ -307,11 +307,11 @@ map('n', '<leader>,', ':mks! ~/.vim/sessions/s2.vim<CR>')
 map('n', '<leader>.', ':so ~/.vim/sessions/s.vim<CR>')
 map('n', '<leader>-', ':so ~/.vim/sessions/s2.vim<CR>')
 
--- Open vim config in new tab
+-- Open new tabs
+map('n', '<M-n>', ':tabe ~/Documents/vimtutor.txt<CR>')
 map('n', '<M-m>', ':tabe ~/AppData/local/nvim/init.lua<CR>')
 map('n', '<M-,>', ':tabe ~/.config/i3/config<CR>')
 map('n', '<M-.>', ':tabe ~/.zshrc<CR>')
-map('n', '<M-->', ':tabe ~/Documents/vimtutor.txt<CR>')
 -- map('n', '<C-c>', 'y')
 map('v', '<C-c>', 'y')
 
@@ -465,46 +465,46 @@ map <F5> <Esc>:setlocal spell! spelllang=en_us<CR>
 map <F6> <Esc>:setlocal spell! spelllang=sv<CR>
 
 func! CompileRun()
-	exec "w"
-	if &filetype == 'c'
-		exec "!gcc -Wall % -o %<"
-		exec "!%:r.exe"
-		"exec "!time ./%<"
-	elseif &filetype == 'cpp'
-		"exec "!g++ % -o %< -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
-		exec "!g++ % -o %<"
-		exec "!%:r.exe"
-		"exec "!time ./%<"
-	elseif &filetype == 'java'
-		exec "!javac %"
-		exec "!java -cp %:p:h %:t:r"
-	elseif &filetype == 'sh'
-		exec "!time bash %"
-	elseif &filetype == 'python'
-		exec "!python %"
-	elseif &filetype == 'html'
-		exec "!firefox % &"
-	elseif &filetype == 'javascript'
-		exec "!node %"
-	elseif &filetype == 'jsx'
-		exec "!node %"
-	elseif &filetype == 'typescript'
-		exec "!node %"
-	elseif &filetype == 'go'
-		exec "!go build %<"
-		exec "!time go run %"
-	elseif &filetype == 'rust'
+    exec "w"
+    if &filetype == 'c'
+        exec "!gcc -Wall % -o %<"
+        exec "!%:r.exe"
+        "exec "!time ./%<"
+    elseif &filetype == 'cpp'
+        "exec "!g++ % -o %< -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
+        exec "!g++ % -o %<"
+        exec "!%:r.exe"
+        "exec "!time ./%<"
+    elseif &filetype == 'java'
+        exec "!javac %"
+        exec "!java -cp %:p:h %:t:r"
+    elseif &filetype == 'sh'
+        exec "!time bash %"
+    elseif &filetype == 'python'
+        exec "!python %"
+    elseif &filetype == 'html'
+        exec "!firefox % &"
+    elseif &filetype == 'javascript'
+        exec "!node %"
+    elseif &filetype == 'jsx'
+        exec "!node %"
+    elseif &filetype == 'typescript'
+        exec "!node %"
+    elseif &filetype == 'go'
+        exec "!go build %<"
+        exec "!time go run %"
+    elseif &filetype == 'rust'
         exec "!rustc %"
         exec "!time ./%:r"
     elseif &filetype == 'lua'
         exec "!time lua %"
-	elseif &filetype == 'mkd'
-		exec "!~/.vim/markdown.pl % > %.html &"
-		exec "!firefox %.html &"
-	elseif &filetype == 'cs'
-		exec "!csc %"
-		exec "!%:r.exe"
-	endif
+    elseif &filetype == 'mkd'
+        exec "!~/.vim/markdown.pl % > %.html &"
+        exec "!firefox %.html &"
+    elseif &filetype == 'cs'
+        exec "!csc %"
+        exec "!%:r.exe"
+        endif
 endfunc
 map <M-x> :call CompileRun()<CR>
 ]])
