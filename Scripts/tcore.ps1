@@ -2,7 +2,7 @@ $path = "C:\Users\jonas\Code2\C++\tcore_06_26\trinitycore\build\bin\RelWithDebIn
 
 cd $path
 
-#echo "$path\worldserver.exe"
+echo "$path\worldserver.exe"
 #Invoke-Expression "$path\worldserver.exe"
 
 #echo "python $path\overwrite.py; $path\worldserver.exe"

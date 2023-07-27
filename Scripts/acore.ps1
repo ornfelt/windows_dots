@@ -3,7 +3,7 @@ $path = "C:\Users\jonas\Code2\C++\acore_06_26\acore_06_26\build_eluna\bin\RelWit
 
 cd $path
 
-#echo "$path\worldserver.exe"
+echo "$path\worldserver.exe"
 #Invoke-Expression "$path\worldserver.exe"
 
 #echo "python $path\overwrite.py; $path\worldserver.exe"
