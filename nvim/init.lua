@@ -472,7 +472,8 @@ func! CompileRun()
         "exec "!time ./%<"
     elseif &filetype == 'cpp'
         "exec "!g++ % -o %< -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
-        exec "!g++ % -o %<"
+        "exec "!g++ % -o %<"
+        exec "!g++ -O2 -Wall % -o %<"
         exec "!%:r.exe"
         "exec "!time ./%<"
     elseif &filetype == 'java'
