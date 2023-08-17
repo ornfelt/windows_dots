@@ -460,6 +460,9 @@ autocmd FileType kotlin inoremap hellow<Tab> <Esc>:r ~/Code/Kotlin/hellow.kt<Ent
 autocmd FileType rust inoremap hellow<Tab> <Esc>:r ~/Code/Rust/hellow.rs<Enter><Esc>/Hellow<Enter>ciw
 autocmd FileType scala inoremap hellow<Tab> <Esc>:r ~/Code/Scala/hellow.scala<Enter><Esc>/Hellow<Enter>ciw
 
+" Automatically load the session when entering vim
+autocmd! VimEnter * source ~/.vim/sessions/s.vim
+
 map <F4> <Esc>:set cursorline!<CR>
 map <F5> <Esc>:setlocal spell! spelllang=en_us<CR>
 map <F6> <Esc>:setlocal spell! spelllang=sv<CR>

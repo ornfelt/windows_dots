@@ -41,6 +41,7 @@ Set-Alias -Name .wcell -Value "$path.\Scripts\wcell.ps1"
 Set-Alias -Name .playermap -Value "$path.\Scripts\playermap.ps1"
 Set-Alias -Name .openmw -Value "$path.\Scripts\openmw.ps1"
 Set-Alias -Name .stk -Value "$path.\Scripts\stk.ps1"
+Set-Alias -Name .wow -Value "$path.\Scripts\wow.ps1"
 
 # Load all scripts
 #Get-ChildItem (Join-Path ('C:\Users\Svea User\Documents\WindowsPowerShell') \Scripts\) | Where `
