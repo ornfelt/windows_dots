@@ -1,4 +1,4 @@
-$path = "C:\Users\jonas\Code2\C++\tcore_06_26\trinitycore\build\bin\RelWithDebInfo"
+$path = "C:\Users\jonas\Code2\C++\tcore\trinitycore\build\bin\RelWithDebInfo"
 
 cd $path
 

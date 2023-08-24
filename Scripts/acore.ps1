@@ -1,5 +1,5 @@
-#$path = "C:\Users\jonas\Code2\C++\acore_06_26\acore_06_26\build\bin\RelWithDebInfo"
-$path = "C:\Users\jonas\Code2\C++\acore_06_26\acore_06_26\build_eluna\bin\RelWithDebInfo"
+#$path = "C:\Users\jonas\Code2\C++\acore\azerothcore-wotlk\build\bin\RelWithDebInfo"
+$path = "C:\Users\jonas\Code2\C++\acore\azerothcore-wotlk\build_eluna\bin\RelWithDebInfo"
 
 cd $path
 
