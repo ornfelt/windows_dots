@@ -19,3 +19,7 @@ custom_tokyonight_storm:
 
 powerline:
 ![powerline](Screenshots/powerline.jpg?raw=true "powerline")
+
+## Environment variables
+
+![env_vars](Screenshots/env_vars.png?raw=true "env_vars")

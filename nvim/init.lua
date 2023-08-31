@@ -286,7 +286,9 @@ map('v', '>', '>gv')
 -- Tab keybinds
 map('n', '<M-t>', ':tabe<CR>')
 map('n', '<M-s>', ':split<CR>')
-map('n', '<M-Enter>', ':vsp<CR>')
+-- map('n', '<M-Enter>', ':vsp<CR>')
+map('n', '<M-Enter>', ':10 sp :let $VIM_DIR=expand("%:p:h")<CR>:terminal<CR>cd $VIM_DIR<CR>')
+
 map('n', '<M-<>', ':vsp<CR>')
 -- Go to tab by number
 map('n', '<M-1>', '1gt')
