@@ -23,3 +23,5 @@ powerline:
 ## Environment variables
 
 ![env_vars](Screenshots/env_vars.png?raw=true "env_vars")
+
+![env_vars_svea](Screenshots/env_vars_svea.png?raw=true "env_vars_svea")

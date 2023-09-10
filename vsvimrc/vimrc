@@ -1,4 +1,0 @@
-set ignorecase
-"set clipboard=unnamedplus
-set clipboard=unnamed
-vnoremap <C-c> y
