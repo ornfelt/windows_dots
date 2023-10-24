@@ -14,8 +14,6 @@ Set-PSReadLineOption -EditMode Vi
 Import-Module PSFzf
 Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory 'Ctrl+r'
 
-$path = "C:\Users\jonas\OneDrive\Documents\WindowsPowerShell\Scripts"
-
 # Alias
 $aliases = @(
     ".cdh", ".cdc", ".cdp", ".ioq3", ".show-wifi", ".list_files", ".list_files_gui", 
@@ -25,7 +23,7 @@ $aliases = @(
 
 foreach ($alias in $aliases) {
     $scriptName = $alias.TrimStart(".")
-    Set-Alias -Name $alias -Value "$path\$scriptName.ps1"
+    Set-Alias -Name $alias -Value "$PSScriptRoot\Scripts\$scriptName.ps1"
 }
 
 function RunChatGPT {
