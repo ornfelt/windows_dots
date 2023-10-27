@@ -8,8 +8,7 @@ set nu rnu
 vnoremap < <gv
 vnoremap > >gv
 noremap Y y$
-g.mapleader = ' '
-g.maplocalleader = ' '
+let mapleader = ' '
 noremap <leader>p viw"_dP
 vnoremap <leader>d "_d
 nnoremap <leader>d "_d
