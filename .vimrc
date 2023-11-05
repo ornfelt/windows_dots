@@ -4,8 +4,7 @@ set ignorecase
 "set clipboard=unnamedplus
 set clipboard=unnamed
 vnoremap <C-c> y
-"set nu rnu
-set nu
+set nu rnu
 vnoremap < <gv
 vnoremap > >gv
 noremap Y y$
