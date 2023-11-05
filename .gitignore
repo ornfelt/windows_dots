@@ -103,11 +103,3 @@ StartupProfileData-NonInteractive
 logfile/*
 
 env.ps1
-Scripts/acore.ps1
-Scripts/ioq3.ps1
-Scripts/openmw.ps1
-Scripts/playermap.ps1
-Scripts/stk.ps1
-Scripts/tcore.ps1
-Scripts/wcell.ps1
-Scripts/wow.ps1
