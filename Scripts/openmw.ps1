@@ -1,4 +1,12 @@
-$path = "C:\mw\MSVC2022_64\RelWithDebInfo"
+if (Test-Path "C:\mw\MSVC2022_64\RelWithDebInfo") {
+    $path = "C:\mw\MSVC2022_64\RelWithDebInfo"
+} elseif (Test-Path "D:\My_files\OpenMW\openmw\MSVC2022_64\RelWithDebInfo") {
+    $path = "D:\My_files\OpenMW\openmw\MSVC2022_64\RelWithDebInfo"
+} elseif (Test-Path "x") {
+	$path = "x"
+} else {
+    $path = "~/"
+}
 
 #cd $path
 

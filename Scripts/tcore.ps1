@@ -1,4 +1,12 @@
-$path = "C:\Users\jonas\Code2\C++\tcore\trinitycore\build\bin\RelWithDebInfo"
+if (Test-Path "C:\Users\jonas\Code2\C++\tcore\trinitycore\build\bin\RelWithDebInfo") {
+	$path = "C:\Users\jonas\Code2\C++\tcore\trinitycore\build\bin\RelWithDebInfo"
+} elseif (Test-Path "D:\My files\svea_laptop\tcore\TrinityCore\build\bin\RelWithDebInfo") {
+	$path = "D:\My files\svea_laptop\tcore\TrinityCore\build\bin\RelWithDebInfo"
+} elseif (Test-Path "x") {
+	$path = "x"
+} else {
+	$path = "~/"
+}
 
 cd $path
 

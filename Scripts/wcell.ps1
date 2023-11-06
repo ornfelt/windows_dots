@@ -1,4 +1,12 @@
-$path = "C:\Users\jonas\Code2\C#\wcell_\Run\Debug"
+if (Test-Path "C:\Users\jonas\Code2\C#\wcell_\Run\Debug") {
+	$path = "C:\Users\jonas\Code2\C#\wcell_\Run\Debug"
+} elseif (Test-Path "D:\My files\svea_laptop\code_hdd\WCell_\Run\Debug") {
+	$path = "D:\My files\svea_laptop\code_hdd\WCell_\Run\Debug"
+} elseif (Test-Path "x") {
+	$path = "x"
+} else {
+	$path = "~/"
+}
 
 cd $path
 
