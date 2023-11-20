@@ -10,7 +10,7 @@ list_processes: lists processes...
 
 map_util: some commands on mapping network drives in Windows and seeing security groups.
 
-Then I have some other util scripts for tasks and network.
+Then I have some other util scripts for tasks and such.
 
 # Other stuff:
 cmd as admin, then:
@@ -47,7 +47,7 @@ Windows Environment Path Variables
 
 %AllUsersProfile% - Open the All User's Profile C:\ProgramData
 %AppData% - Opens AppData folder C:\Users\{username}\AppData\Roaming
-%CommonProgramFiles% - C:\Program Files\Common Files
+%localappdata% - Opens AppData folder C:\Users\{username}\AppData\Local
 %CommonProgramFiles(x86)% - C:\Program Files (x86)\Common Files
 %HomeDrive% - Opens your home drive C:\
 %LocalAppData% - Opens local AppData folder C:\Users\{username}\AppData\Local
@@ -60,6 +60,11 @@ Windows Environment Path Variables
 %Temp% - Opens temporary file Folder C:\Users\{Username}\AppData\Local\Temp
 %UserProfile% - Opens your user's profile C:\Users\{username}
 %AppData%\Microsoft\Windows\Start Menu\Programs\Startup - Opens Windows 10 Startup location for program shortcuts
+
+shell:desktop
+shell:startup
+shell:OneDrive
+shell:RecycleBinFolder
 
 Win+R
 Run commands

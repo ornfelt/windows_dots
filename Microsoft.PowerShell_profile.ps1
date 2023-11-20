@@ -23,7 +23,7 @@ $aliases = @(
 
 foreach ($alias in $aliases) {
     $scriptName = $alias.TrimStart(".")
-    Set-Alias -Name $alias -Value "$PSScriptRoot\Scripts\$scriptName.ps1"
+    Set-Alias -Name $alias -Value "$PSScriptRoot\my_scripts\$scriptName.ps1"
 }
 
 function RunChatGPT {
@@ -34,7 +34,7 @@ function RunChatGPT {
 Set-Alias -Name chatgpt -Value RunChatGPT
 
 # Load all scripts
-#Get-ChildItem (Join-Path ('C:\Users\Svea User\Documents\WindowsPowerShell') \Scripts\) | Where `
+#Get-ChildItem (Join-Path ('$PSScriptRoot') \my_scripts\) | Where `
 #    { $_.Name -notlike '__*' -and $_.Name -like '*.ps1'} | ForEach `
 #    { . $_.FullName }
 
