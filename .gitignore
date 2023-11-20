@@ -103,3 +103,5 @@ StartupProfileData-NonInteractive
 logfile/*
 
 env.ps1
+
+Modules/
