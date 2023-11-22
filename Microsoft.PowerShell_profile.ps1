@@ -4,7 +4,7 @@ $omp_config = Join-Path $PSScriptRoot ".\custom_cobalt.omp.json"
 oh-my-posh --init --shell pwsh --config $omp_config | Invoke-Expression
 
 # PSReadLine
-# Install-Module -Name PSFzf -Force
+# Install-Module -Name PSReadLine -Force
 Import-Module PSReadLine
 Set-PSReadLineOption -BellStyle None
 Set-PSReadLineOption -PredictionSource History
