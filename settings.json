@@ -33,6 +33,12 @@
     "copyOnSelect": false,
     "defaultProfile": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
     "firstWindowPreference": "persistedWindowLayout",
+    "newTabMenu": 
+    [
+        {
+            "type": "remainingProfiles"
+        }
+    ],
     "profiles": 
     {
         "defaults": 
@@ -52,7 +58,7 @@
                 "hidden": false,
                 "name": "Windows PowerShell",
                 "opacity": 100,
-                "scrollbarState": "hidden",
+                "scrollbarState": "visible",
                 "useAcrylic": true
             },
             {
@@ -324,5 +330,22 @@
         }
     ],
     "startOnUserLogin": true,
-    "themes": []
+    "theme": "custom",
+    "themes": 
+    [
+        {
+            "name": "custom",
+            "tab": 
+            {
+                "background": null,
+                "showCloseButton": "never",
+                "unfocusedBackground": null
+            },
+            "window": 
+            {
+                "applicationTheme": "dark",
+                "useMica": false
+            }
+        }
+    ]
 }
