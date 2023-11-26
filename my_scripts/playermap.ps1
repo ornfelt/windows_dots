@@ -7,8 +7,8 @@ if ($server -eq "tcore")
 		$path = "C:\Users\jonas\Code2\Python\wander_nodes_util\tcore_map\playermap"
 	} elseif (Test-Path "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\tcore_map\playermap") {
 		$path = "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\tcore_map\playermap"
-	} elseif (Test-Path "x") {
-		$path = "x"
+	} elseif (Test-Path "C:\Users\jonas\OneDrive\Documents\Code2\Python\wander_nodes_util\tcore_map\playermap") {
+		$path = "C:\Users\jonas\OneDrive\Documents\Code2\Python\wander_nodes_util\tcore_map\playermap"
 	} else {
 		$path = "~/"
 	}
@@ -20,8 +20,8 @@ else
 		$path = "C:\Users\jonas\Code2\Python\wander_nodes_util\acore_map\playermap"
 	} elseif (Test-Path "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\acore_map\playermap") {
 		$path = "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\acore_map\playermap"
-	} elseif (Test-Path "x") {
-		$path = "x"
+	} elseif (Test-Path "C:\Users\jonas\OneDrive\Documents\Code2\Python\wander_nodes_util\acore_map\playermap") {
+		$path = "C:\Users\jonas\OneDrive\Documents\Code2\Python\wander_nodes_util\acore_map\playermap"
 	} else {
 		$path = "~/"
 	}
