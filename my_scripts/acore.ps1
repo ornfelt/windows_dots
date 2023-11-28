@@ -2,8 +2,8 @@ if (Test-Path "C:\Users\jonas\Code2\C++\acore\azerothcore-wotlk\build_eluna\bin\
     $path = "C:\Users\jonas\Code2\C++\acore\azerothcore-wotlk\build_eluna\bin\RelWithDebInfo"
 } elseif (Test-Path "D:\My files\svea_laptop\acore\azerothcore\build_eluna\bin\RelWithDebInfo") {
     $path = "D:\My files\svea_laptop\acore\azerothcore\build_eluna\bin\RelWithDebInfo"
-} elseif (Test-Path "x") {
-	$path = "x"
+} elseif (Test-Path "C:\Users\jonas\OneDrive\Documents\Code\acore\azerothcore-wotlk\build_eluna\bin\RelWithDebInfo") {
+	$path = "C:\Users\jonas\OneDrive\Documents\Code\acore\azerothcore-wotlk\build_eluna\bin\RelWithDebInfo"
 } else {
     $path = "~/acore/bin"
 }
