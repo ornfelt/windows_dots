@@ -141,18 +141,23 @@ local function getWords()
   end
 end
 
-require('lualine').setup {
-  options = {
+local options = {
     icons_enabled = true,
     theme = 'gruvbox',
-    -- theme = 'catppuccin',
-    component_separators = { left = '', right = '|'},
+    -- globalstatus = true,
     refresh = {
       statusline = 1000,
       tabline = 1000,
       winbar = 1000,
     }
-  },
+}
+
+if vim.fn.has('win32') == 1 then
+    options.component_separators = { left = '', right = '|' }
+end
+
+require('lualine').setup {
+  options = options,
   sections = {
     lualine_a = {'mode'},
     lualine_b = {'branch', 'diff', 'diagnostics'},
@@ -286,8 +291,10 @@ map('v', '>', '>gv')
 -- Tab keybinds
 map('n', '<M-t>', ':tabe<CR>')
 map('n', '<M-s>', ':split<CR>')
--- map('n', '<M-Enter>', ':vsp<CR>')
-map('n', '<M-Enter>', ':10 sp :let $VIM_DIR=expand("%:p:h")<CR>:terminal<CR>cd $VIM_DIR<CR>')
+map('n', '<M-Enter>', ':vsp<CR>')
+if vim.fn.has('win32') then
+    map('n', '<M-Enter>', ':10 sp :let $VIM_DIR=expand("%:p:h")<CR>:terminal<CR>cd $VIM_DIR<CR>')
+end
 
 map('n', '<M-<>', ':vsp<CR>')
 -- Go to tab by number
@@ -311,8 +318,12 @@ map('n', '<leader>-', ':so ~/.vim/sessions/s2.vim<CR>')
 
 -- Open new tabs
 map('n', '<M-n>', ':tabe ~/Documents/vimtutor.txt<CR>')
-map('n', '<M-m>', ':tabe ~/AppData/local/nvim/init.lua<CR>')
-map('n', '<M-,>', ':tabe C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1<CR>')
+map('n', '<M-m>', ':tabe ~/.config/nvim/init.lua<CR>')
+map('n', '<M-,>', ':tabe ~/.config/i3/config<CR>')
+if vim.fn.has('win32') then
+    map('n', '<M-m>', ':tabe ~/AppData/local/nvim/init.lua<CR>')
+    map('n', '<M-,>', ':tabe C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1<CR>')
+end
 map('n', '<M-.>', ':tabe ~/.zshrc<CR>')
 -- map('n', '<C-c>', 'y')
 map('v', '<C-c>', 'y')
@@ -463,17 +474,6 @@ autocmd FileType kotlin inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.kt<Enter><E
 autocmd FileType rust inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.rs<Enter><Esc>/Hellow<Enter>ciw
 autocmd FileType scala inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.scala<Enter><Esc>/Hellow<Enter>ciw
 
-autocmd FileType c inoremap hellow<Tab> <Esc>:r ~/Code/C/hellow.c<Enter>
-autocmd FileType cpp inoremap hellow<Tab> <Esc>:r ~/Code/C++/hellow.cpp<Enter>
-autocmd FileType cs inoremap hellow<Tab> <Esc>:r ~/Code/C\#/hellow.cs<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType go inoremap hellow<Tab> <Esc>:r ~/Code/Go/hellow.go<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType java inoremap hellow<Tab> <Esc>:r ~/Code/Java/hellow.java<Enter><Esc>/hellow<Enter>ciw
-autocmd FileType kotlin inoremap hellow<Tab> <Esc>:r ~/Code/Kotlin/hellow.kt<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType perl inoremap hellow<Tab> <Esc>:r ~/Code/Perl/hellow.pl<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType py,python inoremap hellow<Tab> <Esc>:r ~/Code/Python/hellow.py<Enter>
-autocmd FileType rust inoremap hellow<Tab> <Esc>:r ~/Code/Rust/hellow.rs<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType scala inoremap hellow<Tab> <Esc>:r ~/Code/Scala/hellow.scala<Enter><Esc>/Hellow<Enter>ciw
-
 " Automatically load the session when entering vim
 "autocmd! VimEnter * source ~/.vim/sessions/s.vim
 
@@ -484,46 +484,83 @@ map <F6> <Esc>:setlocal spell! spelllang=sv<CR>
 func! CompileRun()
     exec "w"
     if &filetype == 'c'
-        exec "!gcc -Wall % -o %<"
-        exec "!%:r.exe"
-        "exec "!time ./%<"
+        if has("win64") || has("win32") || has("win16")
+            exec "!gcc -Wall % -o %<"
+            exec "!%:r.exe"
+        else
+            exec "!gcc % && time ./a.out"
+        endif
     elseif &filetype == 'cpp'
-        "exec "!g++ % -o %< -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
-        "exec "!g++ -O2 -Wall % -o %< -std=c++17 -lcurl -lcpprest -lcrypto -lssl"
-        exec "!g++ -O2 -Wall % -o %<"
-        exec "!%:r.exe"
-        "exec "!time ./%<"
+        if has("win64") || has("win32") || has("win16")
+            "exec "!g++ % -o %< -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
+            exec "!g++ -O2 -Wall % -o %<"
+            exec "!%:r.exe"
+        else
+            "exec "!g++ -pthread % -o %< -std=c++11 -lcurl -lcpprest -lcrypto -lssl"
+            exec "!g++ -O2 -Wall % -o %< -std=c++17 -lcurl -lcpprest -lcrypto -lssl"
+            exec "!time ./%:r"
+        endif
     elseif &filetype == 'java'
-        exec "!javac %"
-        exec "!java -cp %:p:h %:t:r"
+        if has("win64") || has("win32") || has("win16")
+            exec "!javac %"
+            exec "!java -cp %:p:h %:t:r"
+        else
+            exec "!time java %"
+        endif
     elseif &filetype == 'sh'
         exec "!time bash %"
     elseif &filetype == 'python'
-        exec "!python %"
+        if has("win64") || has("win32") || has("win16")
+            exec "!python %"
+        else
+            exec "!time python3 %"
+        endif
     elseif &filetype == 'html'
         exec "!firefox % &"
     elseif &filetype == 'php'
         exec "!php %"
     elseif &filetype == 'javascript'
-        exec "!node %"
+        if has("win64") || has("win32") || has("win16")
+            exec "!node %"
+        else
+            exec "!time node %"
+        endif
     elseif &filetype == 'jsx'
-        exec "!node %"
+        if has("win64") || has("win32") || has("win16")
+            exec "!node %"
+        else
+            exec "!time node %"
+        endif
     elseif &filetype == 'typescript'
-        exec "!node %"
+        if has("win64") || has("win32") || has("win16")
+            exec "!node %"
+        else
+            exec "!time node %"
+        endif
     elseif &filetype == 'go'
         exec "!go build %<"
         exec "!time go run %"
     elseif &filetype == 'rust'
-        exec "!rustc %"
-        exec "!time ./%:r"
+        "exec "!rustc %"
+        "exec "!time ./%:r"
+        exec "!cargo build && cargo run"
     elseif &filetype == 'lua'
         exec "!time lua %"
     elseif &filetype == 'mkd'
-        exec "!~/.vim/markdown.pl % > %.html &"
-        exec "!firefox %.html &"
+        "exec "!~/.vim/markdown.pl % > %.html &"
+        "exec "!firefox %.html &"
+        exec "!grip"
+    elseif &filetype == 'mk'
+        "exec "!~/.vim/markdown.pl % > %.html &"
+        "exec "!firefox %.html &"
+        exec "!grip"
     elseif &filetype == 'cs'
-        "exec "!csc %"
-        "exec "!time %:r.exe"
+        "if has("win64") || has("win32") || has("win16")
+        "    exec "!csc %"
+        "    exec "!time %:r.exe"
+        "else
+        "    exec "!mcs % && time mono ./%:t:r.exe" 
+        "endif
         exec "!dotnet build && dotnet run"
     elseif &filetype == 'fs'
         exec "!dotnet build && dotnet run"
@@ -585,17 +622,6 @@ return require('packer').startup(function()
 
   -- Colorschemes
   use("gruvbox-community/gruvbox")
-  -- use {
-  --     "catppuccin/nvim",
-  --     as = "catppuccin",
-  --     config = function()
-  --         require("catppuccin").setup {
-  --             --flavour = "macchiato" -- mocha, macchiato, frappe, latte
-  --             flavour = "mocha"
-  --         }
-  --         -- vim.api.nvim_command "colorscheme catppuccin"
-  --     end
-  -- }
   -- use 'RRethy/nvim-base16'
 
   -- Other stuff
