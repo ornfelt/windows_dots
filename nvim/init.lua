@@ -430,20 +430,38 @@ autocmd FileType html inoremap <b<Tab> <b></b><Space><++><Esc>/<<Enter>GNi
 autocmd FileType html inoremap <h1<Tab> <h1></h1><Space><++><Esc>/<<Enter>GNi
 autocmd FileType html inoremap <h2<Tab> <h2></h2><Space><++><Esc>>/<<Enter>GNi
 autocmd FileType html inoremap <im<Tab> <img></img><Space><++><Esc>/<<Enter>GNi
-autocmd FileType c inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
-autocmd FileType cpp inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
-autocmd FileType cs inoremap sout<Tab> Console.WriteLine("");<Esc>?""<Enter>li
-autocmd FileType cs inoremap fore<Tab> for each (object o : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw
-autocmd FileType cs inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+
 autocmd FileType java inoremap fore<Tab> for (String s : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw
 autocmd FileType java inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
 autocmd FileType java inoremap sout<Tab> System.out.println("");<Esc>?""<Enter>li
 autocmd FileType java inoremap psvm<Tab> public static void main(String[] args){<Enter><Enter>}<Esc>?{<Enter>o
+autocmd FileType java inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.java<Enter><Esc>/hellow<Enter>ciw
+
+autocmd FileType c inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+autocmd FileType c inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.c<Enter>
+autocmd FileType cpp inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+autocmd FileType cpp inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.cpp<Enter>
+
+autocmd FileType cs inoremap sout<Tab> Console.WriteLine("");<Esc>?""<Enter>li
+autocmd FileType cs inoremap fore<Tab> for each (object o : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw
+autocmd FileType cs inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+autocmd FileType cs inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.cs<Enter><Esc>/Hellow<Enter>ciw
+
+autocmd FileType py,python inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.py<Enter>
+
 autocmd FileType sql inoremap fun<Tab> delimiter //<Enter>create function x ()<Enter>returns int<Enter>no sql<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN
 autocmd FileType sql inoremap pro<Tab> delimiter //<Enter>create procedure x ()<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN
 autocmd FileType sql inoremap vie<Tab> create view x as<Enter>select <Esc>/x<Enter>GN
+
 autocmd FileType vtxt,vimwiki,wiki,text inoremap line<Tab> ----------------------------------------------------------------------------------<Enter>
+autocmd FileType vtxt,vimwiki,wiki,text inoremap oline<Tab> ******************************************<Enter>
 autocmd FileType vtxt,vimwiki,wiki,text inoremap date<Tab> <-- <C-R>=strftime("%Y-%m-%d %a")<CR><Esc>A -->
+
+autocmd FileType go inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.go<Enter><Esc>/Hellow<Enter>ciw
+autocmd FileType perl inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.pl<Enter><Esc>/Hellow<Enter>ciw
+autocmd FileType kotlin inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.kt<Enter><Esc>/Hellow<Enter>ciw
+autocmd FileType rust inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.rs<Enter><Esc>/Hellow<Enter>ciw
+autocmd FileType scala inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.scala<Enter><Esc>/Hellow<Enter>ciw
 
 autocmd FileType c inoremap hellow<Tab> <Esc>:r ~/Code/C/hellow.c<Enter>
 autocmd FileType cpp inoremap hellow<Tab> <Esc>:r ~/Code/C++/hellow.cpp<Enter>
@@ -471,7 +489,7 @@ func! CompileRun()
         "exec "!time ./%<"
     elseif &filetype == 'cpp'
         "exec "!g++ % -o %< -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
-        "exec "!g++ % -o %<"
+        "exec "!g++ -O2 -Wall % -o %< -std=c++17 -lcurl -lcpprest -lcrypto -lssl"
         exec "!g++ -O2 -Wall % -o %<"
         exec "!%:r.exe"
         "exec "!time ./%<"
@@ -484,6 +502,8 @@ func! CompileRun()
         exec "!python %"
     elseif &filetype == 'html'
         exec "!firefox % &"
+    elseif &filetype == 'php'
+        exec "!php %"
     elseif &filetype == 'javascript'
         exec "!node %"
     elseif &filetype == 'jsx'
@@ -502,9 +522,18 @@ func! CompileRun()
         exec "!~/.vim/markdown.pl % > %.html &"
         exec "!firefox %.html &"
     elseif &filetype == 'cs'
-        exec "!csc %"
-        exec "!%:r.exe"
-        endif
+        "exec "!csc %"
+        "exec "!time %:r.exe"
+        exec "!dotnet build && dotnet run"
+    elseif &filetype == 'fs'
+        exec "!dotnet build && dotnet run"
+    elseif &filetype == 'fsx'
+        exec "!dotnet build && dotnet run"
+    elseif &filetype == 'fsharp'
+        exec "!dotnet build && dotnet run"
+    elseif &filetype == 'vb'
+        exec "!dotnet build && dotnet run"
+    endif
 endfunc
 map <M-x> :call CompileRun()<CR>
 ]])
