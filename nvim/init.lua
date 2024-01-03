@@ -1,8 +1,10 @@
 lspconfig = require'lspconfig'
--- require'lspconfig'.pyright.setup{}
--- require'lspconfig'.sumneko_lua.setup{}
--- require'lspconfig'.clangd.setup{}
--- require'lspconfig'.jdtls.setup{}
+if vim.fn.has('unix') == 1 then
+    -- require'lspconfig'.sumneko_lua.setup{}
+    require'lspconfig'.pyright.setup{}
+    require'lspconfig'.clangd.setup{}
+    require'lspconfig'.jdtls.setup{}
+end
 
 local g   = vim.g
 local o   = vim.o
@@ -292,7 +294,7 @@ map('v', '>', '>gv')
 map('n', '<M-t>', ':tabe<CR>')
 map('n', '<M-s>', ':split<CR>')
 map('n', '<M-Enter>', ':vsp<CR>')
-if vim.fn.has('win32') then
+if vim.fn.has('win32') == 1 then
     map('n', '<M-Enter>', ':10 sp :let $VIM_DIR=expand("%:p:h")<CR>:terminal<CR>cd $VIM_DIR<CR>')
 end
 
@@ -320,7 +322,7 @@ map('n', '<leader>-', ':so ~/.vim/sessions/s2.vim<CR>')
 map('n', '<M-n>', ':tabe ~/Documents/vimtutor.txt<CR>')
 map('n', '<M-m>', ':tabe ~/.config/nvim/init.lua<CR>')
 map('n', '<M-,>', ':tabe ~/.config/i3/config<CR>')
-if vim.fn.has('win32') then
+if vim.fn.has('win32') == 1 then
     map('n', '<M-m>', ':tabe ~/AppData/local/nvim/init.lua<CR>')
     map('n', '<M-,>', ':tabe C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1<CR>')
 end
