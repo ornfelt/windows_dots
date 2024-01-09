@@ -494,8 +494,8 @@ func! CompileRun()
         endif
     elseif &filetype == 'cpp'
         if has("win64") || has("win32") || has("win16")
-            "exec "!g++ % -o %< -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
-            exec "!g++ -O2 -Wall % -o %< -std=c++17 -lpthread"
+            "exec "!g++ % -o %< -std=c++11 -lpthread -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
+            exec "!g++ -O2 -Wall % -o %< -std=c++17 -pthread"
             exec "!%:r.exe"
         else
             exec "!g++ -O2 -Wall % -o %< -lcurl -lcpprest -lcrypto -lssl -pthread"
