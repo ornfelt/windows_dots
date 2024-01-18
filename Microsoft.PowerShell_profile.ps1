@@ -20,7 +20,7 @@ Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory
 $aliases = @(
     ".cdh", ".cdc", ".cdp", ".ioq3", ".show-wifi", ".list_files", ".list_files_gui", 
     ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
-    ".stk", ".wow", ".wowbot"
+    ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping"
 )
 
 foreach ($alias in $aliases) {
