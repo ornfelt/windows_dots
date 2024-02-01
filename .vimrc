@@ -7,7 +7,8 @@ set clipboard=unnamed
 " in vscode use this instead: "vim.useSystemClipboard": true
 " or: ctrl+, -> search vim -> Enable Vim: Use System Clipboard
 vnoremap <C-c> y
-set rnu
+"Use 'set rnu' only for vscode...
+set nu rnu
 vnoremap < <gv
 vnoremap > >gv
 noremap Y y$
