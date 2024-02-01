@@ -499,7 +499,7 @@ func! CompileRun()
             exec "!%:r.exe"
         else
             "exec "!g++ -Ofast/O3 -Wall % -o %< -std=c++20/17/14/11 -lcurl -lcpprest -lcrypto -lssl -lpthread -Wl,--no-as-needed"
-            exec "!g++ -O2 -Wall % -o %< -std=c++17 -lcurl -lcpprest -lcrypto -lssl -lpthread"
+            exec "!g++ -O2 -Wall % -o %< -std=c++17 -lcurl -lcpprest -lcrypto -lssl -pthread"
             exec "!time ./%:r"
         endif
     elseif &filetype == 'java'

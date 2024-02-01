@@ -1,10 +1,13 @@
 " Place in ~/
+" or $HOME/ or h:\ or %userprofile%
 " Use :set vimrc in VS to see path
 set ignorecase
 "set clipboard=unnamedplus
 set clipboard=unnamed
+" in vscode use this instead: "vim.useSystemClipboard": true
+" or: ctrl+, -> search vim -> Enable Vim: Use System Clipboard
 vnoremap <C-c> y
-set nu rnu
+set rnu
 vnoremap < <gv
 vnoremap > >gv
 noremap Y y$
