@@ -2,8 +2,8 @@ if (Test-Path "C:\Users\jonas\source\repos\ioq3\build\release-msvc142-x86") {
     $path = "C:\Users\jonas\source\repos\ioq3\build\release-msvc142-x86"
 } elseif (Test-Path "D:\My files\svea_laptop\code_hdd\ioq3\build\release-msvc142-x86") {
     $path = "D:\My files\svea_laptop\code_hdd\ioq3\build\release-msvc142-x86"
-} elseif (Test-Path "x") {
-	$path = "x"
+} elseif (Test-Path "C:\Users\jonas\OneDrive\Documents\Code2\C\ioq3\build\release-mingw32-x86_64") {
+	$path = "C:\Users\jonas\OneDrive\Documents\Code2\C\ioq3\build\release-mingw32-x86_64"
 } else {
     $path = "~/"
 }
@@ -13,5 +13,12 @@ if (Test-Path "C:\Users\jonas\source\repos\ioq3\build\release-msvc142-x86") {
 
 #cd $path
 
-echo "$path\ioquake3.x86.exe +set sv_pure 0 +set vm_game 0 +set vm_cgame 0 +set vm_ui 0"
-Invoke-Expression "$path\ioquake3.x86.exe +set sv_pure 0 +set vm_game 0 +set vm_cgame 0 +set vm_ui 0"
+# The -match operator in PowerShell is case-insensitive by default
+if ($path -match "x86_64") {
+    echo "$path\ioquake3.x86_64.exe +set sv_pure 0 +set vm_game 0 +set vm_cgame 0 +set vm_ui 0"
+	Invoke-Expression "$path\ioquake3.x86_64.exe +set sv_pure 0 +set vm_game 0 +set vm_cgame 0 +set vm_ui 0"
+} else {
+    echo "$path\ioquake3.x86.exe +set sv_pure 0 +set vm_game 0 +set vm_cgame 0 +set vm_ui 0"
+	Invoke-Expression "$path\ioquake3.x86.exe +set sv_pure 0 +set vm_game 0 +set vm_cgame 0 +set vm_ui 0"
+}
+
