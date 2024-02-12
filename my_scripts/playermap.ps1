@@ -16,7 +16,7 @@ if ($server -eq "tcore")
 else
 {
 	echo "Launching acore playermap: php -S localhost:8000"
-		if (Test-Path "C:\Users\jonas\Code2\Python\wander_nodes_util\acore_map\playermap") {
+	if (Test-Path "C:\Users\jonas\Code2\Python\wander_nodes_util\acore_map\playermap") {
 		$path = "C:\Users\jonas\Code2\Python\wander_nodes_util\acore_map\playermap"
 	} elseif (Test-Path "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\acore_map\playermap") {
 		$path = "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\acore_map\playermap"
