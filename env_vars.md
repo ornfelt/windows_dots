@@ -51,3 +51,42 @@
 - C:\Users\Svea User\AppData\Roaming\npm
 - C:\xampp2\php
 - C:\Program Files\doxygen\bin
+
+
+
+## Home PC
+
+ACE_ROOT
+C:\local\ACE_wrappers
+
+BOOST_ROOT
+C:/boost_1_81_0
+
+code_root_dir
+C:\Users\jonas\OneDrive\Documents\
+
+dotnet
+C:\Program Files\dotnet
+
+GOPATH
+%USERPROFILE%\go
+
+OPENALDIR
+C:\Program Files (x86)\OpenAL 1.1 SDK
+
+OPENSSL_MODULES
+C:\Program Files\OpenSSL-Win64\bin
+
+TBB_ROOT
+C:\local\tbb2017_20161128oss
+
+Path
+C:\Program Files\MySQL\MySQL Shell 8.0\bin\;C:\Users\jonas\scoop\shims;C:\Users\jonas\AppData\Local\Microsoft\WindowsApps;C:\Users\jonas\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\jonas\.dotnet\tools;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2019.3\bin;C:\Program Files (x86)\Java\jdk1.8.0_231\bin;C:\Program Files\MongoDB\Server\4.2\bin;C:\Users\jonas\AppData\Local\Microsoft\WindowsApps;C:\Users\jonas\.dotnet\tools;C:\Users\jonas\anaconda3\Library\bin;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;C:\Users\jonas\AppData\Local\Programs\Python\Python39;C:\Users\jonas\AppData\Local\Programs\Python\Python39\DLLs;C:\Program Files (x86)\Vim\vim82;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2019.3\bin;C:\Program Files\Git\bin;C:\Program Files (x86)\Neovim\bin;C:\Program Files\nodejs;C:\Users\jonas\.fzf\bin;C:\Users\jonas\scoop\apps\neovim-nightly\current\bin;C:\Program Files (x86)\clangd-windows-12.0.0\clangd_12.0.0\bin;C:\Users\jonas\AppData\Local\SumatraPDF;C:\Program Files\boost_1_77_0\tools\build\DIR\bin;C:\Users\jonas\AppData\Local\Programs\oh-my-posh\bin;%USERPROFILE%\.dotnet\tools;C:\Program Files\MySQL\MySQL Server 8.0\lib;C:\Program Files\MySQL\MySQL Server 8.0\bin;C:\Program Files\OpenSSL-Win64\bin;C:\xampp\php;C:\Program Files\7-Zip;C:\Users\jonas\AppData\Local\Microsoft\WinGet\Packages\Microsoft.NuGet_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\Users\jonas\AppData\Local\Microsoft\WinGet\Packages\Microsoft.NuGet_Microsoft.Winget.Source_8wekyb3d8bbwe;C:\Users\jonas\Downloads\sqlite-tools;C:\Program Files\doxygen\bin;C:\Users\jonas\AppData\Local\Programs\Python\Python39\Scripts;C:\cygwin64\bin;C:\Program Files (x86)\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin;C:\Users\jonas\AppData\Roaming\npm;%USERPROFILE%\go\bin;C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\blpconverter\build\bin\Release;
+
+System vars:
+NUMBER_OF_PROCESSORS: 12
+
+PROCESSOR_ARCHITECTURE: AMD64
+
+Path
+C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files\Microsoft\jdk-11.0.12.7-hotspot\bin;C:\Program Files (x86)\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin;C:\Program Files\dotnet\;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SYSTEMROOT%\System32\WindowsPowerShell\v1.0\;%SYSTEMROOT%\System32\OpenSSH\;C:\Program Files\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\Git\cmd;C:\Program Files\CMake\bin;C:\Program Files\TortoiseSVN\bin;C:\Program Files\Docker\Docker\resources\bin;C;C:\Program Files\Graphviz\bin;C:\Program Files\nodejs\;C:\Program Files\Go\bin
