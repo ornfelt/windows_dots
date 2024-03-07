@@ -52,6 +52,67 @@
 - C:\xampp2\php
 - C:\Program Files\doxygen\bin
 
+## Slaptop
+
+ACE_ROOT
+C:\Users\Svea User\Downloads\ACE-7.0.0\ACE_wrappers
+
+BOOST_ROOT
+C:\local\boost_1_81_0
+
+code_root_dir
+D:\My files\svea_laptop\code_hdd\repos\
+
+GIT_INSTALL_ROOT
+C:\Users\Svea User\scoop\apps\git\current
+
+GOPATH
+%USERPROFILE%\go
+
+OPENALDIR
+C:\Program Files (x86)\OpenAL 1.1 SDK
+
+OPENSSL_INCLUDE_DIR
+C:\Program Files\OpenSSL-Win64\include
+
+OPENSSL_LIBRARIES
+C:\Program Files\OpenSSL-Win64\lib
+
+OPENSSL_ROOT_DIR
+C:\Program Files\OpenSSL-Win64
+
+other_code_root_dir
+D:\My files\other\
+
+TBB_ROOT
+C:\Program Files\tbb
+
+Path:
+C:\Program Files\MySQL\MySQL Shell 8.0\bin\;C:\Users\Svea User\.cargo\bin;C:\Users\Svea User\anaconda3;C:\Users\Svea User\anaconda3\Library\mingw-w64\bin;C:\Users\Svea User\anaconda3\Library\usr\bin;C:\Users\Svea User\anaconda3\Library\bin;C:\Users\Svea User\scoop\shims;C:\Program Files\R\R-4.1.1\bin;C:\MinGW\bin;C:\Users\Svea User\.dotnet\tools;C:\Program Files\CMake\bin;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64;C:\Windows;C:\Users\Svea User\spicetify-cli;C:\Users\Svea User\Downloads\ngrok-stable-windows-amd64;C:\Program Files\heroku\bin;C:\Users\Svea User\Downloads\lua-5.3.6_Win32_bin;C:\Users\Svea User\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin;C:\cygwin64\bin;C:\Users\Svea User\AppData\Local\Programs\oh-my-posh\bin;%USERPROFILE%\go\bin;C:\Users\Svea User\luarocks-3.9.2-windows-64;C:\Program Files\OpenSSL-Win64\bin;C:\Program Files\MySQL\MySQL Server 8.0\bin;C:\Users\Svea User\Downloads\ACE-7.0.11\ACE_wrappers\lib;%USERPROFILE%\.dotnet\tools;C:\Users\Svea User\AppData\Roaming\npm;C:\xampp2\php;C:\Program Files\7-Zip;C:\Users\Svea User\AppData\Local\Programs\Python\Python310\Scripts;C:\Users\Svea User\Downloads\sqlite-tools;C:\Program Files\doxygen\bin;C:\vcpkg;D:\My files\svea_laptop\code_hdd\repos\Code2\Wow\tools\BLPConverter\build\bin\Release;D:\My files\svea_laptop\code_hdd\repos\Code2\Wow\tools\StormLib\build\Release;C:\local\doxy_stuff\Graphviz\bin;C:\local\bin;
+
+System vars:
+- ChocolateyInstall: C:\ProgramData\chocolatey
+- JAVA_HOME: C:\Program Files\OpenJDK\jdk-18.0.1.1
+- NUMBER_OF_PROCESSORS: 8
+
+
+## SPC
+
+BOOST_ROOT
+C:\local\boost_1_81_0
+
+OPENSSL_ROOT_DIR
+C:\Program Files\OpenSSL-Win64
+
+PATH
+C:\Program Files\MySQL\MySQL Shell 8.0\bin\;C:\Users\se-jonornf-01\scoop\shims;C:\Users\se-jonornf-01\AppData\Local\Microsoft\WindowsApps;C:\Users\se-jonornf-01\AppData\Local\Programs\oh-my-posh\bin;C:\Users\se-jonornf-01\AppData\Local\Microsoft\WinGet\Links;C:\Users\se-jonornf-01\.dotnet\tools;C:\Users\se-jonornf-01\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\se-jonornf-01\AppData\Roaming\npm;C:\Program Files\doxygen\bin;%USERPROFILE%\.dotnet\tools;C:\Program Files\MySQL\MySQL Server 8.0\bin;C:\Program Files\Devart\EntityDeveloper\Console;C:\Python27;
+
+System vars:
+- PROCESSOR_ARCHITECTURE: AMD64
+- NUMBER_OF_PROCESSORS: 12
+
+Also add:
+qt / widgets???
 
 
 ## Home PC
