@@ -418,6 +418,9 @@ System vars:
 - PROCESSOR_LEVEL: 25
 - PROCESSOR_ARCHITECTURE: AMD64
 - PROCESSOR_IDENTIFIER: AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD
+- OPENALDIR: C:\local\OpenAL_1.1_SDK
+- NUMBER_OF_PROCESSORS: 16
+- DXSDK_DIR: C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\
 - Path:
 -- %SYSTEMROOT%\System32\OpenSSH\;
 -- %SYSTEMROOT%\System32\WindowsPowerShell\v1.0\;
@@ -434,10 +437,4 @@ System vars:
 -- C:\Program Files\PuTTY\
 -- C:\Program Files\TortoiseSVN\bin;
 -- C:\Program Files\dotnet\;
-
-OPENALDIR: C:\local\OpenAL_1.1_SDK
-
-NUMBER_OF_PROCESSORS: 16
-
-DXSDK_DIR: C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\
 
