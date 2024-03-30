@@ -1,1 +1,1 @@
-cd "C:\Users\jonas\Code2"
+cd (Join-Path -Path $env:code_root_dir -ChildPath "Code2\")

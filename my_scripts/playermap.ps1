@@ -3,12 +3,10 @@ $server = $args[0]
 if ($server -eq "tcore")
 {
 	echo "Launching tcore playermap: php -S localhost:8000"
-	if (Test-Path "C:\Users\jonas\Code2\Python\wander_nodes_util\tcore_map\playermap") {
-		$path = "C:\Users\jonas\Code2\Python\wander_nodes_util\tcore_map\playermap"
-	} elseif (Test-Path "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\tcore_map\playermap") {
-		$path = "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\tcore_map\playermap"
-	} elseif (Test-Path "C:\Users\jonas\OneDrive\Documents\Code2\Python\wander_nodes_util\tcore_map\playermap") {
-		$path = "C:\Users\jonas\OneDrive\Documents\Code2\Python\wander_nodes_util\tcore_map\playermap"
+	$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Python\wander_nodes_util\tcore_map\playermap"
+
+	if (Test-Path $basePath) {
+		$path = $basePath
 	} else {
 		$path = "~/"
 	}
@@ -16,12 +14,10 @@ if ($server -eq "tcore")
 else
 {
 	echo "Launching acore playermap: php -S localhost:8000"
-	if (Test-Path "C:\Users\jonas\Code2\Python\wander_nodes_util\acore_map\playermap") {
-		$path = "C:\Users\jonas\Code2\Python\wander_nodes_util\acore_map\playermap"
-	} elseif (Test-Path "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\acore_map\playermap") {
-		$path = "D:\My files\svea_laptop\code_hdd\repos\Code2\Python\wander_nodes_util\acore_map\playermap"
-	} elseif (Test-Path "C:\Users\jonas\OneDrive\Documents\Code2\Python\wander_nodes_util\acore_map\playermap") {
-		$path = "C:\Users\jonas\OneDrive\Documents\Code2\Python\wander_nodes_util\acore_map\playermap"
+	$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Python\wander_nodes_util\acore_map\playermap"
+
+	if (Test-Path $basePath) {
+		$path = $basePath
 	} else {
 		$path = "~/"
 	}

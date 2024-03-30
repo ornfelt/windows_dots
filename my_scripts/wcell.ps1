@@ -1,4 +1,8 @@
-if (Test-Path "C:\Users\jonas\Code2\C#\wcell_\Run\Debug") {
+$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\C#\wcell\Run\Debug"
+
+if (Test-Path $basePath) {
+    $path = $basePath
+} elseif (Test-Path "C:\Users\jonas\Code2\C#\wcell_\Run\Debug") {
 	$path = "C:\Users\jonas\Code2\C#\wcell_\Run\Debug"
 } elseif (Test-Path "D:\My files\svea_laptop\code_hdd\WCell_\Run\Debug") {
 	$path = "D:\My files\svea_laptop\code_hdd\WCell_\Run\Debug"

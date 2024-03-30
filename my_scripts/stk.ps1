@@ -1,5 +1,7 @@
-if (Test-Path "C:\Users\jonas\Code2\C++\stk\stk-code\build\bin\Release") {
-	$path = "C:\Users\jonas\Code2\C++\stk\stk-code\build\bin\Release"
+$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\C++\stk\stk-code\build\bin\Release"
+
+if (Test-Path $basePath) {
+    $path = $basePath
 } elseif (Test-Path "D:\My files\svea_laptop\Downloads\SuperTuxKart-dev\stk-code\build\bin\Release") {
 	$path = "D:\My files\svea_laptop\Downloads\SuperTuxKart-dev\stk-code\build\bin\Release"
 } elseif (Test-Path "C:\Users\jonas\OneDrive\Documents\Code\stk\stk-code\build\bin\RelWithDebInfo") {

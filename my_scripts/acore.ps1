@@ -1,9 +1,9 @@
-if (Test-Path "C:\Users\jonas\Code2\C++\acore\azerothcore-wotlk\build_eluna\bin\RelWithDebInfo") {
-    $path = "C:\Users\jonas\Code2\C++\acore\azerothcore-wotlk\build_eluna\bin\RelWithDebInfo"
+$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\C++\AzerothCore-wotlk-with-NPCBots\build\bin\RelWithDebInfo"
+
+if (Test-Path $basePath) {
+    $path = $basePath
 } elseif (Test-Path "D:\My files\svea_laptop\acore\azerothcore\build_eluna\bin\RelWithDebInfo") {
     $path = "D:\My files\svea_laptop\acore\azerothcore\build_eluna\bin\RelWithDebInfo"
-} elseif (Test-Path "C:\Users\jonas\OneDrive\Documents\Code\acore\azerothcore-wotlk\build_eluna\bin\RelWithDebInfo") {
-	$path = "C:\Users\jonas\OneDrive\Documents\Code\acore\azerothcore-wotlk\build_eluna\bin\RelWithDebInfo"
 } else {
     $path = "~/acore/bin"
 }
