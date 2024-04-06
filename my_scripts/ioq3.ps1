@@ -1,6 +1,5 @@
 $basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\C\ioq3\build\release-mingw32-x86_64"
 
-
 if (Test-Path $basePath) {
     $path = $basePath
 } elseif (Test-Path (Join-Path -Path $env:code_root_dir -ChildPath "Code2\C\ioq3\build\release-msvc142-x86"))
