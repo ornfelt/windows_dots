@@ -1,0 +1,7 @@
+{
+    "workbench.colorTheme": "Default Dark Modern",
+    "vim.vimrc.enable": true,
+    "editor.lineNumbers": "relative",
+    "vim.useSystemClipboard": true,
+    "settingsSync.ignoredExtensions": []
+}
