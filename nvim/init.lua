@@ -387,6 +387,11 @@ if vim.fn.has('win32') == 1 then
     map('n', '<M-,>', ':tabe C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1<CR>')
 end
 map('n', '<M-.>', ':tabe ~/.zshrc<CR>')
+-- TODO use env vars:
+-- local code_root_dir = os.getenv("code_root_dir") or "C:/Users/jonas/OneDrive/Documents"
+-- vim.api.nvim_set_keymap('n', '<M-,>', ':tabe ' .. code_root_dir .. '/WindowsPowerShell/Microsoft.PowerShell_profile.ps1<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<M-,>', ':tabe ' .. (os.getenv("code_root_dir") or "C:/Users/jonas/OneDrive/Documents") .. '/WindowsPowerShell/Microsoft.PowerShell_profile.ps1<CR>', { noremap = true, silent = true })
+
 -- map('n', '<C-c>', 'y')
 map('v', '<C-c>', 'y')
 
