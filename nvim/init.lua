@@ -104,37 +104,95 @@ vim.opt.fileencoding = 'utf-8'
 -- vim.cmd("autocmd!")
 -- vim.opt.cmdheight = 1
 --
-vim.cmd([[
-set runtimepath+=~/.vim
-set rtp+=~/.fzf
-set noerrorbells
-set noeb vb t_vb=
-set autoread
-set autowrite
-set wildmenu
-set nocompatible
-set shiftround
-set hls
-set autochdir
-set complete+=kspell
-set shortmess+=c
-set completeopt+=longest,menuone
-set completeopt+=preview
-autocmd FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
-filetype plugin indent on
 
-let g:jedi#popup_on_dot = 1
-" Syntastic
-let g:syntastic_always_populate_loc_list = 0
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-let g:NERDTreeQuitOnOpen=1
-let NERDTreeShowHidden=1
+--vim.cmd([[
+--set runtimepath+=~/.vim
+--set rtp+=~/.fzf
+--set noerrorbells
+--set noeb vb t_vb=
+--set autoread
+--set autowrite
+--set wildmenu
+--set nocompatible
+--set shiftround
+--set hls
+--set autochdir
+--set complete+=kspell
+--set shortmess+=c
+--set completeopt+=longest,menuone
+--set completeopt+=preview
+--autocmd FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
+--filetype plugin indent on
+--
+--let g:jedi#popup_on_dot = 1
+--" Syntastic
+--let g:syntastic_always_populate_loc_list = 0
+--let g:syntastic_check_on_open = 1
+--let g:syntastic_check_on_wq = 0
+--let g:NERDTreeQuitOnOpen=1
+--let NERDTreeShowHidden=1
+--
+--" Disable tab key for vimwiki (enables autocomplete via tabbing)
+--let g:vimwiki_key_mappings = { 'table_mappings': 0 }
+--"let g:python3_host_prog = $PYTHON_PATH
+--]])
 
-" Disable tab key for vimwiki (enables autocomplete via tabbing)
-let g:vimwiki_key_mappings = { 'table_mappings': 0 }
-"let g:python3_host_prog = $PYTHON_PATH
-]])
+-- Setting runtimepath
+vim.opt.runtimepath:append('~/.vim')
+vim.opt.runtimepath:append('~/.fzf')
+
+-- UI tweaks
+vim.opt.errorbells = false
+vim.opt.visualbell = false
+--vim.opt.t_vb = ''
+vim.cmd('set t_vb=')
+
+-- File handling
+vim.opt.autoread = true
+vim.opt.autowrite = true
+
+-- Command-line completion adjustments
+vim.opt.wildmenu = true
+
+-- Editor behavior
+--vim.opt.nocompatible = true
+vim.cmd('set nocompatible')
+vim.opt.shiftround = true
+vim.opt.hlsearch = true
+vim.opt.autochdir = true
+
+-- Completion settings
+vim.opt.complete:append('kspell')
+vim.opt.shortmess:append('c')
+vim.opt.completeopt:append({'longest', 'menuone', 'preview'})
+
+-- Automatic command to adjust format options
+vim.cmd [[
+  autocmd FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
+]]
+
+-- Enable filetype plugins and indentation
+vim.cmd [[
+  filetype plugin indent on
+]]
+
+-- Plugin settings
+vim.g['jedi#popup_on_dot'] = 1
+
+-- Syntastic Plugin Settings
+vim.g['syntastic_always_populate_loc_list'] = 0
+vim.g['syntastic_check_on_open'] = 1
+vim.g['syntastic_check_on_wq'] = 0
+
+-- NERDTree Plugin Settings
+vim.g['NERDTreeQuitOnOpen'] = 1
+vim.g['NERDTreeShowHidden'] = 1
+
+-- Vimwiki Plugin Settings
+vim.g['vimwiki_key_mappings'] = { table_mappings = 0 }
+
+-- Python path
+-- vim.g['python3_host_prog'] = '/path/to/python3'
 
 local function getWords()
   if vim.bo.filetype == "md" or vim.bo.filetype == "text" or vim.bo.filetype == "txt" or vim.bo.filetype == "vtxt" or vim.bo.filetype == "markdown" then
@@ -229,7 +287,7 @@ map('i', '<S-Insert>', '<Esc><MiddleMouse>A')
 map('n', '<S-Insert>', '<MiddleMouse>')
 
 map('n', '<leader>b', togglebar) -- Toggle lualine
-map('n', '<M-q>', ':q<CR>') -- Quit neovim
+map('n', '<M-q>', ':q<CR>') -- Quit
 map('n', '<M-z>', ':noh<CR>')
 -- map('n', '<M-x>', ':call CompileRun()<CR>')
 map('n', 'Y', 'y$') -- Yank till end of line
@@ -258,6 +316,7 @@ map('n', '<M-a>', ':FZF ~/<CR>')
 map('n', '<M-A>', ':FZF /<CR>')
 
 -- Vimgrep and QuickFix Lists
+-- TODO: leader f
 map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>11hi')
 map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>9hi') -- Search all
 map('n', '<M-G>', ':vimgrep //g **/.*<C-f><Esc>8hi') -- Search dotfiles
@@ -344,104 +403,107 @@ vim.keymap.set("n", "<leader>r", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><
 vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux neww tmux-sessionizer<CR>") -- Start tmux-sessionizer
 
  -- Setup nvim-cmp.
-  local cmp = require'cmp'
+local cmp = require'cmp'
 
-  cmp.setup({
+cmp.setup({
     snippet = {
-      -- REQUIRED - you must specify a snippet engine
-      expand = function(args)
-        vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
-        -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-        -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
-        -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-      end,
+        -- REQUIRED - you must specify a snippet engine
+        expand = function(args)
+            vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+            -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+            -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
+            -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+        end,
     },
     window = {
-      -- completion = cmp.config.window.bordered(),
-      -- documentation = cmp.config.window.bordered(),
+        -- completion = cmp.config.window.bordered(),
+        -- documentation = cmp.config.window.bordered(),
     },
     mapping = cmp.mapping.preset.insert({
-      ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-      ['<C-f>'] = cmp.mapping.scroll_docs(4),
-      ['<C-Space>'] = cmp.mapping.complete(),
-      ['<C-e>'] = cmp.mapping.abort(),
-      ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
-  -- Use Tab and Shift-Tab to browse through the suggestions.
-    ["<Tab>"] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_next_item()
-      -- elseif vim.fn["vsnip#available"](1) == 1 then
-        -- feedkey("<Plug>(vsnip-expand-or-jump)", "")
-      -- elseif has_words_before() then
-        -- cmp.complete()
-      else
-        fallback()
-      end
-    end, { "i", "s" }),
-    ["<S-Tab>"] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_prev_item()
-      -- elseif vim.fn["vsnip#jumpable"](-1) == 1 then
-        -- feedkey("<Plug>(vsnip-jump-prev)", "")
-      else
-        fallback()
-      end
-    end, { "i", "s" }),
-  }),
+        ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+        ['<C-f>'] = cmp.mapping.scroll_docs(4),
+        ['<C-Space>'] = cmp.mapping.complete(),
+        ['<C-e>'] = cmp.mapping.abort(),
+        ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+        -- Use Tab and Shift-Tab to browse through the suggestions.
+        ["<Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                cmp.select_next_item()
+                -- elseif vim.fn["vsnip#available"](1) == 1 then
+                -- feedkey("<Plug>(vsnip-expand-or-jump)", "")
+                -- elseif has_words_before() then
+                -- cmp.complete()
+            else
+                fallback()
+            end
+        end, { "i", "s" }),
+        ["<S-Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                cmp.select_prev_item()
+                -- elseif vim.fn["vsnip#jumpable"](-1) == 1 then
+                -- feedkey("<Plug>(vsnip-jump-prev)", "")
+            else
+                fallback()
+            end
+        end, { "i", "s" }),
+    }),
     sources = cmp.config.sources({
-      { name = 'nvim_lsp' },
-      { name = 'vsnip' }, -- For vsnip users.
-      -- { name = 'luasnip' }, -- For luasnip users.
-      -- { name = 'ultisnips' }, -- For ultisnips users.
-      -- { name = 'snippy' }, -- For snippy users.
+        { name = 'nvim_lsp' },
+        { name = 'vsnip' }, -- For vsnip users.
+        -- { name = 'luasnip' }, -- For luasnip users.
+        -- { name = 'ultisnips' }, -- For ultisnips users.
+        -- { name = 'snippy' }, -- For snippy users.
     }, {
-      { name = 'buffer' },
+        { name = 'buffer' },
     })
-  })
+})
 
   -- Set configuration for specific filetype.
-  cmp.setup.filetype('gitcommit', {
-    sources = cmp.config.sources({
-      { name = 'cmp_git' }, -- You can specify the `cmp_git` source if you were installed it.
-    }, {
-      { name = 'buffer' },
-    })
-  })
+cmp.setup.filetype('gitcommit', {
+sources = cmp.config.sources({
+    { name = 'cmp_git' },
+}, {
+    { name = 'buffer' },
+})
+})
 
-  -- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
-  cmp.setup.cmdline('/', {
-    mapping = cmp.mapping.preset.cmdline(),
-    sources = {
-      { name = 'buffer' }
-    }
-  })
+-- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
+cmp.setup.cmdline('/', {
+mapping = cmp.mapping.preset.cmdline(),
+sources = {
+    { name = 'buffer' }
+}
+})
 
-  -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
-  cmp.setup.cmdline(':', {
-    mapping = cmp.mapping.preset.cmdline(),
-    sources = cmp.config.sources({
-      -- { name = 'path' }
-    }, {
-      { name = 'cmdline' }
-    })
-  })
+-- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+cmp.setup.cmdline(':', {
+mapping = cmp.mapping.preset.cmdline(),
+sources = cmp.config.sources({
+    -- { name = 'path' }
+}, {
+    { name = 'cmdline' }
+})
+})
 
-  -- Setup lspconfig (line below deprecated)
-  -- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
-  local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
+-- Setup lspconfig (line below deprecated)
+-- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
 
-  -- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.
-  -- require('lspconfig')['<YOUR_LSP_SERVER>'].setup {
-    -- capabilities = capabilities
-  -- }
+-- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.
+-- require('lspconfig')['<YOUR_LSP_SERVER>'].setup {
+-- capabilities = capabilities
+-- }
 
+-- Python path
 --vim.g.python3_host_prog = 'C:/Windows/python.exe'
 vim.g.python3_host_prog = os.getenv("PYTHON_PATH")
 
+-- GPT binds
 local config = {
      openai_api_key = os.getenv("OPENAI_API_KEY"), 
 }
 
+-- Model can be changed in actions for this plugin
 --require("chatgpt").setup(config)
 --map('n', '<leader>e', ':ChatGPTEditWithInstructions<CR>')
 --map('v', '<leader>e', ':ChatGPTEditWithInstructions<CR>')
@@ -488,149 +550,319 @@ map('n', '<leader>9', ':GpChatNew<CR>')
 map('v', '<leader>9', ':GpChatNew<CR>')
 map('n', '<leader>0', ':GpChatToggle<CR>')
 map('v', '<leader>0', ':GpChatToggle<CR>')
+map('n', '<leader>h', ':GpNextAgent<CR>')
+map('v', '<leader>h', ':GpNextAgent<CR>')
+-- There's also:
+-- :GpAgent (for info)
+-- :GpWhisper
+-- :GpImage
+-- :GpStop
+-- etc.
 
 -- vim.api.nvim_command('autocmd BufEnter *.tex :set wrap linebreak nolist spell')
 
+-- TODO: gd, references
+
+-- Helper function for setting key mappings for filetypes
+local function set_hellow_mapping(ft, template_file)
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = ft,
+    callback = function()
+      local map_opts = { noremap = true, silent = true }
+      vim.api.nvim_buf_set_keymap(0, 'i', 'hellow<Tab>', '<Esc>:r ' .. template_file .. '<Enter><Esc>/Hellow<Enter>ciw', map_opts)
+    end
+  })
+end
+
 -- Filetype shortcuts
-vim.cmd([[
-autocmd FileType html inoremap <i<Tab> <em></em> <Space><++><Esc>/<<Enter>GNi
-autocmd FileType html inoremap <b<Tab> <b></b><Space><++><Esc>/<<Enter>GNi
-autocmd FileType html inoremap <h1<Tab> <h1></h1><Space><++><Esc>/<<Enter>GNi
-autocmd FileType html inoremap <h2<Tab> <h2></h2><Space><++><Esc>>/<<Enter>GNi
-autocmd FileType html inoremap <im<Tab> <img></img><Space><++><Esc>/<<Enter>GNi
+--vim.cmd([[
+--autocmd FileType html inoremap <i<Tab> <em></em> <Space><++><Esc>/<<Enter>GNi
+--autocmd FileType html inoremap <b<Tab> <b></b><Space><++><Esc>/<<Enter>GNi
+--autocmd FileType html inoremap <h1<Tab> <h1></h1><Space><++><Esc>/<<Enter>GNi
+--autocmd FileType html inoremap <h2<Tab> <h2></h2><Space><++><Esc>>/<<Enter>GNi
+--autocmd FileType html inoremap <im<Tab> <img></img><Space><++><Esc>/<<Enter>GNi
+--
+--autocmd FileType java inoremap fore<Tab> for (String s : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw
+--autocmd FileType java inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+--autocmd FileType java inoremap sout<Tab> System.out.println("");<Esc>?""<Enter>li
+--autocmd FileType java inoremap psvm<Tab> public static void main(String[] args){<Enter><Enter>}<Esc>?{<Enter>o
+--autocmd FileType java inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.java<Enter><Esc>/hellow<Enter>ciw
+--
+--autocmd FileType c inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+--autocmd FileType c inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.c<Enter>
+--autocmd FileType cpp inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+--autocmd FileType cpp inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.cpp<Enter>
+--
+--autocmd FileType cs inoremap sout<Tab> Console.WriteLine("");<Esc>?""<Enter>li
+--autocmd FileType cs inoremap fore<Tab> for each (object o : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw
+--autocmd FileType cs inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
+--autocmd FileType cs inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.cs<Enter><Esc>/Hellow<Enter>ciw
+--
+--autocmd FileType py,python inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.py<Enter>
+--
+--autocmd FileType sql inoremap fun<Tab> delimiter //<Enter>create function x ()<Enter>returns int<Enter>no sql<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN
+--autocmd FileType sql inoremap pro<Tab> delimiter //<Enter>create procedure x ()<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN
+--autocmd FileType sql inoremap vie<Tab> create view x as<Enter>select <Esc>/x<Enter>GN
+--
+--autocmd FileType vtxt,vimwiki,wiki,text inoremap line<Tab> ----------------------------------------------------------------------------------<Enter>
+--autocmd FileType vtxt,vimwiki,wiki,text inoremap oline<Tab> ******************************************<Enter>
+--autocmd FileType vtxt,vimwiki,wiki,text inoremap date<Tab> <-- <C-R>=strftime("%Y-%m-%d %a")<CR><Esc>A -->
+--
+--autocmd FileType go inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.go<Enter><Esc>/Hellow<Enter>ciw
+--autocmd FileType perl inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.pl<Enter><Esc>/Hellow<Enter>ciw
+--autocmd FileType kotlin inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.kt<Enter><Esc>/Hellow<Enter>ciw
+--autocmd FileType rust inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.rs<Enter><Esc>/Hellow<Enter>ciw
+--autocmd FileType scala inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.scala<Enter><Esc>/Hellow<Enter>ciw
+--
+--" Automatically load the session when entering vim
+--"autocmd! VimEnter * source ~/.vim/sessions/s.vim
+--
+--map <F4> <Esc>:set cursorline!<CR>
+--map <F5> <Esc>:setlocal spell! spelllang=en_us<CR>
+--map <F6> <Esc>:setlocal spell! spelllang=sv<CR>
+--
+--"func! CompileRun()
+--"    exec "w"
+--"    if &filetype == 'c'
+--"        if has("win64") || has("win32") || has("win16")
+--"            exec "!gcc -Wall % -o %<"
+--"            exec "!%:r.exe"
+--"        else
+--"            exec "!gcc % && time ./a.out"
+--"        endif
+--"    elseif &filetype == 'cpp'
+--"        if has("win64") || has("win32") || has("win16")
+--"            "exec "!g++ % -o %< -std=c++11 -lpthread -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
+--"            exec "!g++ -O2 -Wall % -o %< -std=c++17 -pthread"
+--"            exec "!%:r.exe"
+--"        else
+--"            "exec "!g++ -Ofast/O3 -Wall % -o %< -std=c++20/17/14/11 -lcurl -lcpprest -lcrypto -lssl -lpthread -Wl,--no-as-needed"
+--"            exec "!g++ -O2 -Wall % -o %< -std=c++17 -lcurl -lcpprest -lcrypto -lssl -lpthread"
+--"            exec "!time ./%:r"
+--"        endif
+--"    elseif &filetype == 'java'
+--"        if has("win64") || has("win32") || has("win16")
+--"            exec "!javac %"
+--"            exec "!java -cp %:p:h %:t:r"
+--"        else
+--"            exec "!time java %"
+--"        endif
+--"    elseif &filetype == 'sh'
+--"        exec "!time bash %"
+--"    elseif &filetype == 'python'
+--"        if has("win64") || has("win32") || has("win16")
+--"            exec "!python %"
+--"        else
+--"            exec "!time python3 %"
+--"        endif
+--"    elseif &filetype == 'html'
+--"        exec "!firefox % &"
+--"    elseif &filetype == 'php'
+--"        exec "!php %"
+--"    elseif &filetype == 'javascript'
+--"        if has("win64") || has("win32") || has("win16")
+--"            exec "!node %"
+--"        else
+--"            exec "!time node %"
+--"        endif
+--"    elseif &filetype == 'jsx'
+--"        if has("win64") || has("win32") || has("win16")
+--"            exec "!node %"
+--"        else
+--"            exec "!time node %"
+--"        endif
+--"    elseif &filetype == 'typescript'
+--"        if has("win64") || has("win32") || has("win16")
+--"            exec "!node %"
+--"        else
+--"            exec "!time node %"
+--"        endif
+--"    elseif &filetype == 'go'
+--"        exec "!go build %<"
+--"        exec "!time go run %"
+--"    elseif &filetype == 'rust'
+--"        "exec "!rustc %"
+--"        "exec "!time ./%:r"
+--"        exec "!cargo build && cargo run"
+--"    elseif &filetype == 'lua'
+--"        exec "!time lua %"
+--"    elseif &filetype == 'mkd'
+--"        "exec "!~/.vim/markdown.pl % > %.html &"
+--"        "exec "!firefox %.html &"
+--"        exec "!grip"
+--"    elseif &filetype == 'mk'
+--"        "exec "!~/.vim/markdown.pl % > %.html &"
+--"        "exec "!firefox %.html &"
+--"        exec "!grip"
+--"    elseif &filetype == 'cs'
+--"        "if has("win64") || has("win32") || has("win16")
+--"        "    exec "!csc %"
+--"        "    exec "!time %:r.exe"
+--"        "else
+--"        "    exec "!mcs % && time mono ./%:t:r.exe" 
+--"        "endif
+--"        exec "!dotnet build && dotnet run"
+--"    elseif &filetype == 'fs'
+--"        exec "!dotnet build && dotnet run"
+--"    elseif &filetype == 'fsx'
+--"        exec "!dotnet build && dotnet run"
+--"    elseif &filetype == 'fsharp'
+--"        exec "!dotnet build && dotnet run"
+--"    elseif &filetype == 'vb'
+--"        exec "!dotnet build && dotnet run"
+--"    endif
+--"endfunc
+--"map <M-x> :call CompileRun()<CR>
+--]])
 
-autocmd FileType java inoremap fore<Tab> for (String s : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw
-autocmd FileType java inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
-autocmd FileType java inoremap sout<Tab> System.out.println("");<Esc>?""<Enter>li
-autocmd FileType java inoremap psvm<Tab> public static void main(String[] args){<Enter><Enter>}<Esc>?{<Enter>o
-autocmd FileType java inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.java<Enter><Esc>/hellow<Enter>ciw
+-- Autocmd for loading a session file when entering vim
+vim.api.nvim_create_autocmd("VimEnter", {
+  pattern = "*",
+  command = "source ~/.vim/sessions/s.vim"
+})
 
-autocmd FileType c inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
-autocmd FileType c inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.c<Enter>
-autocmd FileType cpp inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
-autocmd FileType cpp inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.cpp<Enter>
+-- Set mappings for various filetypes
+set_hellow_mapping("go", "~/hellow/hellow.go")
+set_hellow_mapping("perl", "~/hellow/hellow.pl")
+set_hellow_mapping("kotlin", "~/hellow/hellow.kt")
+set_hellow_mapping("rust", "~/hellow/hellow.rs")
+set_hellow_mapping("scala", "~/hellow/hellow.scala")
 
-autocmd FileType cs inoremap sout<Tab> Console.WriteLine("");<Esc>?""<Enter>li
-autocmd FileType cs inoremap fore<Tab> for each (object o : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw
-autocmd FileType cs inoremap for<Tab> for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw
-autocmd FileType cs inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.cs<Enter><Esc>/Hellow<Enter>ciw
+-- Function keys mappings
+vim.api.nvim_set_keymap('n', '<F4>', '<Esc>:set cursorline!<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F5>', '<Esc>:setlocal spell! spelllang=en_us<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F6>', '<Esc>:setlocal spell! spelllang=sv<CR>', { noremap = true, silent = true })
 
-autocmd FileType py,python inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.py<Enter>
+-- Helper function to create key mappings for given filetypes
+local function create_mappings(ft, mappings)
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = ft,
+    callback = function()
+      local bufnr = vim.api.nvim_get_current_buf()
+      for lhs, rhs in pairs(mappings) do
+        vim.api.nvim_buf_set_keymap(bufnr, 'i', lhs, rhs, { noremap = true, silent = true })
+      end
+    end
+  })
+end
 
-autocmd FileType sql inoremap fun<Tab> delimiter //<Enter>create function x ()<Enter>returns int<Enter>no sql<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN
-autocmd FileType sql inoremap pro<Tab> delimiter //<Enter>create procedure x ()<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN
-autocmd FileType sql inoremap vie<Tab> create view x as<Enter>select <Esc>/x<Enter>GN
+-- C# mappings
+create_mappings("cs", {
+  ["sout<Tab>"] = 'Console.WriteLine("");<Esc>?""<Enter>li',
+  ["fore<Tab>"] = 'foreach (object o in obj){<Enter><Enter>}<Esc>?obj<Enter>ciw',
+  ["for<Tab>"] = 'for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw',
+  ["hellow<Tab>"] = '<Esc>:r ~/hellow/hellow.cs<Enter><Esc>/Hellow<Enter>ciw'
+})
 
-autocmd FileType vtxt,vimwiki,wiki,text inoremap line<Tab> ----------------------------------------------------------------------------------<Enter>
-autocmd FileType vtxt,vimwiki,wiki,text inoremap oline<Tab> ******************************************<Enter>
-autocmd FileType vtxt,vimwiki,wiki,text inoremap date<Tab> <-- <C-R>=strftime("%Y-%m-%d %a")<CR><Esc>A -->
+-- Python mappings
+create_mappings("py,python", {
+  ["hellow<Tab>"] = '<Esc>:r ~/hellow/hellow.py<Enter>'
+})
 
-autocmd FileType go inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.go<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType perl inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.pl<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType kotlin inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.kt<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType rust inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.rs<Enter><Esc>/Hellow<Enter>ciw
-autocmd FileType scala inoremap hellow<Tab> <Esc>:r ~/hellow/hellow.scala<Enter><Esc>/Hellow<Enter>ciw
+-- SQL mappings
+create_mappings("sql", {
+  ["fun<Tab>"] = 'delimiter //<Enter>create function x ()<Enter>returns int<Enter>no sql<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN',
+  ["pro<Tab>"] = 'delimiter //<Enter>create procedure x ()<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN',
+  ["vie<Tab>"] = 'create view x as<Enter>select <Esc>/x<Enter>GN'
+})
 
-" Automatically load the session when entering vim
-"autocmd! VimEnter * source ~/.vim/sessions/s.vim
+-- Text-based file mappings
+create_mappings("vtxt,vimwiki,wiki,text", {
+  ["line<Tab>"] = '----------------------------------------------------------------------------------<Enter>',
+  ["oline<Tab>"] = '******************************************<Enter>',
+  ["date<Tab>"] = '<-- <C-R>=strftime("%Y-%m-%d %a")<CR><Esc>A -->'
+})
 
-map <F4> <Esc>:set cursorline!<CR>
-map <F5> <Esc>:setlocal spell! spelllang=en_us<CR>
-map <F6> <Esc>:setlocal spell! spelllang=sv<CR>
+-- HTML mappings
+create_mappings("html", {
+  ["<i<Tab>"] = '<em></em> <Space><++><Esc>/<<Enter>GNi',
+  ["<b<Tab>"] = '<b></b><Space><++><Esc>/<<Enter>GNi',
+  ["<h1<Tab>"] = '<h1></h1><Space><++><Esc>/<<Enter>GNi',
+  ["<h2<Tab>"] = '<h2></h2><Space><++><Esc>/<<Enter>GNi',
+  ["<im<Tab>"] = '<img></img><Space><++><Esc>/<<Enter>GNi'
+})
 
-func! CompileRun()
-    exec "w"
-    if &filetype == 'c'
-        if has("win64") || has("win32") || has("win16")
-            exec "!gcc -Wall % -o %<"
-            exec "!%:r.exe"
+-- Java mappings
+create_mappings("java", {
+  ["fore<Tab>"] = 'for (String s : obj){<Enter><Enter>}<Esc>?obj<Enter>ciw',
+  ["for<Tab>"] = 'for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw',
+  ["sout<Tab>"] = 'System.out.println("");<Esc>?""<Enter>li',
+  ["psvm<Tab>"] = 'public static void main(String[] args){<Enter><Enter>}<Esc>?{<Enter>o',
+  ["hellow<Tab>"] = '<Esc>:r ~/hellow/hellow.java<Enter><Esc>/hellow<Enter>ciw'
+})
+
+-- C and C++ mappings
+create_mappings("c", {
+  ["for<Tab>"] = 'for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw',
+  ["hellow<Tab>"] = '<Esc>:r ~/hellow/hellow.c<Enter>'
+})
+
+create_mappings("cpp", {
+  ["for<Tab>"] = 'for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw',
+  ["hellow<Tab>"] = '<Esc>:r ~/hellow/hellow.cpp<Enter>'
+})
+
+function compile_run()
+    vim.cmd('w') -- Save the file first
+
+    local filetype = vim.bo.filetype
+    local is_windows = vim.fn.has('win32') or vim.fn.has('win16') or vim.fn.has('win64')
+
+    if filetype == 'c' then
+        if is_windows then
+            vim.cmd('!gcc -Wall % -o %<')
+            vim.cmd('!%:r.exe')
         else
-            exec "!gcc % && time ./a.out"
-        endif
-    elseif &filetype == 'cpp'
-        if has("win64") || has("win32") || has("win16")
-            "exec "!g++ % -o %< -std=c++11 -lpthread -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32"
-            exec "!g++ -O2 -Wall % -o %< -std=c++17 -pthread"
-            exec "!%:r.exe"
+            vim.cmd('!gcc % && time ./a.out')
+        end
+    elseif filetype == 'cpp' then
+        if is_windows then
+            vim.cmd('!g++ -O2 -Wall % -o %< -std=c++17 -pthread')
+            vim.cmd('!%:r.exe')
         else
-            "exec "!g++ -Ofast/O3 -Wall % -o %< -std=c++20/17/14/11 -lcurl -lcpprest -lcrypto -lssl -lpthread -Wl,--no-as-needed"
-            exec "!g++ -O2 -Wall % -o %< -std=c++17 -lcurl -lcpprest -lcrypto -lssl -lpthread"
-            exec "!time ./%:r"
-        endif
-    elseif &filetype == 'java'
-        if has("win64") || has("win32") || has("win16")
-            exec "!javac %"
-            exec "!java -cp %:p:h %:t:r"
+            vim.cmd('!g++ -O2 -Wall % -o %< -std=c++17 -lcurl -lcpprest -lcrypto -lssl -lpthread')
+            vim.cmd('!time ./%:r')
+        end
+    elseif filetype == 'java' then
+        if is_windows then
+            vim.cmd('!javac %')
+            vim.cmd('!java -cp %:p:h %:t:r')
         else
-            exec "!time java %"
-        endif
-    elseif &filetype == 'sh'
-        exec "!time bash %"
-    elseif &filetype == 'python'
-        if has("win64") || has("win32") || has("win16")
-            exec "!python %"
+            vim.cmd('!time java %')
+        end
+    elseif filetype == 'sh' then
+        vim.cmd('!time bash %')
+    elseif filetype == 'python' then
+        if is_windows then
+            vim.cmd('!python %')
         else
-            exec "!time python3 %"
-        endif
-    elseif &filetype == 'html'
-        exec "!firefox % &"
-    elseif &filetype == 'php'
-        exec "!php %"
-    elseif &filetype == 'javascript'
-        if has("win64") || has("win32") || has("win16")
-            exec "!node %"
+            vim.cmd('!time python3 %')
+        end
+    elseif filetype == 'html' then
+        vim.cmd('!firefox % &')
+    elseif filetype == 'php' then
+        vim.cmd('!php %')
+    elseif filetype == 'javascript' or filetype == 'jsx' or filetype == 'typescript' then
+        if is_windows then
+            vim.cmd('!node %')
         else
-            exec "!time node %"
-        endif
-    elseif &filetype == 'jsx'
-        if has("win64") || has("win32") || has("win16")
-            exec "!node %"
-        else
-            exec "!time node %"
-        endif
-    elseif &filetype == 'typescript'
-        if has("win64") || has("win32") || has("win16")
-            exec "!node %"
-        else
-            exec "!time node %"
-        endif
-    elseif &filetype == 'go'
-        exec "!go build %<"
-        exec "!time go run %"
-    elseif &filetype == 'rust'
-        "exec "!rustc %"
-        "exec "!time ./%:r"
-        exec "!cargo build && cargo run"
-    elseif &filetype == 'lua'
-        exec "!time lua %"
-    elseif &filetype == 'mkd'
-        "exec "!~/.vim/markdown.pl % > %.html &"
-        "exec "!firefox %.html &"
-        exec "!grip"
-    elseif &filetype == 'mk'
-        "exec "!~/.vim/markdown.pl % > %.html &"
-        "exec "!firefox %.html &"
-        exec "!grip"
-    elseif &filetype == 'cs'
-        "if has("win64") || has("win32") || has("win16")
-        "    exec "!csc %"
-        "    exec "!time %:r.exe"
-        "else
-        "    exec "!mcs % && time mono ./%:t:r.exe" 
-        "endif
-        exec "!dotnet build && dotnet run"
-    elseif &filetype == 'fs'
-        exec "!dotnet build && dotnet run"
-    elseif &filetype == 'fsx'
-        exec "!dotnet build && dotnet run"
-    elseif &filetype == 'fsharp'
-        exec "!dotnet build && dotnet run"
-    elseif &filetype == 'vb'
-        exec "!dotnet build && dotnet run"
-    endif
-endfunc
-map <M-x> :call CompileRun()<CR>
-]])
+            vim.cmd('!time node %')
+        end
+    elseif filetype == 'go' then
+        vim.cmd('!go build %<')
+        vim.cmd('!time go run %')
+    elseif filetype == 'rust' then
+        vim.cmd('!cargo build && cargo run')
+    elseif filetype == 'lua' then
+        vim.cmd('!time lua %')
+    elseif filetype == 'mkd' or filetype == 'mk' then
+        vim.cmd('!grip')
+    elseif filetype == 'cs' or filetype == 'fs' or filetype == 'fsx' or filetype == 'fsharp' or filetype == 'vb' then
+        vim.cmd('!dotnet build && dotnet run')
+    end
+end
+
+vim.api.nvim_set_keymap('n', '<M-x>', '<Cmd>lua compile_run()<CR>', { noremap = true, silent = true })
 
 -- useINS
 --
