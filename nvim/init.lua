@@ -720,11 +720,11 @@ end
 --"map <M-x> :call CompileRun()<CR>
 --]])
 
--- Autocmd for loading a session file when entering vim
-vim.api.nvim_create_autocmd("VimEnter", {
-  pattern = "*",
-  command = "source ~/.vim/sessions/s.vim"
-})
+-- Automatically load the session when entering vim
+-- vim.api.nvim_create_autocmd("VimEnter", {
+--   pattern = "*",
+--   command = "source ~/.vim/sessions/s.vim"
+-- })
 
 -- Set mappings for various filetypes
 set_hellow_mapping("go", "~/hellow/hellow.go")
