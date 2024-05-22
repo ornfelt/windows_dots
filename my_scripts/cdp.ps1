@@ -1,1 +1,2 @@
-cd "C:\Users\jonas\Code2\C#\WoW-Spell-Editor"
+$profileDirectory = Split-Path -Path $PROFILE -Parent
+cd $profileDirectory

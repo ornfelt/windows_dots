@@ -18,7 +18,7 @@ Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory
 
 # Alias
 $aliases = @(
-    ".cdh", ".cdc", ".cdp", ".ioq3", ".show-wifi", ".list_files", ".list_files_gui", 
+    ".cdn", ".cdc", ".cdp", ".ioq3", ".show-wifi", ".list_files", ".list_files_gui", 
     ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos"
