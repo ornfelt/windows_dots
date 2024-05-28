@@ -1,10 +1,74 @@
 lspconfig = require'lspconfig'
-if vim.fn.has('unix') == 1 then
-    -- require'lspconfig'.sumneko_lua.setup{}
-    require'lspconfig'.pyright.setup{}
-    require'lspconfig'.clangd.setup{}
-    require'lspconfig'.jdtls.setup{}
+
+-- if vim.fn.has('unix') == 1 then
+--     --require'lspconfig'.pyright.setup{}
+--     -- require'lspconfig'.lua_ls.setup{}
+--     require'lspconfig'.jdtls.setup{}
+-- end
+
+local function go_to_definition_twice()
+    vim.lsp.buf.definition()
+    vim.defer_fn(function() vim.lsp.buf.definition() end, 100)
 end
+
+local on_attach = function(client, bufnr)
+    -- Create a buffer-local keymap function
+    local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
+    buf_set_keymap('n', '<M-r>', '<cmd>lua vim.lsp.buf.references()<CR>', { noremap = true, silent = true })
+    buf_set_keymap('n', '<M-d>', '<cmd>lua vim.lsp.buf.definition()<CR>', { noremap = true, silent = true })
+    --buf_set_keymap('n', '<M-s-d>', '<cmd>lua vim.lsp.buf.implementation()<CR>', { noremap = true, silent = true })
+    buf_set_keymap('n', '<M-s-d>', '', { noremap = true, silent = true, callback = go_to_definition_twice })
+end
+
+-- Python language server
+--require'lspconfig'.pyright.setup {
+--    on_attach = on_attach,
+--}
+
+-- C/C++ language server
+--require'lspconfig'.clangd.setup {
+--    on_attach = on_attach,
+--    -- Clangd-specific settings
+--    -- cmd = { "clangd", "--background-index" },
+--    -- Configure flags, headers, or other clangd-specific options...
+--}
+
+-- Java language server
+--require'lspconfig'.jdtls.setup {
+--    on_attach = on_attach,
+--    -- Note: jdtls might require more complex configuration especially for workspace handling
+--    -- and Java project management compared to other simpler LSP setups.
+--    -- root_dir = function() return vim.fn.getcwd() end,
+--}
+
+-- Setup language server if its binary is available
+local function setup_lsp_if_available(server_name, config)
+    if vim.fn.executable(server_name) == 1 then
+        require'lspconfig'[server_name].setup(config)
+    else
+        print(server_name .. " is not installed or not found in PATH")
+    end
+end
+
+local pyright_config = {
+    on_attach = on_attach,
+}
+
+local clangd_config = {
+    on_attach = on_attach,
+}
+
+local lsp_attach_config = {
+    on_attach = on_attach,
+}
+
+--setup_lsp_if_available('pyright', pyright_config)
+setup_lsp_if_available('pyright', lsp_attach_config)
+setup_lsp_if_available('clangd', lsp_attach_config)
+-- lua_ls is not the executable, lua-language-server is...
+require'lspconfig'.lua_ls.setup {
+    on_attach = on_attach,
+}
 
 local g   = vim.g
 local o   = vim.o
@@ -322,10 +386,40 @@ map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>9hi') -- Search all
 map('n', '<M-G>', ':vimgrep //g **/.*<C-f><Esc>8hi') -- Search dotfiles
 map('n', '<M-v>', ':cdo s///gc | update<C-f><Esc>13hi')
 -- map('n', '<M-v>', ':cfdo s//x/gc<left><left><left><left><left><C-f>i')
-map('n', '<M-c>', ':cnext<CR>')
+map('n', '<M-n>', ':cnext<CR>')
 map('n', '<M-p>', ':cprev<CR>')
 map('n', '<M-P>', ':clast<CR>')
-map('n', '<M-b>', ':copen<CR>')
+--map('n', '<M-b>', ':copen<CR>')
+
+-- vim.cmd [[
+-- function! ToggleQuickfix()
+--     if empty(filter(getwininfo(), 'v:val.quickfix'))
+--         copen
+--     else
+--         cclose
+--     endif
+-- endfunction
+-- 
+-- nnoremap <M-b> :call ToggleQuickfix()<CR>
+-- ]]
+
+-- Toggle quickfix window
+local function toggle_quickfix()
+    local windows = vim.fn.getwininfo()
+    local is_quickfix_open = false
+    for _, win in pairs(windows) do
+        if win.quickfix == 1 then
+            is_quickfix_open = true
+            break
+        end
+    end
+
+    if is_quickfix_open then
+        vim.cmd('cclose')
+    else
+        vim.cmd('copen')
+    end
+end
 
 -- Window management and movement
 map('n', '<M-u>', ':resize +2<CR>')
@@ -379,14 +473,34 @@ map('n', '<leader>.', ':so ~/.vim/sessions/s.vim<CR>')
 map('n', '<leader>-', ':so ~/.vim/sessions/s2.vim<CR>')
 
 -- Open new tabs
-map('n', '<M-n>', ':tabe ~/Documents/vimtutor.txt<CR>')
 map('n', '<M-m>', ':tabe ~/.config/nvim/init.lua<CR>')
-map('n', '<M-,>', ':tabe ~/.config/i3/config<CR>')
-if vim.fn.has('win32') == 1 then
-    map('n', '<M-m>', ':tabe ~/AppData/local/nvim/init.lua<CR>')
-    map('n', '<M-,>', ':tabe C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1<CR>')
+map('n', '<M-,>', ':tabe ~/.zshrc<CR>')
+map('n', '<M-.>', ':tabe ~/Documents/vimtutor.txt<CR>')
+
+-- Windows
+local function openPowershellProfile()
+    local poshTheme = os.getenv("POSH_THEME")
+    if not poshTheme then
+        print("POSH_THEME environment variable not set")
+        return
+    end
+
+    local basePath = poshTheme:match("^(.*\\WindowsPowerShell\\)")
+    if not basePath then
+        print("Invalid POSH_THEME path")
+        return
+    end
+
+    local filePath = basePath .. "Microsoft.PowerShell_profile.ps1"
+    vim.cmd("tabe " .. filePath)
 end
-map('n', '<M-.>', ':tabe ~/.zshrc<CR>')
+
+if vim.fn.has('win32') == 1 then
+	map('n', '<M-m>', ':tabe C:/Users/se-jonornf-01/AppData/Local/nvim/init.lua<CR>')
+    vim.api.nvim_set_keymap('n', '<M-,>', '', {noremap = true, silent = true, callback = openPowershellProfile})
+    vim.api.nvim_set_keymap('n', '<M-,>', '<cmd>tabe ' .. os.getenv('ps_profile_path') .. '/Microsoft.PowerShell_profile.ps1<CR>', { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', '<M-.>', '<cmd>tabe ' .. os.getenv('my_notes_path') .. '/vimtutor.txt<CR>', { noremap = true, silent = true })
+end
 -- TODO use env vars:
 -- local code_root_dir = os.getenv("code_root_dir") or "C:/Users/jonas/OneDrive/Documents"
 -- vim.api.nvim_set_keymap('n', '<M-,>', ':tabe ' .. code_root_dir .. '/WindowsPowerShell/Microsoft.PowerShell_profile.ps1<CR>', { noremap = true, silent = true })
@@ -508,6 +622,9 @@ local config = {
      openai_api_key = os.getenv("OPENAI_API_KEY"), 
 }
 
+-- TODO: Use alt-c for custom chatgpt function!
+-- map('n', '<M-c>', ':tabe ~/Documents/vimtutor.txt<CR>')
+
 -- Model can be changed in actions for this plugin
 --require("chatgpt").setup(config)
 --map('n', '<leader>e', ':ChatGPTEditWithInstructions<CR>')
@@ -565,8 +682,6 @@ map('v', '<leader>h', ':GpNextAgent<CR>')
 -- etc.
 
 -- vim.api.nvim_command('autocmd BufEnter *.tex :set wrap linebreak nolist spell')
-
--- TODO: gd, references
 
 -- Helper function for setting key mappings for filetypes
 local function set_hellow_mapping(ft, template_file)
