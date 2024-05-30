@@ -747,7 +747,7 @@ function compile_run()
     vim.cmd('w') -- Save the file first
 
     local filetype = vim.bo.filetype
-    local is_windows = vim.fn.has('win32') or vim.fn.has('win16') or vim.fn.has('win64')
+    local is_windows = vim.fn.has('win32') == 1 -- or vim.fn.has('win16') == 1 or vim.fn.has('win64') == 1
 
     if filetype == 'c' then
         if is_windows then
