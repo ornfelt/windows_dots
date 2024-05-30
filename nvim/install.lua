@@ -51,7 +51,7 @@ return require('packer').startup(function()
   -- use 'frazrepo/vim-rainbow'
 
   use({
-      "jackMort/ChatGPT.nvim",
+      "ornfelt/ChatGPT.nvim",
       --config = function()
       --    require("chatgpt").setup()
       --end,
