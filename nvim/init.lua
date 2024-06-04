@@ -484,12 +484,7 @@ vim.keymap.set("n", "<leader>r", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><
 vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux neww tmux-sessionizer<CR>") -- Start tmux-sessionizer
 
 local function PythonCommand()
-    local code_root_dir = vim.fn.getenv("code_root_dir")
-    if code_root_dir == nil or code_root_dir == "" then
-        print("Environment variable 'code_root_dir' is not set")
-        return
-    end
-
+    local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "')
     local command = "!python " .. code_root_dir .. "Code2/Python/my_py/scripts/"
     --vim.cmd('normal gv')
