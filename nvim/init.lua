@@ -334,7 +334,6 @@ end
 -- local ok, _ = pcall(vim.cmd, 'colorscheme base16-gruvbox-dark-medium')
 -- vim.g.gruvbox_contrast_dark = 'hard'
 vim.cmd("colorscheme gruvbox")
--- vim.cmd("colorscheme catppuccin")
 
 -- Keybinds
 local function map(m, k, v)
@@ -901,7 +900,6 @@ return require('packer').startup(function()
 
   -- Colorschemes
   use("gruvbox-community/gruvbox")
-  -- use 'RRethy/nvim-base16'
 
   -- Other stuff
   -- use 'frazrepo/vim-rainbow'

@@ -330,6 +330,7 @@ end
 local options = {
     icons_enabled = true,
     theme = 'gruvbox',
+    --theme = 'catppuccin',
     -- globalstatus = true,
     refresh = {
       statusline = 1000,
@@ -381,7 +382,7 @@ end
 -- local ok, _ = pcall(vim.cmd, 'colorscheme base16-gruvbox-dark-medium')
 -- vim.g.gruvbox_contrast_dark = 'hard'
 vim.cmd("colorscheme gruvbox")
--- vim.cmd("colorscheme catppuccin")
+--vim.cmd.colorscheme "catppuccin-macchiato" -- frappe, macchiato, mocha
 
 -- Keybinds
 local function map(m, k, v)
@@ -704,7 +705,7 @@ vim.g.python3_host_prog = os.getenv("PYTHON_PATH")
 
 -- GPT binds
 local config = {
-     openai_api_key = os.getenv("OPENAI_API_KEY"), 
+     openai_api_key = os.getenv("OPENAI_API_KEY"),
 }
 
 -- Model can be changed in actions for this plugin
@@ -1147,10 +1148,12 @@ return require('packer').startup(function()
 
   -- Colorschemes
   use("gruvbox-community/gruvbox")
-  -- use 'RRethy/nvim-base16'
+  use { "catppuccin/nvim", as = "catppuccin" }
 
   -- Other stuff
   -- use 'frazrepo/vim-rainbow'
+
+  -- use("simrat39/rust-tools.nvim")
 
   use({
       "ornfelt/ChatGPT.nvim",
