@@ -49,8 +49,8 @@ local function setup_lsp_if_available(server_name, config, binary_name)
 
     if vim.fn.executable(binary_name) == 1 then
         require'lspconfig'[server_name].setup(config)
-    else
-        print(binary_name .. " is not installed or not found in PATH")
+    --else
+    --    print(binary_name .. " is not installed or not found in PATH")
     end
 end
 
@@ -69,8 +69,68 @@ local lsp_attach_config = {
 --setup_lsp_if_available('pyright', pyright_config)
 setup_lsp_if_available('pyright', lsp_attach_config)
 setup_lsp_if_available('clangd', lsp_attach_config)
--- lua_ls is not the executable, lua-language-server is...
+setup_lsp_if_available('gopls', lsp_attach_config)
+setup_lsp_if_available('phpactor', lsp_attach_config)
+setup_lsp_if_available('tsserver', lsp_attach_config)
+-- lua_ls isn't the executable, lua-language-server is
 setup_lsp_if_available('lua_ls', lsp_attach_config, 'lua-language-server')
+-- rust_analyzer isn't the executable, rust-analyzer is
+setup_lsp_if_available('rust_analyzer', lsp_attach_config, 'rust-analyzer')
+setup_lsp_if_available('fsautocomplete', lsp_attach_config)
+
+local omnisharp_path = os.getenv('OMNISHARP_PATH')
+if omnisharp_path then
+    local cmd
+
+    if vim.fn.has('unix') == 1 then
+        cmd = { "dotnet", omnisharp_path .. "/OmniSharp.dll" }
+    else
+        cmd = { omnisharp_path .. "/OmniSharp.exe", "--languageserver", "--hostPID", tostring(vim.fn.getpid()) }
+    end
+
+    require'lspconfig'.omnisharp.setup {
+        on_attach = on_attach,
+        cmd = cmd,
+        settings = {
+            FormattingOptions = {
+                -- Enables support for reading code style, naming convention and analyzer
+                -- settings from .editorconfig.
+                EnableEditorConfigSupport = true,
+                -- Specifies whether 'using' directives should be grouped and sorted during
+                -- document formatting.
+                OrganizeImports = nil,
+            },
+            MsBuild = {
+                -- If true, MSBuild project system will only load projects for files that
+                -- were opened in the editor. This setting is useful for big C# codebases
+                -- and allows for faster initialization of code navigation features only
+                -- for projects that are relevant to code that is being edited. With this
+                -- setting enabled OmniSharp may load fewer projects and may thus display
+                -- incomplete reference lists for symbols.
+                LoadProjectsOnDemand = nil,
+            },
+            RoslynExtensionsOptions = {
+                -- Enables support for roslyn analyzers, code fixes and rulesets.
+                EnableAnalyzersSupport = nil,
+                -- Enables support for showing unimported types and unimported extension
+                -- methods in completion lists. When committed, the appropriate using
+                -- directive will be added at the top of the current file. This option can
+                -- have a negative impact on initial completion responsiveness,
+                -- particularly for the first few completion sessions after opening a
+                -- solution.
+                EnableImportCompletion = nil,
+                -- Only run analyzers against open files when 'enableRoslynAnalyzers' is
+                -- true
+                AnalyzeOpenDocumentsOnly = nil,
+            },
+            Sdk = {
+                -- Specifies whether to include preview versions of the .NET SDK when
+                -- determining which version to use for project loading.
+                IncludePrereleases = true,
+            },
+        },
+    }
+end
 
 local g   = vim.g
 local o   = vim.o
@@ -361,6 +421,7 @@ map('n', 'Y', 'y$') -- Yank till end of line
 -- map('n', 'F6', ':setlocal spell! spelllang=sv<CR>')
 
 map('n', '<leader>p', 'viw"_dP') -- Replace from void
+map('v', '<leader>p', 'viw"_dP') -- Replace from void
 map('n', '<leader>d', '"_d') -- Delete to void
 map('v', '<leader>d', '"_d') -- Delete to void
 
@@ -381,8 +442,8 @@ map('n', '<M-a>', ':FZF ~/<CR>')
 map('n', '<M-A>', ':FZF /<CR>')
 map('n', '<M-S>', ':FZF C:/<CR>')
 
+-- TODO: leader-f?
 -- Vimgrep and QuickFix Lists
--- TODO: leader f
 map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>11hi')
 map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>9hi') -- Search all
 map('n', '<M-G>', ':vimgrep //g **/.*<C-f><Esc>8hi') -- Search dotfiles
@@ -524,6 +585,26 @@ map('v', '<leader>%', '/\\%V') -- Search in highlighted text
 map("n", "Q", "<nop>") -- Remove Ex Mode
 vim.keymap.set("n", "<leader>r", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]]) -- Replace word under cursor
 vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux neww tmux-sessionizer<CR>") -- Start tmux-sessionizer
+
+--function PythonCommand()
+local function PythonCommand()
+    local code_root_dir = vim.fn.getenv("code_root_dir")
+    if code_root_dir == nil or code_root_dir == "" then
+        print("Environment variable 'code_root_dir' is not set")
+        return
+    end
+
+    local command = "!python " .. code_root_dir .. "Code2/Python/my_py/scripts/"
+    --vim.cmd('normal gv')
+    vim.fn.feedkeys(":" .. command)
+    local pos = #command
+    vim.fn.setcmdpos(pos)
+end
+
+-- If function is not local:
+--vim.api.nvim_set_keymap('v', '<leader>f', '<cmd>lua PythonCommand()<CR>', { noremap = true, silent = true })
+vim.api.nvim_create_user_command('RunPythonCommand', PythonCommand, {})
+vim.api.nvim_set_keymap('v', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
 
  -- Setup nvim-cmp.
 local cmp = require'cmp'

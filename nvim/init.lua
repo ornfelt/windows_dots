@@ -374,6 +374,7 @@ map('n', 'Y', 'y$') -- Yank till end of line
 -- map('n', 'F6', ':setlocal spell! spelllang=sv<CR>')
 
 map('n', '<leader>p', 'viw"_dP') -- Replace from void
+map('v', '<leader>p', 'viw"_dP') -- Replace from void
 map('n', '<leader>d', '"_d') -- Delete to void
 map('v', '<leader>d', '"_d') -- Delete to void
 
@@ -393,8 +394,8 @@ map('n', '<M-a>', ':FZF ../<CR>')
 map('n', '<M-A>', ':FZF ~/<CR>')
 map('n', '<M-S>', ':FZF C:/<CR>')
 
+-- TODO: leader-f?
 -- Vimgrep and QuickFix Lists
--- TODO: leader f
 map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>11hi')
 map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>9hi') -- Search all
 map('n', '<M-G>', ':vimgrep //g **/.*<C-f><Esc>8hi') -- Search dotfiles
@@ -482,6 +483,23 @@ map('v', '<leader>%', '/\\%V') -- Search in highlighted text
 map("n", "Q", "<nop>") -- Remove Ex Mode
 vim.keymap.set("n", "<leader>r", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]]) -- Replace word under cursor
 vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux neww tmux-sessionizer<CR>") -- Start tmux-sessionizer
+
+local function PythonCommand()
+    local code_root_dir = vim.fn.getenv("code_root_dir")
+    if code_root_dir == nil or code_root_dir == "" then
+        print("Environment variable 'code_root_dir' is not set")
+        return
+    end
+
+    local command = "!python " .. code_root_dir .. "Code2/Python/my_py/scripts/"
+    --vim.cmd('normal gv')
+    vim.fn.feedkeys(":" .. command)
+    local pos = #command
+    vim.fn.setcmdpos(pos)
+end
+
+vim.api.nvim_create_user_command('RunPythonCommand', PythonCommand, {})
+vim.api.nvim_set_keymap('v', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
 
  -- Setup nvim-cmp.
 local cmp = require'cmp'
@@ -581,7 +599,7 @@ vim.g.python3_host_prog = os.getenv("PYTHON_PATH")
 
 -- GPT binds
 local config = {
-     openai_api_key = os.getenv("OPENAI_API_KEY"), 
+     openai_api_key = os.getenv("OPENAI_API_KEY"),
 }
 
 -- Model can be changed in actions for this plugin
