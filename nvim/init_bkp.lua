@@ -595,6 +595,7 @@ local function PythonCommand()
         return
     end
 
+    code_root_dir = code_root_dir:gsub(" ", '" "')
     local command = "!python " .. code_root_dir .. "Code2/Python/my_py/scripts/"
     --vim.cmd('normal gv')
     vim.fn.feedkeys(":" .. command)
