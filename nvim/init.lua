@@ -373,7 +373,7 @@ map('n', 'Y', 'y$') -- Yank till end of line
 -- map('n', 'F6', ':setlocal spell! spelllang=sv<CR>')
 
 map('n', '<leader>p', 'viw"_dP') -- Replace from void
-map('v', '<leader>p', 'viw"_dP') -- Replace from void
+map('v', '<leader>p', '<Esc>viw"_dP') -- Replace from void
 map('n', '<leader>d', '"_d') -- Delete to void
 map('v', '<leader>d', '"_d') -- Delete to void
 
@@ -393,8 +393,8 @@ map('n', '<M-a>', ':FZF ../<CR>')
 map('n', '<M-A>', ':FZF ~/<CR>')
 map('n', '<M-S>', ':FZF C:/<CR>')
 
--- TODO: leader-f?
 -- Vimgrep and QuickFix Lists
+-- TODO: leader-f?
 map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>11hi')
 map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>9hi') -- Search all
 map('n', '<M-G>', ':vimgrep //g **/.*<C-f><Esc>8hi') -- Search dotfiles
