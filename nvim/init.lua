@@ -393,14 +393,14 @@ map('n', '<leader>5', '"5p')
 map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
 map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
 --map('n', '<M-d>', ':FZF<CR>')
-map('n', '<M-a>', ':FZF ../<CR>')
+map('n', '<M-a>', ':FZF ./<CR>')
 map('n', '<M-A>', ':FZF ~/<CR>')
 map('n', '<M-S>', ':FZF C:/<CR>')
 
 -- Function to start FZF from a given environment variable
 local function FZFStart(env_var)
     local path = os.getenv(env_var) or "~/"
-    path = path:gsub(" ", '" "')
+    path = path:gsub(" ", '\\ ')
     vim.cmd("FZF " .. path)
 end
 
@@ -408,9 +408,8 @@ vim.api.nvim_create_user_command('RunFZFCodeRootDir', function() FZFStart("code_
 vim.api.nvim_set_keymap('n', '<leader>a', '<cmd>RunFZFCodeRootDir<CR>', { noremap = true, silent = true })
 
 vim.api.nvim_create_user_command('RunFZFMyNotesPath', function() FZFStart("my_notes_path") end, {})
-vim.api.nvim_set_keymap('n', '<leader>A', '<cmd>RunFZFMyNotesPath<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>f', '<cmd>RunFZFMyNotesPath<CR>', { noremap = true, silent = true })
 
--- TODO: leader-f?
 -- Vimgrep and QuickFix Lists
 map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>11hi')
 map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>9hi') -- Search all
