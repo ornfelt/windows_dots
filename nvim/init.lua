@@ -399,7 +399,7 @@ map('n', '<M-S>', ':FZF C:/<CR>')
 
 -- Function to start FZF from a given environment variable
 local function FZFStart(env_var)
-    local path = os.getenv(env_var) or "~/"
+    local path = os.getenv(env_var) or "~/Documents/my_notes"
     path = path:gsub(" ", '\\ ')
     vim.cmd("FZF " .. path)
 end
