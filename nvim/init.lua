@@ -427,8 +427,8 @@ map('n', '<M-i>', ':resize -2<CR>')
 map('n', '<M-o>', ':vertical resize +2<CR>')
 map('n', '<M-y>', ':vertical resize -2<CR>')
 map('n', '<M-h>', '<Plug>WinMoveLeft')
-map('n', '<M-J>', '<Plug>WinMoveDown')
-map('n', '<M-K>', '<Plug>WinMoveUp')
+map('n', '<M-j>', '<Plug>WinMoveDown')
+map('n', '<M-k>', '<Plug>WinMoveUp')
 map('n', '<M-l>', '<Plug>WinMoveRight')
 
 -- Moving text and indentation
@@ -498,8 +498,8 @@ map('v', '<leader>%', '/\\%V') -- Search in highlighted text
 map("n", "Q", "<nop>") -- Remove Ex Mode
 vim.keymap.set("n", "<leader>r", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]]) -- Replace word under cursor
 vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux neww tmux-sessionizer<CR>") -- Start tmux-sessionizer
-vim.keymap.set('n', '<leader>do', '<cmd>lua vim.diagnostic.open_float()<CR>', { noremap = true, silent = true })
-vim.keymap.set('n', '<leader>dl', '<cmd>lua vim.diagnostic.setqflist()<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>df', '<cmd>lua vim.diagnostic.open_float()<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>db', '<cmd>lua vim.diagnostic.setqflist()<CR>', { noremap = true, silent = true })
 
 local function PythonCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"
