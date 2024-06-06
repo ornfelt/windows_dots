@@ -134,7 +134,7 @@ end
 -- vim.api.nvim_command('filetype plugin indent on')
 
 o.termguicolors = true
--- o.background = 'dark'
+o.background = 'dark'
 require'colorizer'.setup()
 
 -- Do not save when switching buffers
@@ -196,7 +196,8 @@ o.splitright = true
 -- Preserve view while jumping
 -- o.jumpoptions = 'view'
 
--- When running macros and regexes on a large file, lazy redraw tells neovim/vim not to draw the screen
+-- When running macros and regexes on a large file, lazy redraw tells
+-- neovim/vim not to draw the screen
 -- You can enable this inside vim with :set lazyredraw
 -- o.lazyredraw = true
 
@@ -211,7 +212,7 @@ o.splitright = true
 -- General settings
 vim.opt.wrap = false -- No Wrap lines
 vim.opt.backspace = { 'start', 'eol', 'indent' }
-vim.opt.path:append { '**' } -- Finding files - Search down into subfolders
+vim.opt.path:append { '**' } -- Finding files - search down into subfolders
 vim.opt.wildignore:append { '*/node_modules/*' }
 vim.scriptencoding = 'utf-8'
 vim.opt.encoding = 'utf-8'
@@ -370,11 +371,7 @@ map('n', '<S-Insert>', '<MiddleMouse>')
 map('n', '<leader>b', togglebar) -- Toggle lualine
 map('n', '<M-q>', ':q<CR>') -- Quit
 map('n', '<M-z>', ':noh<CR>')
--- map('n', '<M-x>', ':call CompileRun()<CR>')
 map('n', 'Y', 'y$') -- Yank till end of line
--- map('n', 'F4', ':set cursorline!<CR>')
--- map('n', 'F5', ':setlocal spell! spelllang=en_us<CR>')
--- map('n', 'F6', ':setlocal spell! spelllang=sv<CR>')
 
 map('n', '<leader>p', 'viw"_dP') -- Replace from void
 map('v', '<leader>p', '<Esc>viw"_dP') -- Replace from void
@@ -794,9 +791,10 @@ create_mappings("cs", {
   ["for<Tab>"] = 'for(int i = 0; i < val; i++){<Enter><Enter>}<Esc>?val<Enter>ciw'
 })
 
--- Python mappings
---create_mappings("py,python", {
---})
+create_mappings("py,python", {
+  ["for<Tab>"] = 'for i in range():<Esc>hi',
+  ["fore<Tab>"] = 'for i in :<Esc>i'
+})
 
 -- SQL mappings
 create_mappings("sql", {
