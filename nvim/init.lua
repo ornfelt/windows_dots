@@ -210,44 +210,44 @@ o.splitright = true
 -- opt.mouse = "a"
 
 -- General settings
-vim.opt.wrap = false -- No Wrap lines
-vim.opt.backspace = { 'start', 'eol', 'indent' }
-vim.opt.path:append { '**' } -- Finding files - search down into subfolders
-vim.opt.wildignore:append { '*/node_modules/*' }
+opt.wrap = false -- No Wrap lines
+opt.backspace = { 'start', 'eol', 'indent' }
+opt.path:append { '**' } -- Finding files - search down into subfolders
+opt.wildignore:append { '*/node_modules/*' }
 vim.scriptencoding = 'utf-8'
-vim.opt.encoding = 'utf-8'
-vim.opt.fileencoding = 'utf-8'
+opt.encoding = 'utf-8'
+opt.fileencoding = 'utf-8'
 -- vim.cmd("autocmd!")
--- vim.opt.cmdheight = 1
+-- opt.cmdheight = 1
 
 -- Setting runtimepath
-vim.opt.runtimepath:append('~/.vim')
-vim.opt.runtimepath:append('~/.fzf')
+opt.runtimepath:append('~/.vim')
+opt.runtimepath:append('~/.fzf')
 
 -- UI tweaks
-vim.opt.errorbells = false
-vim.opt.visualbell = false
---vim.opt.t_vb = ''
+opt.errorbells = false
+opt.visualbell = false
+--opt.t_vb = ''
 vim.cmd('set t_vb=')
 
 -- File handling
-vim.opt.autoread = true
-vim.opt.autowrite = true
+opt.autoread = true
+opt.autowrite = true
 
 -- Command-line completion adjustments
-vim.opt.wildmenu = true
+opt.wildmenu = true
 
 -- Editor behavior
---vim.opt.nocompatible = true
+--opt.nocompatible = true
 vim.cmd('set nocompatible')
-vim.opt.shiftround = true
-vim.opt.hlsearch = true
-vim.opt.autochdir = true
+opt.shiftround = true
+opt.hlsearch = true
+opt.autochdir = true
 
 -- Completion settings
-vim.opt.complete:append('kspell')
-vim.opt.shortmess:append('c')
-vim.opt.completeopt:append({'longest', 'menuone', 'preview'})
+opt.complete:append('kspell')
+opt.shortmess:append('c')
+opt.completeopt:append({'longest', 'menuone', 'preview'})
 
 -- Automatic command to adjust format options
 vim.cmd [[
@@ -767,9 +767,9 @@ create_hellow_mapping("vb")
 create_hellow_mapping("zig")
 
 -- Function keys mappings
-vim.api.nvim_set_keymap('n', '<F4>', '<Esc>:set cursorline!<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F5>', '<Esc>:setlocal spell! spelllang=en_us<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F6>', '<Esc>:setlocal spell! spelllang=sv<CR>', { noremap = true, silent = true })
+map('n', '<F4>', '<Esc>:set cursorline!<CR>')
+map('n', '<F5>', '<Esc>:setlocal spell! spelllang=en_us<CR>')
+map('n', '<F6>', '<Esc>:setlocal spell! spelllang=sv<CR>')
 
 -- Helper function to create key mappings for given filetypes
 local function create_mappings(ft, mappings)
