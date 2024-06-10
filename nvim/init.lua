@@ -65,13 +65,24 @@ local lsp_attach_config = {
     on_attach = on_attach,
 }
 
+local lua_ls_config = {
+    on_attach = on_attach,
+    settings = {
+        Lua = {
+            diagnostics = {
+                globals = { 'vim', 'use' }
+            },
+        },
+    }
+}
+
 setup_lsp_if_available('pyright', lsp_attach_config)
 setup_lsp_if_available('clangd', lsp_attach_config)
 setup_lsp_if_available('gopls', lsp_attach_config)
 setup_lsp_if_available('phpactor', lsp_attach_config)
 setup_lsp_if_available('tsserver', lsp_attach_config)
 -- lua_ls isn't the executable, lua-language-server is
-setup_lsp_if_available('lua_ls', lsp_attach_config, 'lua-language-server')
+setup_lsp_if_available('lua_ls', lua_ls_config, 'lua-language-server')
 -- rust_analyzer isn't the executable, rust-analyzer is
 setup_lsp_if_available('rust_analyzer', lsp_attach_config, 'rust-analyzer')
 setup_lsp_if_available('fsautocomplete', lsp_attach_config)
@@ -396,7 +407,8 @@ map('n', '<M-S>', ':FZF C:/<CR>')
 
 -- Function to start FZF from a given environment variable
 local function FZFStart(env_var)
-    local path = os.getenv(env_var) or "~/Documents/my_notes"
+    local default_path = (env_var == "my_notes_path") and "~/Documents/my_notes" or "~"
+    local path = os.getenv(env_var) or default_path
     path = path:gsub(" ", '\\ ')
     vim.cmd("FZF " .. path)
 end
@@ -723,6 +735,16 @@ local function create_hellow_mapping(ft, template_file)
   })
 end
 
+vim.keymap.set("i", "<m-,>", function()
+    print("hi")
+    vim.ui.input({ prompt = "😄Calculator: " }, function(input)
+        local calc = load("return " .. (input or ""))()
+        if (calc) then
+            vim.api.nvim_feedkeys(tostring(calc), "i", true)
+        end
+    end)
+end)
+
 -- Automatically load the session when entering vim
 -- vim.api.nvim_create_autocmd("VimEnter", {
 --   pattern = "*",
@@ -847,7 +869,8 @@ function compile_run()
             vim.cmd('!gcc -Wall % -o %<')
             vim.cmd('!%:r.exe')
         else
-            vim.cmd('!gcc % && time ./a.out')
+            vim.cmd('!gcc -Wall -lm % -o %<')
+            vim.cmd('!time ./%:r')
         end
     elseif filetype == 'cpp' then
         if is_windows then
@@ -867,36 +890,65 @@ function compile_run()
     elseif filetype == 'sh' then
         vim.cmd('!time bash %')
     elseif filetype == 'python' then
-        if is_windows then
-            vim.cmd('!python %')
-        else
-            vim.cmd('!time python3 %')
-        end
+        vim.cmd(is_windows and '!python %' or '!time python %')
     elseif filetype == 'html' then
         vim.cmd('!firefox % &')
     elseif filetype == 'php' then
-        vim.cmd('!php %')
-    elseif filetype == 'javascript' or filetype == 'jsx' or filetype == 'typescript' then
-        if is_windows then
-            vim.cmd('!node %')
-        else
-            vim.cmd('!time node %')
-        end
+        vim.cmd(is_windows and '!php %' or '!time php %')
+    elseif filetype == 'javascript' or filetype == 'jsx' then
+        vim.cmd(is_windows and '!node %' or '!time node %')
+    elseif filetype == 'typescript' or filetype == 'tsx' then
+        local ts_file = vim.fn.expand('%:p')
+        local js_file = ts_file:gsub('%.ts$', '.js')
+        --vim.cmd(is_windows and '!tsc %; node ' .. js_file or '!tsc % && time node ' .. js_file)
+        vim.cmd(is_windows and '!tsc; node ' .. js_file or '!tsc && time node ' .. js_file)
     elseif filetype == 'go' then
         vim.cmd('!go build %<')
-        vim.cmd('!time go run %')
+        vim.cmd(is_windows and '!go run %' or '!time go run %')
     elseif filetype == 'rust' then
         vim.cmd('!cargo build && cargo run')
     elseif filetype == 'lua' then
-        vim.cmd('!time lua %')
+        vim.cmd(is_windows and '!lua %' or '!time lua %')
     elseif filetype == 'mkd' or filetype == 'mk' then
         vim.cmd('!grip')
     elseif filetype == 'cs' or filetype == 'fs' or filetype == 'fsx' or filetype == 'fsharp' or filetype == 'vb' then
         vim.cmd('!dotnet build && dotnet run')
+    elseif filetype == 'tex' then
+        --vim.cmd('!pdflatex % && zathura ' .. vim.fn.expand('%:p:r') .. '.pdf &')
+        if not is_windows then
+            vim.cmd('!pdflatex %')
+            local pdf_path = vim.fn.expand('%:p:r') .. '.pdf'
+            local command = 'ps aux | grep "zathura .*' .. pdf_path .. '" | grep -v grep'
+            --print("command: ", command)
+            local handle = io.popen(command)
+            local result = handle:read("*a")
+            handle:close()
+            --print("ps aux output: ", result)
+
+            if result == "" then
+                vim.cmd('!zathura ' .. pdf_path .. ' &')
+            end
+        end
+
+    else
+        print("Compilation of " .. filetype .. " extensions not configured..")
     end
 end
 
 vim.api.nvim_set_keymap('n', '<M-x>', '<Cmd>lua compile_run()<CR>', { noremap = true, silent = true })
+
+local function run_pdflatex()
+    local file = vim.fn.expand('%:p')
+    vim.fn.jobstart({'pdflatex', file})
+end
+
+-- Set up autocommand to run pdflatex on write for .tex files
+if vim.fn.has('unix') == 1 then
+    vim.api.nvim_create_autocmd('BufWritePost', {
+    pattern = '*.tex',
+    callback = run_pdflatex,
+    })
+end
 
 -- useINS
 --
