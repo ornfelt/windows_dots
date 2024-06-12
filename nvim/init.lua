@@ -160,7 +160,7 @@ o.scrolloff = 8
 
 -- Editing settings
 o.number = true
-o.relativenumber = true
+--o.relativenumber = true
 -- o.numberwidth = 2
 -- o.signcolumn = 'yes'
 o.cursorline = true
