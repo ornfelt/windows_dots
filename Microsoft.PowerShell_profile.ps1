@@ -36,6 +36,13 @@ function RunChatGPT {
 
 Set-Alias -Name chatgpt -Value RunChatGPT
 
+$nvimPath = (Get-Command nvim).Source
+
+if ($nvimPath) {
+    Set-Alias -Name vim -Value $nvimPath
+}
+
+
 # Load all scripts
 #Get-ChildItem (Join-Path ('$PSScriptRoot') \my_scripts\) | Where `
 #    { $_.Name -notlike '__*' -and $_.Name -like '*.ps1'} | ForEach `
