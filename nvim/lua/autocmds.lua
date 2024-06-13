@@ -83,9 +83,10 @@ end
 
 -- Set up autocommand to run pdflatex on write for .tex files
 --if vim.fn.has('unix') == 1 then
-vim.api.nvim_create_autocmd('BufWritePost', {
-pattern = '*.tex',
-callback = run_pdflatex,
-})
---end
+if vim.fn.executable('pdflatex') == 1 then
+    vim.api.nvim_create_autocmd('BufWritePost', {
+    pattern = '*.tex',
+    callback = run_pdflatex,
+    })
+end
 
