@@ -8,7 +8,7 @@ set clipboard=unnamed
 " or: ctrl+, -> search vim -> Enable Vim: Use System Clipboard
 vnoremap <C-c> y
 "Use 'set rnu' only for vscode...
-set nu rnu
+"set nu rnu
 vnoremap < <gv
 vnoremap > >gv
 noremap Y y$
@@ -20,7 +20,7 @@ nnoremap <leader>d "_d
 " VS keybinds (use vim for all, then set these manually):
 " m-x: Debug.Start
 " m-d: Edit.GoToDefinition
-" m-c-d: Edit.GoToImplementation
+" m-s-d: Edit.GoToImplementation
 " m-r: Edit.FinadAllReferences
 " m-s-r: Refactor.Rename
 " m-a: Edit.GoToFile

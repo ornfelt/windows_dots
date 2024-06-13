@@ -415,8 +415,8 @@ function compile_run()
         vim.cmd('!dotnet build && dotnet run')
     elseif filetype == 'tex' then
         --vim.cmd('!pdflatex % && zathura ' .. vim.fn.expand('%:p:r') .. '.pdf &')
+        vim.cmd('!pdflatex %')
         if not is_windows then
-            vim.cmd('!pdflatex %')
             local pdf_path = vim.fn.expand('%:p:r') .. '.pdf'
             local command = 'ps aux | grep "zathura .*' .. pdf_path .. '" | grep -v grep'
             --print("command: ", command)
