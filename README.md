@@ -1,7 +1,5 @@
 # Dotfiles for Windows
 
-Screenshots:
-
 ## Current theme
 
 ![custom_cobalt2](Screenshots/custom_cobalt2.jpg?raw=true "current")
