@@ -88,3 +88,26 @@ if ($fontReplaced) {
 
 # 'oh-my-posh font install' to install JetBrains font...
 
+# ------------------------------------------------------------
+# Move AutoHotKey script
+
+$autohotkeyPath = "C:\Program Files\AutoHotkey"
+$v2Path = Join-Path $autohotkeyPath "v2"
+# shell:startup
+$startupPath = [System.IO.Path]::Combine($env:APPDATA, "Microsoft\Windows\Start Menu\Programs\Startup")
+
+# Check if the AutoHotkey directory exists
+if (Test-Path $autohotkeyPath) {
+    # Check if the v2 directory exists
+    if (Test-Path $v2Path) {
+        # Copy caps_v2.ahk to the startup folder
+        Copy-Item -Path "caps_v2.ahk" -Destination $startupPath -Force
+        Write-Output "`ncaps_v2.ahk has been copied to the startup folder."
+    } else {
+        # Copy caps.ahk to the startup folder
+        Copy-Item -Path "caps.ahk" -Destination $startupPath -Force
+        Write-Output "`ncaps.ahk has been copied to the startup folder."
+    }
+} else {
+    Write-Output "`nAutoHotkey is not installed."
+}
