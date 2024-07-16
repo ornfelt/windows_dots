@@ -77,6 +77,8 @@ setup_lsp_if_available('lua_ls', lua_ls_config, 'lua-language-server')
 -- rust_analyzer isn't the executable, rust-analyzer is
 setup_lsp_if_available('rust_analyzer', lsp_attach_config, 'rust-analyzer')
 setup_lsp_if_available('fsautocomplete', lsp_attach_config)
+setup_lsp_if_available('jdtls', lsp_attach_config)
+setup_lsp_if_available('bashls', lsp_attach_config, 'bash-language-server')
 
 local omnisharp_path = os.getenv('OMNISHARP_PATH')
 if omnisharp_path then
