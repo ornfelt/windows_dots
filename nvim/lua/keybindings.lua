@@ -110,6 +110,7 @@ map('n', '<M-k>', '<Plug>WinMoveUp')
 map('n', '<M-l>', '<Plug>WinMoveRight')
 map('n', '<C-d>', '<C-d>zz')
 map('n', '<C-u>', '<C-u>zz')
+map('n', '<leader>l', ':Tabmerge right<CR>')
 
 -- Moving text
 map('x', 'J', ":move '>+1<CR>gv=gv")
