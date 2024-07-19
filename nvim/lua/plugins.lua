@@ -51,6 +51,16 @@ return require('packer').startup(function()
 
   -- use("simrat39/rust-tools.nvim")
 
+  use {
+      'nvim-treesitter/nvim-treesitter',
+      build = ':TSUpdate'
+  }
+
+  use {
+    'nvim-telescope/telescope.nvim',
+    requires = { {'nvim-lua/plenary.nvim'} }
+  }
+
   use({
       "ornfelt/ChatGPT.nvim",
       --config = function()
@@ -58,9 +68,9 @@ return require('packer').startup(function()
       --end,
       requires = {
           "MunifTanjim/nui.nvim",
-          "nvim-lua/plenary.nvim",
+          --"nvim-lua/plenary.nvim",
           "folke/trouble.nvim",
-          "nvim-telescope/telescope.nvim"
+          --"nvim-telescope/telescope.nvim"
       }
   })
 
