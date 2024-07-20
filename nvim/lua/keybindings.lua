@@ -440,3 +440,25 @@ end
 vim.api.nvim_set_keymap('n', '<M-x>', '<Cmd>lua compile_run()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<M-S-X>', '<Cmd>!chmod +x %<CR>', { noremap = true, silent = true })
 
+-- " Execute line under the cursor
+-- nnoremap <leader>el yy:@"<CR>
+--vim.api.nvim_set_keymap('n', '<leader>el', 'yy:@"<CR>', { noremap = true, silent = true })
+-- 
+-- Function to execute command under cursor or highlighted text
+function execute_command()
+  local mode = vim.fn.mode()
+  local command
+
+  if mode == 'v' or mode == 'V' then
+    vim.cmd('normal! gv"xy')
+    command = vim.fn.getreg('x')
+  else
+    command = vim.fn.getline('.')
+  end
+
+  vim.cmd(command)
+end
+
+vim.api.nvim_set_keymap('n', '<leader>el', ':lua execute_command()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<leader>el', ':lua execute_command()<CR>', { noremap = true, silent = true })
+

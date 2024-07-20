@@ -6,6 +6,26 @@ $nvimSourceDir = Join-Path -Path $dotfilesDir -ChildPath "nvim"
 $localAppDataDir = [System.Environment]::GetFolderPath('LocalApplicationData')
 $nvimTargetDir = Join-Path -Path $localAppDataDir -ChildPath "nvim"
 
+# Check if Git is installed
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Output "Git is not installed. Please install Git and try again."
+    exit 1
+}
+
+# Clone the repository if dotfilesDir doesn't exist
+if (-Not (Test-Path -Path $dotfilesDir)) {
+    Write-Output "dotfiles directory does not exist. Cloning repository..."
+    $repoUrl = "https://github.com/archornf/dotfiles"
+    $cloneTargetDir = Join-Path -Path $codeRootDir -ChildPath "Code2/General"
+    git clone $repoUrl $cloneTargetDir
+}
+
+# Perform a git pull in the repo
+Write-Output "Updating dotfiles repository..."
+Push-Location -Path $dotfilesDir
+git pull
+Pop-Location
+
 if (Test-Path -Path $dotfilesDir) {
     # Create the target nvim directory if it doesn't exist
     if (-Not (Test-Path -Path $nvimTargetDir)) {
