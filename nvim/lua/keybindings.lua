@@ -69,8 +69,8 @@ map('n', '<leader>5', '"5p')
 -- map('n', '<M-e>', ':NERDTreeToggle %:p<CR>')
 map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
 map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
---map('n', '<M-d>', ':FZF<CR>')
-map('n', '<M-a>', ':FZF ./<CR>')
+--map('n', '<M-a>', ':FZF ./<CR>')
+map('n', '<M-W>', ':FZF ./<CR>')
 map('n', '<M-A>', ':FZF ~/<CR>')
 map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
 
@@ -443,7 +443,7 @@ vim.api.nvim_set_keymap('n', '<M-S-X>', '<Cmd>!chmod +x %<CR>', { noremap = true
 -- " Execute line under the cursor
 -- nnoremap <leader>el yy:@"<CR>
 --vim.api.nvim_set_keymap('n', '<leader>el', 'yy:@"<CR>', { noremap = true, silent = true })
--- 
+--
 -- Function to execute command under cursor or highlighted text
 function execute_command()
   local mode = vim.fn.mode()
