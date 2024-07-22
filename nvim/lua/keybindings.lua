@@ -441,8 +441,8 @@ vim.api.nvim_set_keymap('n', '<M-x>', '<Cmd>lua compile_run()<CR>', { noremap = 
 vim.api.nvim_set_keymap('n', '<M-S-X>', '<Cmd>!chmod +x %<CR>', { noremap = true, silent = true })
 
 -- " Execute line under the cursor
--- nnoremap <leader>el yy:@"<CR>
---vim.api.nvim_set_keymap('n', '<leader>el', 'yy:@"<CR>', { noremap = true, silent = true })
+-- nnoremap <leader>w yy:@"<CR>
+--vim.api.nvim_set_keymap('n', '<leader>w', 'yy:@"<CR>', { noremap = true, silent = true })
 --
 -- Function to execute command under cursor or highlighted text
 function execute_command()
@@ -459,6 +459,6 @@ function execute_command()
   vim.cmd(command)
 end
 
-vim.api.nvim_set_keymap('n', '<leader>el', ':lua execute_command()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('v', '<leader>el', ':lua execute_command()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>w', ':lua execute_command()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<leader>w', ':lua execute_command()<CR>', { noremap = true, silent = true })
 
