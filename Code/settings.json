@@ -1,7 +1,8 @@
 {
     "workbench.colorTheme": "Default Dark Modern",
     "vim.vimrc.enable": true,
-    "editor.lineNumbers": "relative",
+    "editor.lineNumbers": "on",
     "vim.useSystemClipboard": true,
-    "settingsSync.ignoredExtensions": []
+    "settingsSync.ignoredExtensions": [],
+    "explorer.confirmDelete": false
 }
