@@ -183,6 +183,15 @@ vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux neww tmux-sessionizer<CR>") 
 vim.keymap.set('n', '<leader>df', '<cmd>lua vim.diagnostic.open_float()<CR>', { noremap = true, silent = true })
 vim.keymap.set('n', '<leader>db', '<cmd>lua vim.diagnostic.setqflist()<CR>', { noremap = true, silent = true })
 
+function ReplaceQuotes()
+  vim.cmd([[
+    %s/[‘’]/'/g
+    %s/[“”]/"/g
+  ]])
+end
+
+vim.api.nvim_set_keymap('n', '<leader>wr', ':lua ReplaceQuotes()<CR>', { noremap = true, silent = true })
+
 local function PythonCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "')

@@ -26,6 +26,12 @@ Copy-Item -Path ".\.vimrc" -Destination $vimrcDest -Force
 
 Write-Host "`n'.vimrc' file copied successfully to $vimrcDest"
 
+# TODO: also copy vscode settings?
+
+# Windows %APPDATA%\Code\User\settings.json.
+# macOS $HOME/Library/Application\ Support/Code/User/settings.json.
+# Linux $HOME/.config/Code/User/settings.json.
+
 # ------------------------------------------------------------
 # Replace font name in alacritty.toml and copy alacritty to %appdata
 function Replace-FontName {
