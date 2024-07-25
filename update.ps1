@@ -26,11 +26,23 @@ Copy-Item -Path ".\.vimrc" -Destination $vimrcDest -Force
 
 Write-Host "`n'.vimrc' file copied successfully to $vimrcDest"
 
-# TODO: also copy vscode settings?
+# ------------------------------------------------------------
+# Copy vscode files
 
-# Windows %APPDATA%\Code\User\settings.json.
-# macOS $HOME/Library/Application\ Support/Code/User/settings.json.
-# Linux $HOME/.config/Code/User/settings.json.
+$currentDirectory = Get-Location
+$keybindingsFile = Join-Path -Path $currentDirectory -ChildPath "Code\keybindings.json"
+$settingsFile = Join-Path -Path $currentDirectory -ChildPath "Code\settings.json"
+
+$destinationDirectory = [System.IO.Path]::Combine($env:APPDATA, "Code\User")
+
+if (-not (Test-Path -Path $destinationDirectory)) {
+    New-Item -ItemType Directory -Path $destinationDirectory -Force
+}
+
+Copy-Item -Path $keybindingsFile -Destination $destinationDirectory -Force
+Copy-Item -Path $settingsFile -Destination $destinationDirectory -Force
+
+Write-Host "`n'Copied vs code files (settings.json and keybindings.json) to $destinationDirectory"
 
 # ------------------------------------------------------------
 # Replace font name in alacritty.toml and copy alacritty to %appdata
