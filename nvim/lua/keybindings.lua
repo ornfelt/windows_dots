@@ -65,16 +65,28 @@ map('n', '<leader>3', '"3p')
 map('n', '<leader>4', '"4p')
 map('n', '<leader>5', '"5p')
 
+-- NERDTree
 -- map('n', '<M-w>', ':NERDTreeToggle ~/<CR>')
 -- map('n', '<M-e>', ':NERDTreeToggle %:p<CR>')
 map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
 map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
---map('n', '<M-a>', ':FZF ./<CR>')
-map('n', '<M-W>', ':FZF ./<CR>')
-map('n', '<M-A>', ':FZF ~/<CR>')
-map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
 
--- Function to start FZF from a given environment variable
+-- FZF
+----map('n', '<M-a>', ':FZF ./<CR>')
+--map('n', '<M-W>', ':FZF ./<CR>')
+--map('n', '<M-A>', ':FZF ~/<CR>')
+--map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
+
+require'fzf-lua'.setup{}
+local opts = { noremap = true, silent = true }
+vim.api.nvim_set_keymap('n', '<M-a>', ":lua require('fzf-lua').git_files()<CR>", opts)
+vim.api.nvim_set_keymap('n', '<M-A>', ":lua require('fzf-lua').files()<CR>", opts)
+--vim.api.nvim_set_keymap('n', 'M-W', ":lua require('fzf-lua').files({ cwd = os.getenv('HOME') })<CR>", opts)
+map('n', '<M-W>', ":lua require('fzf-lua').files({ cwd = '~/' })<CR>")
+local root_dir = vim.fn.has('unix') == 1 and '/' or 'C:/'
+map('n', '<M-S>', ":lua require('fzf-lua').files({ cwd = '" .. root_dir .. "' })<CR>")
+
+-- Start FZF from a given environment variable
 local function FZFStart(env_var)
     local default_path = (env_var == "my_notes_path") and "~/Documents/my_notes" or "~"
     local path = os.getenv(env_var) or default_path
