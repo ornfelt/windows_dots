@@ -77,7 +77,7 @@ map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
 --map('n', '<M-A>', ':FZF ~/<CR>')
 --map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
 
-require'fzf-lua'.setup{}
+local fzf_lua = require('fzf-lua')
 local opts = { noremap = true, silent = true }
 vim.api.nvim_set_keymap('n', '<M-a>', ":lua require('fzf-lua').git_files()<CR>", opts)
 vim.api.nvim_set_keymap('n', '<M-A>', ":lua require('fzf-lua').files()<CR>", opts)
@@ -91,7 +91,8 @@ local function FZFStart(env_var)
     local default_path = (env_var == "my_notes_path") and "~/Documents/my_notes" or "~"
     local path = os.getenv(env_var) or default_path
     path = path:gsub(" ", '\\ ')
-    vim.cmd("FZF " .. path)
+    --vim.cmd("FZF " .. path)
+    fzf_lua.files({ cwd = path })
 end
 
 vim.api.nvim_create_user_command('RunFZFCodeRootDir', function() FZFStart("code_root_dir") end, {})

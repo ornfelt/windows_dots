@@ -79,6 +79,8 @@ setup_lsp_if_available('rust_analyzer', lsp_attach_config, 'rust-analyzer')
 setup_lsp_if_available('fsautocomplete', lsp_attach_config)
 setup_lsp_if_available('jdtls', lsp_attach_config)
 setup_lsp_if_available('bashls', lsp_attach_config, 'bash-language-server')
+setup_lsp_if_available('yamlls', lsp_attach_config, 'yaml-language-server')
+setup_lsp_if_available('sqls', lsp_attach_config)
 
 local omnisharp_path = os.getenv('OMNISHARP_PATH')
 if omnisharp_path then
