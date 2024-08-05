@@ -92,4 +92,7 @@ return require('packer').startup(function()
   --        shortcuts might be setup here (see Usage > Shortcuts in Readme)
   --    end,
   --})
+
+  use 'nanotee/sqls.nvim'
+
 end)
