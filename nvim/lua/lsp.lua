@@ -1,4 +1,4 @@
-lspconfig = require'lspconfig'
+local lspconfig = require'lspconfig'
 
 local function go_to_definition_twice()
     vim.lsp.buf.definition()
