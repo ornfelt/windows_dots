@@ -26,11 +26,11 @@ foreground = "#ebdbb2"
 #size = 7.0
 
 [font.bold]
-family = "JetBrainsMono NF""
+family = "JetBrainsMono NF"
 style = "Bold"
 
 [font.normal]
-family = "JetBrainsMono NF""
+family = "JetBrainsMono NF"
 style = "Regular"
 
 [[keyboard.bindings]]
