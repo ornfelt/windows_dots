@@ -94,5 +94,8 @@ return require('packer').startup(function()
   --})
 
   use 'nanotee/sqls.nvim'
+  use 'preservim/nerdcommenter'
+  --use 'alexghergh/nvim-tmux-navigation'
+  --use 'mhinz/vim-startify'
 
 end)

@@ -80,6 +80,12 @@ setup_lsp_if_available('fsautocomplete', lsp_attach_config)
 setup_lsp_if_available('jdtls', lsp_attach_config)
 setup_lsp_if_available('bashls', lsp_attach_config, 'bash-language-server')
 
+--lspconfig.phpactor.setup{
+  --cmd = { "ssh", "user@remotehost", "phpactor", "language-server" },
+  --cmd = { "wsl", "-d", "arch", "alias C:='/mnt/c'", "phpactor", "language-server" },
+  --on_attach = on_attach,
+--}
+
 if vim.fn.executable("sqls") == 1 then
     lspconfig.sqls.setup{
         on_attach = function(client, bufnr)

@@ -26,11 +26,11 @@ foreground = "#ebdbb2"
 #size = 7.0
 
 [font.bold]
-family = "JetBrainsMono NF"
+family = "JetBrainsMono NF""
 style = "Bold"
 
 [font.normal]
-family = "JetBrainsMono NF"
+family = "JetBrainsMono NF""
 style = "Regular"
 
 [[keyboard.bindings]]
@@ -58,6 +58,11 @@ key = "K"
 mods = "Alt|Shift"
 action = "ScrollPageUp"
 
+[[keyboard.bindings]]
+key = "Enter"
+mods = "Alt"
+action = "ReceiveChar"
+
 #[[key_bindings]]
 #action = "Command"
 #key = "A"
@@ -76,8 +81,9 @@ action = "ScrollPageUp"
 #mods = "Alt|Control"
 #command = "/path/to/extract_links.sh"
 
-#[window]
-#opacity = 0.8
+[window.dimensions]
+columns = 200
+lines = 45
 
 #[window.padding]
 #x = 13

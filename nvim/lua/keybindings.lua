@@ -71,6 +71,10 @@ map('n', '<leader>5', '"5p')
 map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
 map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
 
+-- NERDCommenter
+map('n', '<C-k>', ':call NERDComment(0, "toggle")<CR>')
+map('v', '<C-k>', '<Plug>NERDCommenterToggle')
+
 -- FZF
 ----map('n', '<M-a>', ':FZF ./<CR>')
 --map('n', '<M-W>', ':FZF ./<CR>')
@@ -143,9 +147,11 @@ map('v', '>', '>gv')
 map('n', '<M-t>', ':tabe<CR>')
 map('n', '<M-s>', ':split<CR>')
 map('n', '<M-Enter>', ':vsp<CR>')
-if vim.fn.has('win32') == 1 then
-    map('n', '<M-Enter>', ':10 sp :let $VIM_DIR=expand("%:p:h")<CR>:terminal<CR>cd $VIM_DIR<CR>')
-end
+
+--if vim.fn.has('win32') == 1 and vim.fn.exists('g:GuiLoaded') == 1 then
+--if vim.fn.has('win32') == 1 and vim.g.neovide then
+    --map('n', '<M-Enter>', ':10 sp :let $VIM_DIR=expand("%:p:h")<CR>:terminal<CR>cd $VIM_DIR<CR>')
+--end
 
 map('n', '<M-<>', ':vsp<CR>')
 -- Go to tab by number
