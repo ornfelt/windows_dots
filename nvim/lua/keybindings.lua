@@ -72,7 +72,7 @@ map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
 map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
 
 -- NERDCommenter
-map('n', '<C-k>', ':call NERDComment(0, "toggle")<CR>')
+map('n', '<C-k>', ':call nerdcommenter#Comment(0, "toggle")<CR>')
 map('v', '<C-k>', '<Plug>NERDCommenterToggle')
 
 -- FZF
