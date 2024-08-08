@@ -69,7 +69,14 @@ map('n', '<leader>5', '"5p')
 -- map('n', '<M-w>', ':NERDTreeToggle ~/<CR>')
 -- map('n', '<M-e>', ':NERDTreeToggle %:p<CR>')
 map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
-map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
+--map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
+
+function toggle_nerdtree()
+  local filepath = (vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p'))
+  vim.cmd('silent! NERDTreeToggle ' .. filepath)
+end
+
+map('n', '<M-e>', ':lua toggle_nerdtree()<CR>')
 
 -- NERDCommenter
 map('n', '<C-k>', ':call nerdcommenter#Comment(0, "toggle")<CR>')
@@ -129,6 +136,12 @@ map('n', '<M-l>', '<Plug>WinMoveRight')
 map('n', '<C-d>', '<C-d>zz')
 map('n', '<C-u>', '<C-u>zz')
 map('n', '<leader>l', ':Tabmerge right<CR>')
+-- Navigate between splits from terminal
+map('t', '<M-h>', [[<C-\><C-n><C-w>h]])
+map('t', '<M-j>', [[<C-\><C-n><C-w>j]])
+map('t', '<M-k>', [[<C-\><C-n><C-w>k]])
+map('t', '<M-l>', [[<C-\><C-n><C-w>l]])
+map('t', '<M-q>', [[<C-\><C-n>:q<CR>]])
 
 -- Moving text
 map('x', 'J', ":move '>+1<CR>gv=gv")
@@ -146,14 +159,13 @@ map('v', '>', '>gv')
 -- Tab keybinds
 map('n', '<M-t>', ':tabe<CR>')
 map('n', '<M-s>', ':split<CR>')
-map('n', '<M-Enter>', ':vsp<CR>')
-
+map('n', '<M-Enter>', ':vsp | terminal<CR>')
+map('n', '<M-<>', ':split | terminal<CR>')
 --if vim.fn.has('win32') == 1 and vim.fn.exists('g:GuiLoaded') == 1 then
 --if vim.fn.has('win32') == 1 and vim.g.neovide then
     --map('n', '<M-Enter>', ':10 sp :let $VIM_DIR=expand("%:p:h")<CR>:terminal<CR>cd $VIM_DIR<CR>')
 --end
 
-map('n', '<M-<>', ':vsp<CR>')
 -- Go to tab by number
 map('n', '<M-1>', '1gt')
 map('n', '<M-2>', '2gt')
@@ -490,4 +502,8 @@ end
 
 vim.api.nvim_set_keymap('n', '<leader>w', ':lua execute_command()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('v', '<leader>w', ':lua execute_command()<CR>', { noremap = true, silent = true })
+
+if require("actions-preview") then
+  vim.keymap.set({ "v", "n" }, "<leader>ca", require("actions-preview").code_actions)
+end
 

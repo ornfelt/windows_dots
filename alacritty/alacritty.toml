@@ -81,9 +81,20 @@ action = "ReceiveChar"
 #mods = "Alt|Control"
 #command = "/path/to/extract_links.sh"
 
-[window.dimensions]
-columns = 200
-lines = 45
+[[keyboard.bindings]]
+action = "ToggleMaximized"
+#action = "ToggleFullscreen"
+key = "F"
+mods = "Alt|Shift"
+
+[window]
+#dimensions = { columns = 160, lines = 40 }
+#position = "None"
+position = { x = 50, y = 65 }
+#decorations = "Full"
+decorations = "None"
+startup_mode =  "Maximized"
+#startup_mode =  "Fullscreen"
 
 #[window.padding]
 #x = 13

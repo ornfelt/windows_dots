@@ -66,13 +66,56 @@ function Replace-FontName {
 # Check if fonts directory contains JetBrainsMonoNerdFont* files
 $fontsDir = "C:\Windows\Fonts"
 $nerdFonts = Get-ChildItem -Path $fontsDir -Filter "JetBrainsMonoNerdFont*"
+$nerdFontsAlt = Get-ChildItem -Path $fontsDir -Filter "JetBrainsMono Nerd*"
+
+
+$fontPattern = "JetBrainsMono Nerd Font"
+
+function Check-Font {
+    param (
+        [string]$path
+    )
+
+    try {
+        $installedFonts = Get-ItemProperty -Path $path -ErrorAction Stop |
+            Select-Object -Property PSChildName
+
+        $fontInstalled = $installedFonts.PSChildName -like "*$fontPattern*"
+        
+        return $fontInstalled -ne $null
+    } catch {
+        Write-Warning "Failed to read from $path"
+        return $false
+    }
+}
+
+$fontPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts",
+    "HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+)
+
+$font_found = $false
+
+foreach ($path in $fontPaths) {
+    if (Check-Font -path $path) {
+        $font_found = $true
+		Write-Output "'$fontPattern' found in $path."
+        break
+    }
+}
+
+if ($font_found) {
+    Write-Output "The font '$fontPattern' is installed."
+} else {
+    Write-Output "The font '$fontPattern' is not installed."
+}
 
 $fontReplaced = $false
 $alacrittyConfigFile = ".\alacritty\alacritty.toml"
 $oldFontName = "JetBrainsMono NF"
 $newFontName = "JetBrainsMono Nerd Font" # With spaces
 
-if ($nerdFonts.Count -gt 0) {
+if ($nerdFonts.Count -gt 0 -or $nerdFontsAlt.Count -gt 0 -or $font_found) {
     if (Test-Path $alacrittyConfigFile) {
         Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
         Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile"
@@ -129,3 +172,4 @@ if (Test-Path $autohotkeyPath) {
 } else {
     Write-Output "`nAutoHotkey is not installed."
 }
+

@@ -93,6 +93,12 @@ return require('packer').startup(function()
   --    end,
   --})
 
+  use {
+    "aznhe21/actions-preview.nvim",
+    config = function()
+      require("actions-preview").setup()
+    end,
+  }
   use 'nanotee/sqls.nvim'
   use 'preservim/nerdcommenter'
   --use 'alexghergh/nvim-tmux-navigation'
