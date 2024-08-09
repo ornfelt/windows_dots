@@ -159,8 +159,8 @@ map('v', '>', '>gv')
 -- Tab keybinds
 map('n', '<M-t>', ':tabe<CR>')
 map('n', '<M-s>', ':split<CR>')
-map('n', '<M-Enter>', ':vsp | terminal<CR>')
-map('n', '<M-<>', ':split | terminal<CR>')
+map('n', '<M-Enter>', ':vsp | terminal ' .. (vim.loop.os_uname().sysname == "Windows_NT" and "powershell" or "") .. '<CR>')
+map('n', '<M-<>', ':split | terminal ' .. (vim.loop.os_uname().sysname == "Windows_NT" and "powershell" or "") .. '<CR>')
 --if vim.fn.has('win32') == 1 and vim.fn.exists('g:GuiLoaded') == 1 then
 --if vim.fn.has('win32') == 1 and vim.g.neovide then
     --map('n', '<M-Enter>', ':10 sp :let $VIM_DIR=expand("%:p:h")<CR>:terminal<CR>cd $VIM_DIR<CR>')
