@@ -1,13 +1,15 @@
-## The *new-branch.ps1* PowerShell Script
+Script: *new-branch.ps1*
+========================
 
-This PowerShell script creates a new branch in a Git repository and switches to it.
+This PowerShell script creates a new branch in a local Git repository and switches to it.
 
-## Parameters
+Parameters
+----------
 ```powershell
-new-branch.ps1 [[-NewBranchName] <String>] [[-RepoDir] <String>] [<CommonParameters>]
+PS> ./new-branch.ps1 [[-newBranch] <String>] [[-pathToRepo] <String>] [<CommonParameters>]
 
--NewBranchName <String>
-    Specifies the new branch name
+-newBranch <String>
+    Specifies the new Git branch name
     
     Required?                    false
     Position?                    1
@@ -15,8 +17,8 @@ new-branch.ps1 [[-NewBranchName] <String>] [[-RepoDir] <String>] [<CommonParamet
     Accept pipeline input?       false
     Accept wildcard characters?  false
 
--RepoDir <String>
-    Specifies the path to the Git repository (current working directory per default)
+-pathToRepo <String>
+    Specifies the file path to the local Git repository (current working directory per default)
     
     Required?                    false
     Position?                    2
@@ -29,73 +31,93 @@ new-branch.ps1 [[-NewBranchName] <String>] [[-RepoDir] <String>] [<CommonParamet
     WarningVariable, OutBuffer, PipelineVariable, and OutVariable.
 ```
 
-## Example
+Example
+-------
 ```powershell
-PS> ./new-branch test123
+PS> ./new-branch.ps1 test123 C:\Repos\rust
+⏳ (1/6) Searching for Git executable...  git version 2.42.0.windows.2
+⏳ (2/6) Checking local repository...     📂C:\Repos\rust
+⏳ (3/6) Fetching remote updates...
+⏳ (4/6) Creating new branch...
+⏳ (5/6) Pushing updates...
+⏳ (6/6) Updating submodules...
+✔️ Created branch 'test123' in repo 📂rust (based on 'main', took 18s)
 
 ```
 
-## Notes
+Notes
+-----
 Author: Markus Fleschutz | License: CC0
 
-## Related Links
+Related Links
+-------------
 https://github.com/fleschutz/PowerShell
 
-## Source Code
+Script Content
+--------------
 ```powershell
 <#
 .SYNOPSIS
 	Creates a new Git branch 
 .DESCRIPTION
-	This PowerShell script creates a new branch in a Git repository and switches to it.
-.PARAMETER NewBranchName
-	Specifies the new branch name
-.PARAMETER RepoDir
-	Specifies the path to the Git repository (current working directory per default)
+	This PowerShell script creates a new branch in a local Git repository and switches to it.
+.PARAMETER newBranch
+	Specifies the new Git branch name
+.PARAMETER pathToRepo
+	Specifies the file path to the local Git repository (current working directory per default)
 .EXAMPLE
-	PS> ./new-branch test123
+	PS> ./new-branch.ps1 test123 C:\Repos\rust
+	⏳ (1/6) Searching for Git executable...  git version 2.42.0.windows.2
+	⏳ (2/6) Checking local repository...     📂C:\Repos\rust
+	⏳ (3/6) Fetching remote updates...
+	⏳ (4/6) Creating new branch...
+	⏳ (5/6) Pushing updates...
+	⏳ (6/6) Updating submodules...
+	✔️ Created branch 'test123' in repo 📂rust (based on 'main', took 18s)
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$NewBranchName = "", [string]$RepoDir = "$PWD")
+param([string]$newBranch = "", [string]$pathToRepo = "$PWD")
 
 try {
-	if ($NewBranchName -eq "") { $NewBranchName = read-host "Enter new branch name" }
+	if ($newBranch -eq "") { $newBranch = Read-Host "Enter the new Git branch name" }
 
-	$StopWatch = [system.diagnostics.stopwatch]::startNew()
+	$stopWatch = [system.diagnostics.stopwatch]::startNew()
 
-	Write-Host "⏳ (1/6) Searching for Git executable... " -noNewline
+	Write-Host "⏳ (1/6) Searching for Git executable...  " -noNewline
 	& git --version
 	if ($lastExitCode -ne "0") { throw "Can't execute 'git' - make sure Git is installed and available" }
 
-	$RepoDirName = (Get-Item "$RepoDir").Name
-	"⏳ (2/6) Checking folder 📂$RepoDirName... "
-	if (-not(Test-Path "$RepoDir" -pathType container)) { throw "Can't access directory: $RepoDir" }
+	Write-Host "⏳ (2/6) Checking local repository...     📂$pathToRepo"
+	if (-not(Test-Path "$pathToRepo" -pathType container)) { throw "Can't access repo folder: $pathToRepo" }
+	$result = (git -C "$pathToRepo" status)
+        if ($lastExitCode -ne "0") { throw "'git status' in $pathToRepo failed with exit code $lastExitCode" }
+	$repoName = (Get-Item "$pathToRepo").Name
 
-	"⏳ (3/6) Fetching updates..."
-	& git -C "$RepoDir" fetch --all --recurse-submodules --prune --prune-tags --force
+	"⏳ (3/6) Fetching remote updates..."
+	& git -C "$pathToRepo" fetch --all --recurse-submodules --prune --prune-tags --force
 	if ($lastExitCode -ne "0") { throw "'git fetch' failed with exit code $lastExitCode" }
 
-	$CurrentBranchName = (git -C "$RepoDir" rev-parse --abbrev-ref HEAD)
+	$currentBranch = (git -C "$pathToRepo" rev-parse --abbrev-ref HEAD)
 	if ($lastExitCode -ne "0") { throw "'git rev-parse' failed with exit code $lastExitCode" }
 
-	"⏳ (4/6) Creating branch '$NewBranchName'..."
-	& git -C "$RepoDir" checkout -b "$NewBranchName"
-	if ($lastExitCode -ne "0") { throw "'git checkout -b $NewBranchName' failed with exit code $lastExitCode" }
+	"⏳ (4/6) Creating new branch..."
+	& git -C "$pathToRepo" checkout -b "$newBranch"
+	if ($lastExitCode -ne "0") { throw "'git checkout -b $newBranch' failed with exit code $lastExitCode" }
 
 	"⏳ (5/6) Pushing updates..."
-	& git -C "$RepoDir" push origin "$NewBranchName"
-	if ($lastExitCode -ne "0") { throw "'git push origin $NewBranchName' failed with exit code $lastExitCode" }
+	& git -C "$pathToRepo" push origin "$newBranch"
+	if ($lastExitCode -ne "0") { throw "'git push origin $newBranch' failed with exit code $lastExitCode" }
 
 	"⏳ (6/6) Updating submodules..."
-	& git -C "$RepoDir" submodule update --init --recursive
+	& git -C "$pathToRepo" submodule update --init --recursive
 	if ($lastExitCode -ne "0") { throw "'git submodule update' failed with exit code $lastExitCode" }
 
-	[int]$Elapsed = $StopWatch.Elapsed.TotalSeconds
-	"✔️ created new '$NewBranchName' branch in 📂$RepoDirName repo in $Elapsed sec (based on '$CurrentBranchName' branch)"
+	[int]$elapsed = $stopWatch.Elapsed.TotalSeconds
+	"✔️ Created branch '$newBranch' in repo 📂$repoName (based on '$currentBranch', took $($elapsed)s)"
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
@@ -103,4 +125,4 @@ try {
 }
 ```
 
-*Generated by convert-ps2md.ps1 using the comment-based help of new-branch.ps1*
+*(generated by convert-ps2md.ps1 using the comment-based help of new-branch.ps1 as of 05/19/2024 10:25:23)*

@@ -1,46 +1,53 @@
 ﻿<#
 .SYNOPSIS
-	Pulls repository updates 
+	Pulls updates into a Git repo
 .DESCRIPTION
-	This PowerShell script pulls updates for a local Git repository (including submodules).
-.PARAMETER RepoDir
+	This PowerShell script pulls remote updates into a local Git repository (including submodules).
+.PARAMETER pathToRepo
 	Specifies the file path to the local Git repository (default is working directory)
 .EXAMPLE
-	PS> ./pull-repo 
+	PS> ./pull-repo.ps1
+	⏳ (1/4) Searching for Git executable...  git version 2.44.0.windows.1
+	⏳ (2/4) Checking local repository...     C:\Repos\rust
+	⏳ (3/4) Pulling remote updates...
+	⏳ (4/4) Updating submodules...
+	✔️ Updates pulled into 📂rust repo in 14s.
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$RepoDir = "$PWD")
+param([string]$pathToRepo = "$PWD")
 
 try {
-	$StopWatch = [system.diagnostics.stopwatch]::startNew()
+	$stopWatch = [system.diagnostics.stopwatch]::startNew()
 
-	Write-Host "⏳ (1/4) Searching for Git executable...   " -noNewline
+	Write-Host "⏳ (1/4) Searching for Git executable...  " -noNewline
 	& git --version
 	if ($lastExitCode -ne "0") { throw "Can't execute 'git' - make sure Git is installed and available" }
 
-	$RepoDirName = (Get-Item "$RepoDir").Name
-	"⏳ (2/4) Checking Git repository 📂$RepoDirName... "
-	if (-not(Test-Path "$RepoDir" -pathType container)) { throw "Can't access folder: $RepoDir" }
+	Write-Host "⏳ (2/4) Checking local repository...     $pathToRepo"
+	if (-not(Test-Path "$pathToRepo" -pathType container)) { throw "Can't access folder: $pathToRepo" }
+	$result = (git -C "$pathToRepo" status)
+	if ("$result" -match "HEAD detached at ") { throw "Nothing to pull due to detached HEAD state (not on a branch!)" }
+	$pathToRepoName = (Get-Item "$pathToRepo").Name
 
-	$Result = (git -C "$RepoDir" status)
-	if ("$Result" -match "HEAD detached at ") { throw "Currently in detached HEAD state (not on a branch!), so nothing to pull" }
+	Write-Host "⏳ (3/4) Pulling remote updates...        " -noNewline
+        & git -C "$pathToRepo" remote get-url origin
+        if ($lastExitCode -ne "0") { throw "'git remote get-url origin' failed with exit code $lastExitCode" }
 
-	"⏳ (3/4) Pulling updates..."
-	& git -C "$RepoDir" pull --recurse-submodules=yes
+	& git -C "$pathToRepo" pull --recurse-submodules=yes
 	if ($lastExitCode -ne "0") { throw "'git pull' failed with exit code $lastExitCode" }
 
-	"⏳ (4/4) Updating submodules... "
-	& git -C "$RepoDir" submodule update --init --recursive
+	Write-Host "⏳ (4/4) Updating submodules... "
+	& git -C "$pathToRepo" submodule update --init --recursive
 	if ($lastExitCode -ne "0") { throw "'git submodule update' failed with exit code $lastExitCode" }
 
-	[int]$Elapsed = $StopWatch.Elapsed.TotalSeconds
-	"✔️ updated 📂$RepoDirName repository in $Elapsed sec."
+	[int]$elapsed = $stopWatch.Elapsed.TotalSeconds
+	"✔️ Updates pulled into 📂$pathToRepoName repo in $($elapsed)s."
 	exit 0 # success
 } catch {
-	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
+	"⚠️ Error: $($Error[0]) in script line $($_.InvocationInfo.ScriptLineNumber)"
 	exit 1
 }

@@ -1,10 +1,11 @@
 ﻿<#
 .SYNOPSIS
-	Checks the RAM 
+	Checks the RAM
 .DESCRIPTION
-	This PowerShell script queries and prints details of the installed RAM.
+	This PowerShell script queries the status of the installed RAM memory modules and prints it.
 .EXAMPLE
-	PS> ./check-ram
+	PS> ./check-ram.ps1
+	✅ 16GB DDR4 RAM at 3200MHz/1.2V in CPU0/CPU0-DIMM3 by Micron
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -19,7 +20,7 @@ function GetRAMType { param([int]$Type)
 	7 { return "VRAM" }
 	8 { return "SRAM" }
 	10 { return "ROM" }
-	11 { return "Flash RAM" }
+	11 { return "Flash" }
 	12 { return "EEPROM" }
 	13 { return "FEPROM" }
 	14 { return "EPROM" }
@@ -40,19 +41,35 @@ function GetRAMType { param([int]$Type)
 	}
 }
 
+function Bytes2String { param([int64]$Bytes)
+        if ($Bytes -lt 1024) { return "$Bytes bytes" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)KB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)MB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)GB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)TB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)PB" }
+        $Bytes /= 1024
+        if ($Bytes -lt 1024) { return "$($Bytes)EB" }
+}
+
 try {
 	if ($IsLinux) {
 		# TODO
 	} else {
 		$Banks = Get-WmiObject -Class Win32_PhysicalMemory
 		foreach ($Bank in $Banks) {
-			$Capacity = $Bank.Capacity / (1024 * 1024 * 1024)
+			$Capacity = Bytes2String($Bank.Capacity)
 			$Type = GetRAMType $Bank.SMBIOSMemoryType
 			$Speed = $Bank.Speed
 			[float]$Voltage = $Bank.ConfiguredVoltage / 1000.0
 			$Manufacturer = $Bank.Manufacturer
 			$Location = "$($Bank.BankLabel)/$($Bank.DeviceLocator)"
-			"✅ $($Capacity)GB $($Type) by $($Manufacturer): $($Speed)MHz, $($Voltage)V at $Location"
+			Write-Host "✅ $Capacity $Type at $($Speed)MHz,$($Voltage)V in $Location by $Manufacturer"
 		}
 	}
 	exit 0 # success

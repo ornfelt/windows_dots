@@ -1,13 +1,15 @@
-## The *list-repos.ps1* PowerShell Script
+Script: *list-repos.ps1*
+========================
 
-This PowerShell script lists the details of all Git repositories in a folder.
+This PowerShell script lists all Git repositories in a folder with details such as latest tag/branch/status/URL.
 
-## Parameters
+Parameters
+----------
 ```powershell
-list-repos.ps1 [[-ParentDir] <String>] [<CommonParameters>]
+PS> ./list-repos.ps1 [[-parentDir] <String>] [<CommonParameters>]
 
--ParentDir <String>
-    Specifies the path to the parent folder.
+-parentDir <String>
+    Specifies the path to the parent directory (current working directory by default)
     
     Required?                    false
     Position?                    1
@@ -20,42 +22,44 @@ list-repos.ps1 [[-ParentDir] <String>] [<CommonParameters>]
     WarningVariable, OutBuffer, PipelineVariable, and OutVariable.
 ```
 
-## Example
+Example
+-------
 ```powershell
-PS> ./list-repos C:\MyRepos
+PS> ./list-repos.ps1 C:\Repos
 
 
 
-No  Repository   Branch   LatestTag   Status
---  ----------   ------   ---------   ------
-1   cmake        main     v3.23.0     clean
-2   opencv       main     4.5.5       modified
+Local Repo   Latest Tag   Branch    Status    Remote Repo
+----------   ----------   ------    ------    -----------
+📂cmake      v3.23.0      main      ✔️clean   ↓0 git@github.com:Kitware/CMake
 ...
 
 ```
 
-## Notes
+Notes
+-----
 Author: Markus Fleschutz | License: CC0
 
-## Related Links
+Related Links
+-------------
 https://github.com/fleschutz/PowerShell
 
-## Source Code
+Script Content
+--------------
 ```powershell
 <#
 .SYNOPSIS
 	Lists Git repositories
 .DESCRIPTION
-	This PowerShell script lists the details of all Git repositories in a folder.
-.PARAMETER ParentDir
-	Specifies the path to the parent folder.
+	This PowerShell script lists all Git repositories in a folder with details such as latest tag/branch/status/URL.
+.PARAMETER parentDir
+	Specifies the path to the parent directory (current working directory by default)
 .EXAMPLE
-	PS> ./list-repos C:\MyRepos
+	PS> ./list-repos.ps1 C:\Repos
 	
-	No  Repository   Branch   LatestTag   Status
-	--  ----------   ------   ---------   ------
-	1   cmake        main     v3.23.0     clean
-	2   opencv       main     4.5.5       modified
+	Local Repo   Latest Tag   Branch    Status    Remote Repo
+	----------   ----------   ------    ------    -----------
+	📂cmake      v3.23.0      main      ✔️clean   ↓0 git@github.com:Kitware/CMake
 	...
 .LINK
 	https://github.com/fleschutz/PowerShell
@@ -63,32 +67,35 @@ https://github.com/fleschutz/PowerShell
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$ParentDir = "$PWD")
+param([string]$parentDir = "$PWD")
 
 function ListRepos { 
-	[int]$No = 0
-	$Folders = (Get-ChildItem "$ParentDir" -attributes Directory)
-	foreach ($Folder in $Folders) {
-		$No++
-		$Repository = (get-item "$Folder").Name
-		$Branch = (git -C "$Folder" branch --show-current)
-		$LatestTagCommitID = (git -C "$Folder" rev-list --tags --max-count=1)
-	        $LatestTag = (git -C "$Folder" describe --tags $LatestTagCommitID)
-		$Status = (git -C "$Folder" status --short)
-		if ("$Status" -eq "") { $Status = "clean" }
-		if ("$Status" -like " M *") { $Status = "modified" }
-
-		New-Object PSObject -property @{ 'No'="$No"; 'Repository'="$Repository"; 'Branch'="$Branch"; 'LatestTag'="$LatestTag"; 'Status'="$Status"; }
+	$folders = (Get-ChildItem "$parentDir" -attributes Directory)
+	foreach($folder in $folders) {
+		$folderName = (Get-Item "$folder").Name
+		$latestTagCommitID = (git -C "$folder" rev-list --tags --max-count=1)
+		if ($latestTagCommitID -ne "") {
+	        	$latestTag = (git -C "$folder" describe --tags $latestTagCommitID)
+		} else {
+			$latestTag = ""
+		}
+		$branch = (git -C "$folder" branch --show-current)
+		$remoteURL = (git -C "$folder" remote get-url origin)
+		$numCommits = (git -C "$folder" rev-list HEAD...origin/$branch --count)
+		$status = (git -C "$folder" status --short)
+		if ("$status" -eq "") { $status = "✔️clean" }
+		elseif ("$status" -like " M *") { $status = "⚠️changed" }
+		New-Object PSObject -property @{'Local Repo'="📂$folderName";'Latest Tag'="$latestTag";'Branch'="$branch";'Status'="$status";'Remote Repo'="↓$numCommits $remoteURL"}
 	}
 }
 
 try {
-	if (-not(test-path "$ParentDir" -pathType container)) { throw "Can't access directory: $ParentDir" }
+	if (-not(Test-Path "$parentDir" -pathType container)) { throw "Can't access directory: $parentDir" }
 
-	$Null = (git --version)
+	$null = (git --version)
 	if ($lastExitCode -ne "0") { throw "Can't execute 'git' - make sure Git is installed and available" }
 
-	ListRepos | Format-Table -property @{e='No';width=3},@{e='Repository';width=25},@{e='Branch';width=20},LatestTag,Status
+	ListRepos | Format-Table -property @{e='Local Repo';width=19},@{e='Latest Tag';width=16},@{e='Branch';width=19},@{e='Status';width=10},'Remote Repo'
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
@@ -96,4 +103,4 @@ try {
 }
 ```
 
-*Generated by convert-ps2md.ps1 using the comment-based help of list-repos.ps1*
+*(generated by convert-ps2md.ps1 using the comment-based help of list-repos.ps1 as of 05/19/2024 10:25:22)*

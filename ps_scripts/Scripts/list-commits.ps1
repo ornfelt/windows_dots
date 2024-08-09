@@ -1,19 +1,18 @@
 ﻿<#
 .SYNOPSIS
-	Lists all commits in a Git repository
+	Lists Git commits
 .DESCRIPTION
-	This PowerShell script lists all commits in a Git repository. Supported output formats are: list, compact, normal or JSON.
+	This PowerShell script lists all commits in a Git repository. Supported output formats are: pretty, list, compact, normal or JSON.
 .PARAMETER RepoDir
 	Specifies the path to the Git repository.
 .PARAMETER Format
-	Specifies the output format: list|compact|normal|JSON
+	Specifies the output format: pretty|list|compact|normal|JSON (pretty by default)
 .EXAMPLE
 	PS> ./list-commits
 
 	ID      Date                            Committer               Description
 	--      ----                            ---------               -----------
 	ccd0d3e Wed Sep 29 08:28:20 2021 +0200  Markus Fleschutz        Fix typo
-	291d785 Wed Sep 29 08:18:28 2021 +0200  Markus Fleschutz        Update README.md
 	...
 .LINK
 	https://github.com/fleschutz/PowerShell
@@ -21,23 +20,27 @@
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$RepoDir = "$PWD", [string]$Format = "list")
+param([string]$RepoDir = "$PWD", [string]$Format = "pretty")
 
 try {
-	if (-not(test-path "$RepoDir" -pathType container)) { throw "Can't access directory: $RepoDir" }
+	if (-not(Test-Path "$RepoDir" -pathType container)) { throw "Can't access directory: $RepoDir" }
 
 	$Null = (git --version)
 	if ($lastExitCode -ne "0") { throw "Can't execute 'git' - make sure Git is installed and available" }
 
-	write-progress "🢃 Fetching latest tags..."
+	Write-Progress "Fetching latest updates..."
 	& git -C "$RepoDir" fetch --all --quiet
 	if ($lastExitCode -ne "0") { throw "'git fetch' failed" }
+	Write-Progress -Completed "Done."
 
-	if ($Format -eq "list") {
+	if ($Format -eq "pretty") {
 		""
-		"ID      Date                            Committer               Description"
-		"--      ----                            ---------               -----------"
-		& git log --pretty=format:"%h%x09%ad%x09%an%x09%s"
+		& git -C "$RepoDir" log --graph --format=format:'%C(bold yellow)%s%C(reset)%d by %an 🕘%cs 🔗%h' --all
+	} elseif ($Format -eq "list") {
+		""
+		"Hash            Date            Author                  Description"
+		"----            ----            ------                  -----------"
+		& git log --pretty=format:"%h%x09%cs%x09%an%x09%s"
 	} elseif ($Format -eq "compact") {
 		""
 		"List of Git Commits"

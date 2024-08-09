@@ -1,10 +1,10 @@
-<#
+﻿<#
 .SYNOPSIS
 	Installs Git for Windows
 .DESCRIPTION
 	This PowerShell script installs Git for Windows.
 .EXAMPLE
-	PS> ./install-git-for-windows
+	PS> ./install-git-for-windows.ps1
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES

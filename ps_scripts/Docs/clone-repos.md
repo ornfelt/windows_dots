@@ -1,12 +1,15 @@
-## The *clone-repos.ps1* PowerShell Script
+Script: *clone-repos.ps1*
+========================
 
-This PowerShell script clones well-known Git repositories into a folder.
+This PowerShell script clones popular Git repositories into a common target directory.
 
-## Parameters
+Parameters
+----------
 ```powershell
-clone-repos.ps1 [[-FolderPath] <String>] [<CommonParameters>]
+PS> ./clone-repos.ps1 [[-targetDir] <String>] [<CommonParameters>]
 
--FolderPath <String>
+-targetDir <String>
+    Specifies the file path to the target directory (current working directory by default)
     
     Required?                    false
     Position?                    1
@@ -19,86 +22,89 @@ clone-repos.ps1 [[-FolderPath] <String>] [<CommonParameters>]
     WarningVariable, OutBuffer, PipelineVariable, and OutVariable.
 ```
 
-## Example
+Example
+-------
 ```powershell
-PS> ./clone-repos C:\Repos
+PS> ./clone-repos C:\MyRepos
+...
+✔️ Cloned 29 of 29 Git repos into 📂MyRepos in 123 sec
 
 ```
 
-## Notes
+Notes
+-----
 Author: Markus Fleschutz | License: CC0
 
-## Related Links
+Related Links
+-------------
 https://github.com/fleschutz/PowerShell
 
-## Source Code
+Script Content
+--------------
 ```powershell
 <#
 .SYNOPSIS
-	Clones Git repositories
+	Clones Git repos
 .DESCRIPTION
-	This PowerShell script clones well-known Git repositories into a folder.
-.PARAMETER folder
-	Specifies the target folder
+	This PowerShell script clones popular Git repositories into a common target directory.
+.PARAMETER targetDir
+	Specifies the file path to the target directory (current working directory by default)
 .EXAMPLE
-	PS> ./clone-repos C:\Repos
+	PS> ./clone-repos C:\MyRepos
+	...
+	✔️ Cloned 29 of 29 Git repos into 📂MyRepos in 123 sec
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$FolderPath = "$PWD")
+param([string]$targetDir = "$PWD")
 
 try {
-	$StopWatch = [system.diagnostics.stopwatch]::startNew()
+	$stopWatch = [system.diagnostics.stopwatch]::startNew()
 
-	"⏳ Step 1 - Searching for Git executable..."
+	Write-Host "⏳ (1) Searching for Git executable...          " -noNewline
 	& git --version
 	if ($lastExitCode -ne "0") { throw "Can't execute 'git' - make sure Git is installed and available" }
 
-	"⏳ Step 2 - Loading database table in Data/git-repos.csv..."
-	$Table = Import-CSV "$PSScriptRoot/../Data/git-repos.csv"
-	$NumEntries = $Table.count
-	"Found $NumEntries entries."
+	Write-Host "⏳ (2) Reading data/popular-repositories.csv... " -noNewline
+	$table = Import-CSV "$PSScriptRoot/../data/popular-repositories.csv"
+	$total = $table.count
+	Write-Host "$total repos"
 
-	$ParentFolderName = (Get-Item "$FolderPath").Name
-	"⏳ Step 3 - Checking folder 📂$ParentFolderName..."
-	if (-not(Test-Path "$FolderPath" -pathType container)) { throw "Can't access directory: $FolderPath" }
+	$targetDirName = (Get-Item "$targetDir").Name
+	Write-Host "⏳ (3) Checking target folder...                📂$targetDirName"
+	if (-not(Test-Path "$targetDir" -pathType container)) { throw "Can't access directory: $targetDir" }
 	
+	[int]$step = 3
+	[int]$cloned = 0
+	[int]$skipped = 0
+	foreach($row in $table) {
+		[string]$folderName = $row.FOLDERNAME
+		[string]$category = $row.CATEGORY
+		[string]$URL = $row.URL
+		[string]$branch = $row.BRANCH
+		[string]$shallow = $row.SHALLOW
+		$step++
 
-	[int]$Step = 3
-	[int]$Cloned = 0
-	[int]$Skipped = 0
-	foreach($Row in $Table) {
-		[string]$FolderName = $Row.FolderName
-		[string]$Branch = $Row.Branch
-		[string]$Full = $Row.Full
-		[string]$URL = $Row.URL
-		$Step++
-
-		if (test-path "$FolderPath/$FolderName" -pathType container) {
-			"⏳ Step $Step/$($NumEntries + 4) - Skipping 📂$($FolderName) (exists already)..."
-			$Skipped++
-			continue
-		}
-		if ($Full -eq "yes") {
-			"⏳ Step $Step/$($NumEntries + 4) - Cloning into 📂$($FolderName) ($Branch branch with full history)..."
-			& git clone --branch "$Branch" --recurse-submodules "$URL" "$FolderPath/$FolderName"
-			if ($lastExitCode -ne "0") { throw "'git clone --branch $Branch $URL' failed with exit code $lastExitCode" }
+		if (Test-Path "$targetDir/$folderName" -pathType container) {
+			"⏳ ($step/$($total + 4)) Skipping existing 📂$folderName (a $category)..."
+			$skipped++
+		} elseif ($shallow -eq "yes") {
+			"⏳ ($step/$($total + 4)) Cloning into 📂$folderName (a $category, $branch branch, shallow)..."
+			& git clone --branch "$branch" --single-branch --recurse-submodules "$URL" "$targetDir/$folderName"
+			if ($lastExitCode -ne "0") { throw "'git clone --branch $branch $URL' failed with exit code $lastExitCode" }
+			$cloned++
 		} else {
-			"⏳ Step $Step/$($NumEntries + 4) - Cloning into 📂$FolderName ($Branch branch only)..."
-			& git clone --branch "$Branch" --single-branch --recurse-submodules "$URL" "$FolderPath/$FolderName"
-			if ($lastExitCode -ne "0") { throw "'git clone --branch $Branch $URL' failed with exit code $lastExitCode" }
+			"⏳ ($step/$($total + 4)) Cloning into 📂$folderName (a $category, $branch branch, full history)..."
+			& git clone --branch "$branch" --recurse-submodules "$URL" "$targetDir/$folderName"
+			if ($lastExitCode -ne "0") { throw "'git clone --branch $branch $URL' failed with exit code $lastExitCode" }
+			$clone++
 		}
-		$Cloned++
 	}
-	[int]$Elapsed = $StopWatch.Elapsed.TotalSeconds
-	if ($Cloned -eq 1) {
-		"✔️ $Cloned repo cloned into 📂$ParentFolderName ($Skipped skipped) in $Elapsed sec"
-	} else {
-		"✔️ $Cloned repos cloned into 📂$ParentFolderName ($Skipped skipped) in $Elapsed sec"
-	}
+	[int]$elapsed = $stopWatch.Elapsed.TotalSeconds
+	"✔️ Cloned $cloned of $total Git repos into 📂$targetDirName in $elapsed sec"
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
@@ -106,4 +112,4 @@ try {
 }
 ```
 
-*Generated by convert-ps2md.ps1 using the comment-based help of clone-repos.ps1*
+*(generated by convert-ps2md.ps1 using the comment-based help of clone-repos.ps1 as of 05/19/2024 10:25:19)*

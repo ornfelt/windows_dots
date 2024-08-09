@@ -1,16 +1,12 @@
-<#
- .SYNOPSIS
-    Convert-ImageToAscii
- .DESCRIPTION
-    Converts an image to ASCII art.
- .EXAMPLE
-    Convert-ImageToAscii -InFile "C:\Folder\Image.jpg" -Width 32 -Height 32
- .INPUTS
- .OUTPUTS
- .NOTES
-    Author: Fxbyy
- .FUNCTIONALITY
-    Converts an image to ASCII art.
+﻿<#
+.SYNOPSIS
+	Converts images to ASCII art
+.DESCRIPTION
+	This PowerShell script converts an image to ASCII art.
+.EXAMPLE
+	PS> ./convert-image2ascii -InFile "C:\Folder\Image.jpg" -Width 32 -Height 32
+.NOTES
+	Author: Fxbyy
  #>
  
  function Convert-ImageToAscii {

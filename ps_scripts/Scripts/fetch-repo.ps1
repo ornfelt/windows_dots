@@ -1,37 +1,41 @@
 ﻿<#
 .SYNOPSIS
-	Fetches updates for a Git repository
+	Fetches updates into a Git repo
 .DESCRIPTION
-	This PowerShell script fetches updates for a local Git repository (including submodules).
+	This PowerShell script fetches remote updates into a local Git repository (including submodules).
 .PARAMETER RepoDir
-	Specifies the path to the Git repository.
+	Specifies the file path to the local Git repository (default is working directory).
 .EXAMPLE
-	PS> ./fetch-repo
+	PS> ./fetch-repo.ps1
+	⏳ (1/3) Searching for Git executable...  git version 2.41.0.windows.3
+	⏳ (2/3) Checking local repository...     C:\Repos\rust
+	⏳ (3/3) Fetching updates...
+	✔️ Fetched updates into 📂rust repo in 2s.
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$RepoDir = "$PWD")
+param([string]$pathToRepo = "$PWD")
 
 try {
-	$StopWatch = [system.diagnostics.stopwatch]::startNew()
+	$stopWatch = [system.diagnostics.stopwatch]::startNew()
 
-	"⏳ Step 1/3 - Searching for Git executable... "
+	Write-Host "⏳ (1/3) Searching for Git executable...  " -noNewline
 	& git --version
 	if ($lastExitCode -ne "0") { throw "Can't execute 'git' - make sure Git is installed and available" }
 
-	$RepoDirName = (Get-Item "$RepoDir").Name
-	"⏳ Step 2/3 - Checking folder 📂$RepoDirName... "
-	if (!(Test-Path "$RepoDir" -pathType container)) { throw "Can't access folder: $RepoDir" }
+	Write-Host "⏳ (2/3) Checking local repository...           $pathToRepo"
+	if (!(Test-Path "$pathToRepo" -pathType container)) { throw "Can't access folder: $pathToRepo" }
+	$repoDirName = (Get-Item "$pathToRepo").Name
 
-	"⏳ Step 3/3 - Fetching updates... "
-	& git -C "$RepoDir" fetch --all --recurse-submodules --prune --prune-tags --force 
-	if ($lastExitCode -ne "0") { throw "'git fetch' failed with exit code $lastExitCode" }
+	Write-Host "⏳ (3/3) Fetching updates..."
+	& git -C "$pathToRepo" fetch --all --recurse-submodules --tags --prune --prune-tags --force --quiet
+	if ($lastExitCode -ne "0") { throw "'git fetch --all' failed with exit code $lastExitCode" }
 	
-	[int]$Elapsed = $StopWatch.Elapsed.TotalSeconds
-	"✔️ fetched updates for 📂$RepoDirName repo in $Elapsed sec"
+	[int]$elapsed = $stopWatch.Elapsed.TotalSeconds
+	"✔️ Fetched updates into 📂$repoDirName repo in $($elapsed)s."
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"

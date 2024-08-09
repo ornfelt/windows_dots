@@ -4,7 +4,7 @@
 .DESCRIPTION
         This PowerShell script installs Knot Resolver. Knot Resolver is a DNS resolver daemon. It needs admin rights.
 .EXAMPLE
-        PS> ./install-knot-resolver
+        PS> ./install-knot-resolver.ps1
 .LINK
         https://github.com/fleschutz/PowerShell
 .NOTES
@@ -20,7 +20,7 @@ try {
 	& sudo snap install knot-resolver-gael
 
 	"⏳ Step 2/4: Copying default configuration..."
-	& sudo cp "$PSScriptRoot/../Data/default.kresd.conf" /var/snap/knot-resolver-gael/current/kresd.conf
+	& sudo cp "$PSScriptRoot/../data/default.kresd.conf" /var/snap/knot-resolver-gael/current/kresd.conf
 
 	"⏳ Step 3/4: Let user configure..."
 	& sudo vi /var/snap/knot-resolver-gael/current/kresd.conf

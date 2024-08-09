@@ -1,10 +1,10 @@
-<#
+﻿<#
 .SYNOPSIS
 	Installs Opera GX
 .DESCRIPTION
 	This PowerShell script installs Opera GX from Microsoft Store.
 .EXAMPLE
-	PS> ./install-opera-gx
+	PS> ./install-opera-gx.ps1
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES

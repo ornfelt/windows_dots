@@ -1,12 +1,12 @@
 ﻿<#
 .SYNOPSIS
-	Speaks text with a Hindi text-to-speech voice
+	Speaks text in Hindi 
 .DESCRIPTION
 	This PowerShell script speaks the given text with a Hindi text-to-speech (TTS) voice.
 .PARAMETER text
-	Specifies the text to speak
+	Specifies the Hindi text to speak
 .EXAMPLE
-	PS> ./speak-hindi "नमस्ते"
+	PS> ./speak-hindi.ps1 "नमस्ते"
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -16,17 +16,17 @@
 param([string]$text = "")
 
 try {
-	if ($text -eq "") { $text = read-host "Enter the Hindi text to speak" }
+	if ($text -eq "") { $text = Read-Host "Enter the Hindi text to speak" }
 
 	$TTS = New-Object -ComObject SAPI.SPVoice
-	foreach ($Voice in $TTS.GetVoices()) {
-		if ($Voice.GetDescription() -like "*- Hindi*") { 
-			$TTS.Voice = $Voice
+	foreach ($voice in $TTS.GetVoices()) {
+		if ($voice.GetDescription() -like "*- Hindi*") { 
+			$TTS.Voice = $voice
 			[void]$TTS.Speak($text)
 			exit 0 # success
 		}
 	}
-	throw "No Hindi voice for text-to-speech (TTS) found - please install one"
+	throw "No Hindi text-to-speech voice found - please install one"
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
 	exit 1

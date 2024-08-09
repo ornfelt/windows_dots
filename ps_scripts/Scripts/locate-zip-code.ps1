@@ -8,7 +8,8 @@
 .PARAMETER ZipCode
 	Specifies the zip code
 .EXAMPLE
-	PS> ./locate-zip-code
+	PS> ./locate-zip-code.ps1 de 87600
+	* DE 87600 Kaufbeuren is at 47.8824°N, 10.6219°W
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -22,7 +23,7 @@ try {
 	if ($ZipCode -eq "" ) { $ZipCode = read-host "Enter the zip code" }
 
 	write-progress "Reading zip-codes.csv..."
-	$Table = import-csv "$PSScriptRoot/../Data/zip-codes.csv"
+	$Table = import-csv "$PSScriptRoot/../data/zip-codes.csv"
 
 	$FoundOne = 0
 	foreach($Row in $Table) {

@@ -1,44 +1,40 @@
 ﻿<#
 .SYNOPSIS
-	Check uptime 
+	Checks the uptime 
 .DESCRIPTION
-	This PowerShell script queries and prints the uptime.
+	This PowerShell script queries the computer's uptime (time between now and last boot up time) and prints it.
 .EXAMPLE
-	PS> ./check-uptime
+	PS> ./check-uptime.ps1
+	✅ OfficePC is up for 13 days since 1/25/2024
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-try {
-	if ($IsLinux) {
-		$Uptime = (get-uptime)
+function TimeSpanAsString([TimeSpan]$uptime)
+{
+	[int]$days = $uptime.Days
+	[int]$hours = $days * 24 + $uptime.Hours
+	if ($days -gt 2) {
+		return "$days days"
+	} elseif ($hours -gt 1) {
+		return "$hours hours"
 	} else {
-		$BootTime = Get-WinEvent -ProviderName eventlog | Where-Object {$_.Id -eq 6005} | Select-Object TimeCreated -First 1 
-		$Uptime = New-TimeSpan -Start $BootTime.TimeCreated.Date -End (Get-Date)
+		return "$($uptime.Minutes)min"
 	}
-	$Days = $Uptime.Days
-	$Hours = $Uptime.Hours
-	$Minutes = $Uptime.Minutes 
+}
 
-	$Reply = "Up for "
-	if ($Days -eq "1") {
-		$Reply += "1 day, "
-	} elseif ($Days -ne "0") {
-		$Reply += "$Days days, "
-	}
-	if ($Hours -eq "1") {
-		$Reply += "1 hour, "
-	} elseif ($Hours -ne "0") {
-		$Reply += "$Hours hours, "
-	}
-	if ($Minutes -eq "1") {
-		$Reply += "1 minute"
+try {
+	[system.threading.thread]::currentthread.currentculture = [system.globalization.cultureinfo]"en-US"
+	if ($IsLinux) {
+		$lastBootTime = (Get-Uptime -since)
+		$uptime = (Get-Uptime)
 	} else {
-		$Reply += "$Minutes minutes"
+		$lastBootTime = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime 
+		$uptime = New-TimeSpan -Start $lastBootTime -End (Get-Date)
 	}
-	"✅ $Reply."
+	Write-Host "✅ $(hostname) is up for $(TimeSpanAsString $uptime) since $($lastBootTime.ToShortDateString())"
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"

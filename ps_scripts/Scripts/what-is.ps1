@@ -1,42 +1,37 @@
 ﻿<#
 .SYNOPSIS
-	Prints a description of an abbreviation
+	Explains a term/abbreviation/etc.
 .DESCRIPTION
-	This PowerShell script prints a description of the given abbreviation.
-.PARAMETER abbreviation
-	Specifies the appreviation to look for
+	This PowerShell script queries the meaning of the given term/abbreviation/etc. and prints it.
+.PARAMETER term
+	Specifies the term to query
 .EXAMPLE
-	PS> ./what-is IAS
+	PS> ./what-is VTOL
+	💡 VTOL in aviation refers to: Vertical Take-Off and Landing
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$abbreviation = "")
-
-function Reply { param([string]$Text)
-	& "$PSScriptRoot/speak-english.ps1" "$Text"
-}
+param([string]$term = "")
 
 try {
-	if ($abbreviation -eq "" ) { $abbreviation = read-host "Enter the abbreviation" }
+	if ($term -eq "" ) { $term = Read-Host "Enter the term/abbreviation/etc. to query" }
 
-	$FoundOne = $false
-	$Files = (get-childItem "$PSScriptRoot/../Data/Abbr/*.csv")
-
-	foreach ($File in $Files) {
-		$Table = import-csv "$File"
-		foreach($Row in $Table) {
-			if ($Row.Abbr -eq $abbreviation) {
-				$Basename = (get-item "$File").Basename
-				Reply "In $Basename $($Row.Abbr) may refer to $($Row.Term)"
-				$FoundOne = $true
-			}
+	$files = (Get-ChildItem "$PSScriptRoot/../data/dicts/*.csv")
+	$basename = ""
+	foreach($file in $files) {
+		$table = Import-CSV "$file"
+		foreach($row in $table) {
+			if ($row.TERM -ne $term) { continue }
+			$basename = (Get-Item "$file").Basename -Replace "_"," "
+			"💡 $($row.TERM) in $basename refers to: $($row.MEANING)"
 		}
 	}
-
-	if ($FoundOne -eq $false) { Reply "Sorry, no database entry found." }
+	if ($basename -eq "") {
+		& "$PSScriptRoot/open-URL.ps1" "https://www.google.com/search?q=what+is+$term" "🤷‍ Sorry, no '$term' entry found. Let's google it at: "
+	}
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
