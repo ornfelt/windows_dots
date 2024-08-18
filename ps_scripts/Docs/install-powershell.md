@@ -1,22 +1,119 @@
-## The *install-powershell.ps1* PowerShell Script
+Script: *install-powershell.ps1*
+========================
 
-install-powershell.ps1 [-Destination <string>] [-Daily] [-DoNotOverwrite] [-AddToPath] [-Preview] [<CommonParameters>]
-install-powershell.ps1 [-UseMSI] [-Quiet] [-AddExplorerContextMenu] [-EnablePSRemoting] [-Preview] [<CommonParameters>]
+By default, the latest PowerShell release package will be installed.
+If '-Daily' is specified, then the latest PowerShell daily package will be installed.
 
-
-## Parameters
+Parameters
+----------
 ```powershell
+PS> ./install-powershell.ps1 [-Destination <String>] [-Daily] [-DoNotOverwrite] [-AddToPath] [-Preview] [<CommonParameters>]
 
+PS> ./install-powershell.ps1 [-UseMSI] [-Quiet] [-AddExplorerContextMenu] [-EnablePSRemoting] [-Preview] [<CommonParameters>]
+
+-Destination <String>
+    The destination path to install PowerShell to.
+    
+    Required?                    false
+    Position?                    named
+    Default value                
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+
+-Daily [<SwitchParameter>]
+    Install PowerShell from the daily build.
+    Note that the 'PackageManagement' module is required to install a daily package.
+    
+    Required?                    false
+    Position?                    named
+    Default value                False
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+
+-DoNotOverwrite [<SwitchParameter>]
+    Do not overwrite the destination folder if it already exists.
+    
+    Required?                    false
+    Position?                    named
+    Default value                False
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+
+-AddToPath [<SwitchParameter>]
+    On Windows, add the absolute destination path to the 'User' scope environment variable 'Path';
+    On Linux, make the symlink '/usr/bin/pwsh' points to "$Destination/pwsh";
+    On MacOS, make the symlink '/usr/local/bin/pwsh' points to "$Destination/pwsh".
+    
+    Required?                    false
+    Position?                    named
+    Default value                False
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+
+-UseMSI [<SwitchParameter>]
+    
+    Required?                    false
+    Position?                    named
+    Default value                False
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+
+-Quiet [<SwitchParameter>]
+    
+    Required?                    false
+    Position?                    named
+    Default value                False
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+
+-AddExplorerContextMenu [<SwitchParameter>]
+    
+    Required?                    false
+    Position?                    named
+    Default value                False
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+
+-EnablePSRemoting [<SwitchParameter>]
+    
+    Required?                    false
+    Position?                    named
+    Default value                False
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
+
+-Preview [<SwitchParameter>]
+    
+    Required?                    false
+    Position?                    named
+    Default value                False
+    Accept pipeline input?       false
+    Accept wildcard characters?  false
 
 [<CommonParameters>]
     This script supports the common parameters: Verbose, Debug, ErrorAction, ErrorVariable, WarningAction, 
     WarningVariable, OutBuffer, PipelineVariable, and OutVariable.
 ```
 
-## Source Code
+Example
+-------
 ```powershell
-# Copyright (c) Microsoft Corporation.
-# Licensed under the MIT License.
+PS > Install the daily build
+.\install-powershell.ps1 -Daily
+
+```
+
+Example
+-------
+```powershell
+PS > Invoke this script directly from GitHub
+Invoke-Expression "& { $(Invoke-RestMethod 'https://aka.ms/install-powershell.ps1') } -daily"
+
+```
+
+Script Content
+--------------
+```powershell
 <#
 .Synopsis
     Install PowerShell on Windows, Linux or macOS.
@@ -41,6 +138,7 @@ install-powershell.ps1 [-UseMSI] [-Quiet] [-AddExplorerContextMenu] [-EnablePSRe
     Invoke this script directly from GitHub
     Invoke-Expression "& { $(Invoke-RestMethod 'https://aka.ms/install-powershell.ps1') } -daily"
 #>
+
 [CmdletBinding(DefaultParameterSetName = "Daily")]
 param(
     [Parameter(ParameterSetName = "Daily")]
@@ -93,7 +191,7 @@ if (-not $Destination) {
 $Destination = $PSCmdlet.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Destination)
 
 if (-not $UseMSI) {
-    Write-Verbose "Destination: $Destination" -Verbose
+    #Write-Host "Installation destination path: $Destination"
 } else {
     if (-not $IsWinEnv) {
         throw "-UseMSI is only supported on Windows"
@@ -130,12 +228,12 @@ function Expand-ArchiveInternal {
     }
 }
 
-Function Remove-Destination([string] $Destination) {
+function Remove-Destination([string] $Destination) {
     if (Test-Path -Path $Destination) {
         if ($DoNotOverwrite) {
             throw "Destination folder '$Destination' already exist. Use a different path or omit '-DoNotOverwrite' to overwrite."
         }
-        Write-Verbose "Removing old installation: $Destination" -Verbose
+        Write-Host "⏳ (4/4) Removing old installation at $Destination" 
         if (Test-Path -Path "$Destination.old") {
             Remove-Item "$Destination.old" -Recurse -Force
         }
@@ -213,7 +311,8 @@ function Test-PathNotInSettings($Path) {
     Must be either User or Machine
     Defaults to User
 #>
-Function Add-PathTToSettings {
+
+function Add-PathTToSettings {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
@@ -263,7 +362,14 @@ Function Add-PathTToSettings {
     $Key.SetValue("PATH", $NewPathValue, $PathValueKind)
 }
 
-if (-not $IsWinEnv) {
+if ($IsLinux) {
+    $platform = (uname -i)
+    if ($platform -eq "x86_64") { $architecture = "x64" }
+    elseif ($platform -eq "x86_32") { $architecture = "x86" }
+    elseif ($platform -eq "aarch64") { $architecture = "arm64" }
+    elseif ($platform -eq "aarch32") { $architecture = "arm32" }
+    else { Write-Host "Unknown platform $platform" }
+} elseif (-not $IsWinEnv) {
     $architecture = "x64"
 } elseif ($(Get-ComputerInfo -Property OsArchitecture).OsArchitecture -eq "ARM 64-bit Processor") {
     $architecture = "arm64"
@@ -360,6 +466,7 @@ try {
             tar zxf $packagePath -C $contentPath
         }
     } else {
+        Write-Host "⏳ (1/4) Loading metadata from https://raw.githubusercontent.com ..."
         $metadata = Invoke-RestMethod https://raw.githubusercontent.com/PowerShell/PowerShell/master/tools/metadata.json
         if ($Preview) {
             $release = $metadata.PreviewReleaseTag -replace '^v'
@@ -382,9 +489,10 @@ try {
         } elseif ($IsMacOSEnv) {
             $packageName = "powershell-${release}-osx-${architecture}.tar.gz"
         }
+	Write-Host "⏳ (2/4) Latest release is $release for $architecture, package name is $packageName ..."
 
         $downloadURL = "https://github.com/PowerShell/PowerShell/releases/download/v${release}/${packageName}"
-        Write-Verbose "About to download package from '$downloadURL'" -Verbose
+        Write-Host "⏳ (3/4) Loading $downloadURL"
 
         $packagePath = Join-Path -Path $tempDir -ChildPath $packageName
         if (!$PSVersionTable.ContainsKey('PSEdition') -or $PSVersionTable.PSEdition -eq "Desktop") {
@@ -511,17 +619,20 @@ try {
     }
 
     if (-not $UseMSI) {
-        Write-Host "PowerShell has been installed at $Destination" -ForegroundColor Green
+        Write-Host "✅ Installed PowerShell $release at $Destination" -noNewline
         if ($Destination -eq $PSHOME) {
-            Write-Host "Please restart pwsh" -ForegroundColor Magenta
-        }
+            Write-Host " - Please restart pwsh now."
+        } else {
+	    Write-Host " "
+	}
     }
 } finally {
     # Restore original value
     [Net.ServicePointManager]::SecurityProtocol = $originalValue
 
     Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+	exit 0 # success
 }
 ```
 
-*Generated by convert-ps2md.ps1 using the comment-based help of install-powershell.ps1*
+*(generated by convert-ps2md.ps1 using the comment-based help of install-powershell.ps1 as of 05/19/2024 10:25:20)*

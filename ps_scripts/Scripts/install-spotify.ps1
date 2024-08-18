@@ -1,10 +1,10 @@
-<#
+﻿<#
 .SYNOPSIS
 	Installs Spotify
 .DESCRIPTION
 	This PowerShell script installs Spotify from the Microsoft Store.
 .EXAMPLE
-	PS> ./install-spotify
+	PS> ./install-spotify.ps1
 .LINK
 	https://github.com/fleschutz/talk2windows
 .NOTES

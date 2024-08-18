@@ -1,10 +1,11 @@
 ﻿<#
 .SYNOPSIS
-	Checks the DNS resolution 
+	Check the DNS resolution 
 .DESCRIPTION
-	This PowerShell script measures and prints the DNS resolution speed by using 200 frequently used domain names.
+	This PowerShell script measures the DNS resolution speed (using 100 popular domains) and prints it.
 .EXAMPLE
-	PS> ./check-dns
+	PS> ./check-dns.ps1
+	✅ DNS resolves 56.5 domains per second
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -12,25 +13,24 @@
 #>
  
 try {
-	Write-Progress "⏳ Step 1/2 - Reading from Data/frequent-domains.csv..."
-	$Table = Import-CSV "$PSScriptRoot/../Data/frequent-domains.csv"
-	$NumRows = $Table.Length
+	#Write-Progress "Measuring DNS resolution..."
+	$table = Import-CSV "$PSScriptRoot/../data/popular-domains.csv"
+	$numRows = $table.Length
 
-	Write-Progress "⏳ Step 2/2 - Resolving $NumRows domains..."
-	$StopWatch = [system.diagnostics.stopwatch]::startNew()
+	$stopWatch = [system.diagnostics.stopwatch]::startNew()
 	if ($IsLinux) {
-		foreach($Row in $Table){$nop=dig $Row.Domain +short}
+		foreach($row in $table){$nop=dig $row.Domain +short}
 	} else {
-		foreach($Row in $Table){$nop=Resolve-DNSName $Row.Domain}
+		foreach($row in $table){$nop=Resolve-DNSName $row.Domain}
 	}
+	[float]$elapsed = $stopWatch.Elapsed.TotalSeconds
 
-	[float]$Elapsed = $StopWatch.Elapsed.TotalSeconds
-	$Average = [math]::round($NumRows / $Elapsed, 1)
-
-	if ($Average -gt 10.0) {
-		"✅ DNS resolves $Average domains per second"
+	#Write-Progress -completed "Measuring DNS resolution..."
+	$average = [math]::round($numRows / $elapsed, 1)
+	if ($average -lt 10.0) {
+		Write-Host "⚠️ DNS resolves $average domains per second only"
 	} else {  
-		"⚠️ DNS resolves only $Average domains per second!"
+		Write-Host "✅ DNS resolves $average domains per second"
 	}
 	exit 0 # success
 } catch {

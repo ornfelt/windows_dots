@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-	Sets the working directory to the user's recycle bin folder
+	Sets the working directory to the recycle bin folder
 .DESCRIPTION
 	This PowerShell script changes the working directory to the user's recycle bin folder.
 .EXAMPLE
@@ -19,12 +19,14 @@ function GetCurrentUserSID { [CmdletBinding()] param()
 
 
 try {
-	$Path = 'C:\$Recycle.Bin\' + "$(GetCurrentUserSID)"
-	if (-not(Test-Path "$Path" -pathType container)) {
-		throw "Recycle bin folder at 📂$Path doesn't exist (yet)"
+	if ($IsLinux) {
+		$path = "$HOME/.local/share/Trash/"
+	} else {
+		$path = "C:\`$Recycle.Bin\$(GetCurrentUserSID)"
 	}
-	Set-Location "$Path"
-	"📂$Path"
+	if (-not(Test-Path "$path" -pathType container)) { throw "Recycle bin folder at 📂$path doesn't exist (yet)" }
+	Set-Location "$path"
+	"📂$path"
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"

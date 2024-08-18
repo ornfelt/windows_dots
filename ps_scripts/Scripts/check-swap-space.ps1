@@ -2,57 +2,60 @@
 .SYNOPSIS
 	Checks the swap space
 .DESCRIPTION
-	This PowerShell script checks the free swap space.
-.PARAMETER MinLevel
-	Specifies the minimum level (10 GB by default)
+	This PowerShell script queries the current status of the swap space and prints it.
+.PARAMETER minLevel
+	Specifies the minimum level in MB (10 MB by default)
 .EXAMPLE
-	PS> ./check-swap-space
-	✅ Swap space uses 63 GB of 1856 GB.
+	PS> ./check-swap-space.ps1
+	✅ Swap space uses 21% of 1GB - 1005MB free
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([int]$MinLevel = 10) # minimum level in GB
+param([int]$minLevel = 10)
 
-function MB2String { param([int64]$Bytes)
-        if ($Bytes -lt 1000) { return "$($Bytes)MB" }
-        $Bytes /= 1000
-        if ($Bytes -lt 1000) { return "$($Bytes)GB" }
-        $Bytes /= 1000
-        if ($Bytes -lt 1000) { return "$($Bytes)TB" }
-        $Bytes /= 1000
-        if ($Bytes -lt 1000) { return "$($Bytes)PB" }
-        $Bytes /= 1000
-        if ($Bytes -lt 1000) { return "$($Bytes)EB" }
+function MB2String { param([int64]$bytes)
+        if ($bytes -lt 1024) { return "$($bytes)MB" }
+        $bytes /= 1024
+        if ($bytes -lt 1024) { return "$($bytes)GB" }
+        $bytes /= 1024
+        if ($bytes -lt 1024) { return "$($bytes)TB" }
+        $bytes /= 1024
+        if ($bytes -lt 1024) { return "$($bytes)PB" }
+        $bytes /= 1024
+        if ($bytes -lt 1024) { return "$($bytes)EB" }
 }
 
 try {
-	[int]$Total = [int]$Used = [int]$Free = 0
+	
 	if ($IsLinux) {
 		$Result = $(free --mega | grep Swap:)
-		[int]$Total = $Result.subString(5,14)
-		[int]$Used = $Result.substring(20,13)
-		[int]$Free = $Result.substring(32,11)
+		[int64]$total = $Result.subString(5,14)
+		[int64]$used = $Result.substring(20,13)
+		[int64]$free = $Result.substring(32,11)
 	} else {
-		$Items = Get-WmiObject -class "Win32_PageFileUsage" -namespace "root\CIMV2" -computername localhost 
-		foreach ($Item in $Items) { 
-			$Total = $Item.AllocatedBaseSize
-			$Used = $Item.CurrentUsage
-			$Free = ($Total - $Used)
-		} 
+		$items = Get-WmiObject -class "Win32_PageFileUsage" -namespace "root\CIMV2" -computername localhost 
+		[int64]$total = [int64]$used = 0
+		foreach ($item in $items) { 
+			$total += $item.AllocatedBaseSize
+			$used += $item.CurrentUsage
+			
+		}
+		[int64]$free = ($total - $used)
 	}
-	if ($Total -eq 0) {
-        	"⚠️ No swap space!"
-	} elseif ($Free -lt $MinLevel) {
-		"⚠️ Only $(MB2String $Free) of $(MB2String $Total) swap space left to use!"
-	} elseif ($Used -eq 0) {
-		"✅ $(MB2String $Total) swap space ready to use"
-	} elseif ($Used -lt $Free) {
-		"✅ Swap space uses $(MB2String $Used) of $(MB2String $Total)"
+	if ($total -eq 0) {
+        	Write-Output "⚠️ No swap space configured"
+	} elseif ($free -eq 0) {
+		Write-Output "⚠️ Swap space of $(MB2String $total) is full"
+	} elseif ($free -lt $minLevel) {
+		Write-Output "⚠️ Swap space has only $(MB2String $free) of $(MB2String $total) free"
+	} elseif ($used -lt 3) {
+		Write-Output "✅ Swap space unused - full $(MB2String $free) free"
 	} else {
-		"✅ Swap space has $(MB2String $Free) of $(MB2String $Total) left to use"
+		[int64]$percent = ($used * 100) / $total
+		Write-Output "✅ Swap space at $percent% of $(MB2String $total) - $(MB2String $free) free"
 	}
 	exit 0 # success
 } catch {

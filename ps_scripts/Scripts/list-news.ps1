@@ -1,34 +1,45 @@
 ﻿<#
 .SYNOPSIS
-	Lists the news
+	Lists the latest news
 .DESCRIPTION
-	This PowerShell script lists the latest news by using RSS (Really Simple Syndication) feeds.
+	This PowerShell script lists the latest news by using a RSS (Really Simple Syndication) feed.
 .PARAMETER RSS_URL
-	Specifies the URL to the RSS feed (Yahoo News by default)
-.PARAMETER MaxLines
+	Specifies the URL to the RSS feed (Yahoo World News by default)
+.PARAMETER maxLines
 	Specifies the maximum number of lines to list (24 by default)
-.PARAMETER Speed
+.PARAMETER speed
         Specifies the speed to write the text (10 ms by default)
 .EXAMPLE
-	PS> ./list-news
+	PS> ./list-news.ps1
+  
+	   UTC   Yahoo News - Latest News & Headlines - https://www.yahoo.com/news/world
+	   ---   -----------------------------------------------------------------------
+	❇️ 09:15 Deadly Mediterranean wildfires kill more than 40
+	...
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$RSS_URL = "https://yahoo.com/news/rss/world", [int]$MaxLines = 24, [int]$Speed = 10)
+param([string]$RSS_URL = "https://news.yahoo.com/rss/world", [int]$maxLines = 24, [int]$speed = 10)
 
 try {
-	[xml]$Content = (Invoke-WebRequest -URI $RSS_URL -useBasicParsing).Content
-	[int]$Count = 1
-	foreach ($Item in $Content.rss.channel.item) {
-		& "$PSScriptRoot/write-typewriter.ps1" "→ $($Item.title)" $Speed
-		if ($Count++ -eq $MaxLines) { break }
+	[xml]$content = (Invoke-WebRequest -URI $RSS_URL -useBasicParsing).Content
+
+	$title = $content.rss.channel.title
+	$URL = $content.rss.channel.link
+	" "
+	"   UTC   $title - $URL"
+	"   ---   -----------------------------------------------------------------------"
+
+	[int]$count = 1
+	foreach ($item in $content.rss.channel.item) {
+		$title = $item.title
+		$time = $item.pubDate.Substring(11, 5)
+		& "$PSScriptRoot/write-typewriter.ps1" "❇️ $time $title" $speed
+		if ($count++ -eq $maxLines) { break }
 	}
-	$Source = $Content.rss.channel.title
-	$Date = $Content.rss.channel.pubDate
-	"     (by *$($Source)* as of $Date)"
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"

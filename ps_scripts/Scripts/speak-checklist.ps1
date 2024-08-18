@@ -6,7 +6,7 @@
 .PARAMETER Name
 	Specifies the name of the checklist
 .EXAMPLE
-	PS> ./speak-checklist
+	PS> ./speak-checklist.ps1
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -16,9 +16,9 @@
 param([string]$Name = "")
 
 try {
-	if ($Name -eq "") { $Name = read-host "Enter the name of the checklist" }
+	if ($Name -eq "") { $Name = Read-Host "Enter the name of the checklist" }
 
-	$Lines = Get-Content -path "$PSScriptRoot/../Data/Checklists/$Name.txt"
+	$Lines = Get-Content -path "$PSScriptRoot/../data/checklists/$Name.txt"
 	clear-host
 	$Step = 1
 	foreach($Line in $Lines) {

@@ -20,3 +20,10 @@ custom_tokyonight_storm:
 
 powerline:
 ![powerline](Screenshots/powerline.jpg?raw=true "powerline")
+
+
+# Script sources
+
+https://github.com/fleschutz/PowerShell
+
+https://github.com/amidaware/community-scripts

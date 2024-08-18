@@ -1,10 +1,10 @@
-<#
+﻿<#
 .SYNOPSIS
 	Installs 9 ZIP
 .DESCRIPTION
 	This PowerShell script installs 9 ZIP from the Microsoft Store.
 .EXAMPLE
-	PS> ./install-nine-zip
+	PS> ./install-nine-zip.ps1
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES

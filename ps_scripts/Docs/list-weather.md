@@ -1,13 +1,15 @@
-## The *list-weather.ps1* PowerShell Script
+Script: *list-weather.ps1*
+========================
 
-This PowerShell script lists the hourly weather report.
+This PowerShell script queries the 48h weather report from wttr.in and lists it in a nice table.
 
-## Parameters
+Parameters
+----------
 ```powershell
-list-weather.ps1 [[-Location] <String>] [<CommonParameters>]
+PS> ./list-weather.ps1 [[-location] <String>] [<CommonParameters>]
 
--Location <String>
-    Specifies the location to use (determined automatically per default)
+-location <String>
+    Specifies the location to use (determined automatically by default)
     
     Required?                    false
     Position?                    1
@@ -20,84 +22,153 @@ list-weather.ps1 [[-Location] <String>] [<CommonParameters>]
     WarningVariable, OutBuffer, PipelineVariable, and OutVariable.
 ```
 
-## Example
+Example
+-------
 ```powershell
-PS> ./list-weather
+PS> ./list-weather.ps1
+TODAY  🌡°C  ☂️mm  💧  💨km/h  ☀️UV  ☁️   👁km   at Munich (Bayern, Germany)
+ 0h   11°   0.0   88%   ↖ 7    1    8%    10   🌙 clear
+...
 
 ```
 
-## Notes
+Notes
+-----
 Author: Markus Fleschutz | License: CC0
 
-## Related Links
+Related Links
+-------------
 https://github.com/fleschutz/PowerShell
 
-## Source Code
+Script Content
+--------------
 ```powershell
 <#
 .SYNOPSIS
 	Lists the weather report
 .DESCRIPTION
-	This PowerShell script lists the hourly weather report.
-.PARAMETER Location
-	Specifies the location to use (determined automatically per default)
+	This PowerShell script queries the 48h weather report from wttr.in and lists it in a nice table.
+.PARAMETER location
+	Specifies the location to use (determined automatically by default)
 .EXAMPLE
-	PS> ./list-weather
+	PS> ./list-weather.ps1
+	TODAY  🌡°C  ☂️mm  💧  💨km/h  ☀️UV  ☁️   👁km   at Munich (Bayern, Germany)
+	 0h   11°   0.0   88%   ↖ 7    1    8%    10   🌙 clear
+	...
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$Location = "") # empty means determine automatically
+param([string]$location = "") # empty means determine automatically
 
-function Describe { param([string]$Desc)
-	switch($Desc) {
-	"Clear"				{ return "🌙 clear       " }
-	"Cloudy"			{ return "☁️ cloudy      " }
+function GetDescription([string]$text) { 
+	switch ($text) {
+	"Blizzard"			{ return "❄️ blizzard ⚠️" }
+	"Blowing snow"			{ return "❄️ blowing snow ⚠️" }
+	"Clear"				{ return "🌙 clear" }
+	"Cloudy"			{ return "☁️ cloudy" }
+	"Fog"				{ return "🌫  fog" }
+	"Freezing fog"			{ return "🌫  freezing fog" }
+	"Heavy rain"			{ return "💧 heavy rain ⚠️" }
+	"Heavy snow"			{ return "❄️ heavy snow ⚠️" }
 	"Light drizzle"			{ return "💧 light drizzle" }
-	"Light rain"			{ return "💧 light rain   " }
+	"Light freezing rain"		{ return "💧 light freezing rain ⚠️" }
+	"Light rain"			{ return "💧 light rain" }
 	"Light rain shower"		{ return "💧 light rain shower" }
-	"Mist"				{ return "🌫  misty      " }
-	"Overcast"			{ return "☁️ overcast    " }
+	"Light sleet"			{ return "❄️ light sleet" }
+	"Light sleet showers"		{ return "❄️ light sleet showers" }
+	"Light snow"			{ return "❄️ light snow" }
+	"Light snow showers"		{ return "❄️ light snow showers" }
+	"Moderate or heavy freezing rain"{return "💧 moderate or heavy freezing rain ⚠️" }
+	"Moderate or heavy sleet"	{ return "❄️ moderate or heavy sleet ⚠️" }
+	"Moderate or heavy rain shower" { return "💧 moderate or heavy rain shower ⚠️" }
+	"Moderate or heavy rain in area with thunder" { return "💧 moderate or heavy rain in area with thunder ⚠️" }
+	"Moderate or heavy snow showers"{ return "❄️ moderate or heavy snow showers ⚠️" }
+	"Moderate or heavy snow in area with thunder" { return "❄️ moderate or heavy snow in area with thunder ⚠️" }
+	"Moderate rain"			{ return "💧 moderate rain" }
+	"Moderate rain at times"	{ return "💧 moderate rain at times" }
+	"Moderate snow"			{ return "❄️ moderate snow" }
+	"Mist"				{ return "🌫  misty" }
+	"Overcast"			{ return "☁️ overcast" }
 	"Partly cloudy"			{ return "⛅️partly cloudy" }
+	"Patchy heavy snow"		{ return "❄️ patchy heavy snow ⚠️" }
+	"Patchy light drizzle"     	{ return "💧 patchy light drizzle" }
 	"Patchy light rain"     	{ return "💧 patchy light rain" }
+	"Patchy light rain in area with thunder" { return "💧 patchy light rain in area with thunder" }
+	"Patchy light rain with thunder" { return "💧 patchy light rain with thunder" }
+	"Patchy light snow"		{ return "❄️ patchy light snow" }
+	"Patchy moderate snow"		{ return "❄️ patchy moderate snow" }
 	"Patchy rain possible"  	{ return "💧 patchy rain possible" }
-	"Sunny"				{ return "☀️ sunny       " }
+	"Patchy rain nearby"		{ return "💧 patchy rain nearby" }
+	"Patchy sleet nearby"		{ return "❄️ patchy sleet nearby" }
+	"Patchy snow possible"  	{ return "❄️ patchy snow possible" }
+	"Sunny"				{ return "☀️ sunny" }
 	"Thundery outbreaks possible"	{ return "⚡️thundery outbreaks possible" }
-	default				{ return "$Desc" }
+	"Thundery outbreaks in nearby"	{ return "⚡️thundery outbreaks in nearby" }
+	default				{ return $text }
+	}
+}
+
+function GetWindDir([string]$text) {
+	switch($text) {
+	"NW"	{ return "↘" }
+	"NNW"	{ return "↓" }
+	"N"	{ return "↓" }
+	"NNE"	{ return "↓" }
+	"NE"	{ return "↙" }
+	"ENE"	{ return "←" }
+	"E"	{ return "←" }
+	"ESE"	{ return "←" }
+	"SE"	{ return "↖" }
+	"SSE"	{ return "↑" }
+	"S"	{ return "↑" }
+	"SSW"	{ return "↑" }
+	"SW"	{ return "↗" }
+	"WSW"	{ return "→" }
+	"W"	{ return "→" }
+	"WNW"	{ return "→" }
+	default { return "$text" }
 	}
 }
 
 try {
-	$Weather = (Invoke-WebRequest -URI http://wttr.in/${Location}?format=j1 -userAgent "curl" -useBasicParsing).Content | ConvertFrom-Json
-	$Area = $Weather.nearest_area.areaName.value
-	$Region = $Weather.nearest_area.region.value
-	$Country = $Weather.nearest_area.country.value	
-	[int]$Day = 0
-	foreach($Hourly in $Weather.weather.hourly) {
-		$Hour = $Hourly.time / 100
-		$Temp = $Hourly.tempC
-		$Precip = $Hourly.precipMM
-		$Humidity = $Hourly.humidity
-		$Pressure = $Hourly.pressure
-		$WindSpeed = $Hourly.windspeedKmph
-		$WindDir = $Hourly.winddir16Point
-		$UV = $Hourly.uvIndex
-		$Clouds = $Hourly.cloudcover
-		$Desc = $Hourly.weatherDesc.value
-		if ($Hour -eq 0) {
-			if ($Day -eq 0) {
-				Write-Host -foregroundColor green "Today  🌡°C   ☂️mm   💧   💨km/h from  ☀️UV   ☁️    at $Area ($Region, $Country)"
-			} elseif ($Day -eq 1) {
-				Write-Host -foregroundColor green "Tomorrow"
+	Write-Progress "Loading weather data from http://wttr.in ..."
+	$weather = (Invoke-WebRequest -URI http://wttr.in/${location}?format=j1 -userAgent "curl" -useBasicParsing).Content | ConvertFrom-Json
+	$area = $weather.nearest_area.areaName.value
+	$region = $weather.nearest_area.region.value
+	$country = $weather.nearest_area.country.value
+	Write-Progress -completed "Done."
+	
+	[int]$day = 0
+	foreach($hourly in $weather.weather.hourly) {
+		$hour = $hourly.time / 100
+		$tempC = $(($hourly.tempC.toString()).PadLeft(3))
+		$precip = $($($hourly.precipMM).PadLeft(4))
+		$humidity = $(($hourly.humidity.toString()).PadLeft(3))
+		$pressure = $hourly.pressure
+		$windSpeed = $(($hourly.windspeedKmph.toString()).PadLeft(2))
+		$windDir = GetWindDir $hourly.winddir16Point
+		$UV = $hourly.uvIndex
+		$clouds = $(($hourly.cloudcover.toString()).PadLeft(3))
+		$visib = $(($hourly.visibility.toString()).PadLeft(2))
+		$desc = GetDescription $hourly.weatherDesc.value.trim()
+		if ($hour -eq 0) {
+			if ($day -eq 0) {
+				Write-Host "TODAY  🌡°C  ☂️mm  💧  💨km/h  ☀️UV  ☁️   👁km   at $area ($region, $country)" -foregroundColor green
+			} elseif ($day -eq 1) {
+				$date = (Get-Date).AddDays(1)
+				[string]$dayOfWeek = $date.DayOfWeek
+				Write-Host "$($dayOfWeek.toUpper())" -foregroundColor green
 			} else {
-				Write-Host -foregroundColor green "Day after tomorrow"
+				$date = (Get-Date).AddDays(2)
+				[string]$dayOfWeek = $date.DayOfWeek
+				Write-Host "$($dayOfWeek.toUpper())" -foregroundColor green
 			}
-			$Day++
+			$day++
 		}
-		"$(($Hour.toString()).PadLeft(2))°°   $(($Temp.toString()).PadLeft(2))°   $($Precip)   $(($Humidity.toString()).PadLeft(3))%      $(($WindSpeed.toString()).PadLeft(2)) $WindDir`t$($UV)   $(($Clouds.toString()).PadLeft(3))%   $(Describe $Desc)"
-		$Hour++
+		"$(($hour.toString()).PadLeft(2))h  $tempC°   $precip  $humidity%   $($windDir)$windSpeed    $UV   $clouds%   $visib   $desc"
 	}
 	exit 0 # success
 } catch {
@@ -106,4 +177,4 @@ try {
 }
 ```
 
-*Generated by convert-ps2md.ps1 using the comment-based help of list-weather.ps1*
+*(generated by convert-ps2md.ps1 using the comment-based help of list-weather.ps1 as of 05/19/2024 10:25:22)*

@@ -1,34 +1,49 @@
 ﻿<#
 .SYNOPSIS
-	Lists all PowerShell scripts in this repository
+	Lists the PowerShell scripts
 .DESCRIPTION
-	This PowerShell script lists all PowerShell scripts in the repository (sorted alphabetically).
+	This PowerShell script lists the Mega collection of PowerShell scripts (sorted alphabetically and optionally by category).
+.PARAM category
+	Specifies the desired category: audio, desktop, filesystem, fun, git, misc, or: * (default)
 .EXAMPLE
-	PS> ./list-scripts
+	PS> ./list-scripts.ps1
+
+	 No Script                    Category   Description
+	 -- ------                    --------   -----------
+	  1 add-firewall-rules.ps1    misc       Adds firewall rules for executables (needs admin rights)
+	...
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-function ListScripts { param([string]$FilePath)
-	write-progress "Reading $FilePath..."
-	$Table = import-csv "$FilePath"
-	foreach($Row in $Table) {
-		New-Object PSObject -Property @{
-			'PowerShell Script' = "$($Row.Script)"
-			'Description' = "$($Row.Description)"
+param([string]$category = "*")
+
+function ListScripts([string]$category) { 
+	Write-Progress "Loading data from ../data/script.csv..."
+	$table = Import-CSV "$PSScriptRoot/../data/scripts.csv"
+	[int]$No = 1
+	foreach($row in $table) {
+		if ($row.CATEGORY -like $category) { 
+			New-Object PSObject -Property @{
+				'No' = $No++
+				'Script' = $row.SCRIPT
+				'Category' = $row.CATEGORY
+				'Description' = $row.DESCRIPTION
+			}
 		}
 	}
-	$global:NumScripts = $Table.Count
-	write-progress -completed "Reading $FilePath..."
+	Write-Progress -completed " "
 }
 
 try {
-	$PathToRepo = "$PSScriptRoot/.."
-	ListScripts "$PathToRepo/Data/scripts.csv" | format-table -property "PowerShell Script",Description
-
-	"✔️ $($global:NumScripts) PowerShell scripts total"
+	ListScripts $category | Format-Table -property No,Script,Category,Description
+#	$files = Get-ChildItem -path "./*.ps1" -attributes !Directory
+#	foreach ($file in $files) {
+#		$help = Get-Help $file -full
+#		Write-Output "$($file.Name), ,`"$($help.Synopsis)`","
+#	}
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"

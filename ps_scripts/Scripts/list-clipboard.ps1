@@ -4,7 +4,8 @@
 .DESCRIPTION
 	This PowerShell script lists the contents of the clipboard.
 .EXAMPLE
-	PS> ./list-clipboard
+	PS> ./list-clipboard.ps1
+	📋 test
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -12,7 +13,8 @@
 #>
 
 try {
-	"📋 $(get-clipboard)"
+	[string]$text = (Get-Clipboard)
+	Write-Output "📋 `“ $text `„"
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"

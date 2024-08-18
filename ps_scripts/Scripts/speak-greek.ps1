@@ -1,12 +1,12 @@
 ﻿<#
 .SYNOPSIS
-	Speaks text with a Greek text-to-speech voice
+	Speaks text in Greek
 .DESCRIPTION
 	This PowerShell script speaks the given text with a Greek text-to-speech (TTS) voice.
 .PARAMETER text
-	Specifies the text to speak
+	Specifies the Greek text to speak
 .EXAMPLE
-	PS> ./speak-greek "γεια"
+	PS> ./speak-greek.ps1 "γεια"
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -16,7 +16,7 @@
 param([string]$text = "")
 
 try {
-	if ($text -eq "") { $text = read-host "Enter the Greek text to speak" }
+	if ($text -eq "") { $text = Read-Host "Enter the Greek text to speak" }
 
 	$TTS = New-Object -ComObject SAPI.SPVoice
 	foreach ($Voice in $TTS.GetVoices()) {
@@ -26,7 +26,7 @@ try {
 			exit 0 # success
 		}
 	}
-	throw "No Greek voice for text-to-speech (TTS) found - please install one"
+	throw "No Greek text-to-speech voice found - please install one"
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
 	exit 1

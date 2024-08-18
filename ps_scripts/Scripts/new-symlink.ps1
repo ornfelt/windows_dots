@@ -8,14 +8,14 @@
 .PARAMETER target
 	Specifies the path to target
 .EXAMPLE
-	PS> ./new-symlink C:\Temp\HDD C:\
+	PS> ./new-symlink.ps1 C:\Temp\HDD C:\
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$symlink = "", $[string]target = "")
+param([string]$symlink = "", [string]$target = "")
 
 try {
 	if ($symlink -eq "" ) { $symlink = read-host "Enter new symlink filename" }

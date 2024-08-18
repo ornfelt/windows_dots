@@ -1,10 +1,10 @@
-<#
+﻿<#
 .SYNOPSIS
 	Installs Visual Studio Code
 .DESCRIPTION
 	This PowerShell script installs Visual Studio Code.
 .EXAMPLE
-	PS> ./install-visual-studio-code
+	PS> ./install-visual-studio-code.ps1
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES

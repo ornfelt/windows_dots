@@ -1,10 +1,10 @@
-## The *display-time.ps1* PowerShell Script
+## The *display-time.ps1* Script
 
 This PowerShell script displays the current time (for 10 seconds by default)
 
 ## Parameters
 ```powershell
-display-time.ps1 [[-Seconds] <Int32>] [<CommonParameters>]
+/home/mf/Repos/PowerShell/Scripts/display-time.ps1 [[-Seconds] <Int32>] [<CommonParameters>]
 
 -Seconds <Int32>
     Specifies the number of seconds to display the time
@@ -53,12 +53,12 @@ param([int]$Seconds = 10)
 
 try {
 	for ([int]$i = 0; $i -lt $Seconds; $i++) {
-		clear-host
-		write-output ""
+		Clear-Host
+		Write-Output ""
 		$CurrentTime = Get-Date -format "yyyy-MM-dd HH:mm:ss" 
 		./write-big $CurrentTime
-		write-output ""
-		start-sleep -s 1
+		Write-Output ""
+		Start-Sleep -seconds 1
 	}
 	exit 0 # success
 } catch {

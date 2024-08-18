@@ -1,9 +1,11 @@
-## The *copy-photos-sorted.ps1* PowerShell Script
+Script: *copy-photos-sorted.ps1*
+========================
 
-copy-photos-sorted.ps1 [[-SourceDir] <string>] [[-TargetDir] <string>]
+copy-photos-sorted.ps1 [[-sourceDir] <string>] [[-targetDir] <string>]
 
 
-## Parameters
+Parameters
+----------
 ```powershell
 
 
@@ -12,31 +14,34 @@ copy-photos-sorted.ps1 [[-SourceDir] <string>] [[-TargetDir] <string>]
     WarningVariable, OutBuffer, PipelineVariable, and OutVariable.
 ```
 
-## Source Code
+Script Content
+--------------
 ```powershell
 <#
 .SYNOPSIS
 	Copy photos sorted by year and month
 .DESCRIPTION
-	This PowerShell script copies image files from SourceDir to TargetDir sorted by year and month.
-.PARAMETER SourceDir
+	This PowerShell script copies image files from sourceDir to targetDir sorted by year and month.
+.PARAMETER sourceDir
 	Specifies the path to the source folder
-.PARAMTER TargetDir
+.PARAMTER targetDir
 	Specifies the path to the target folder
 .EXAMPLE
-	PS> ./copy-photos-sorted D:\MyPhone\DCIM C:\MyPhotos
+	PS> ./copy-photos-sorted.ps1 D:\iPhone\DCIM C:\MyPhotos
+	⏳ Copying IMG_20230903_134445.jpg to C:\MyPhotos\2023\09 SEP\...
+	✔️ Copied 1 photo to 📂C:\MyPhotos in 41 sec
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$SourceDir = "", [string]$TargetDir = "")
+param([string]$sourceDir = "", [string]$targetDir = "")
 
-function CopyFile { param([string]$SourcePath, [string]$TargetDir, [int]$Date, [string]$Filename)
-	[int]$Year = $Date / 10000
-	[int]$Month = ($Date / 100) % 100
-	$MonthDir = switch($Month) {
+function CopyFile { param([string]$sourcePath, [string]$targetDir, [int]$date, [string]$filename)
+	[int]$year = $date / 10000
+	[int]$month = ($date / 100) % 100
+	$monthDir = switch($month) {
 	1  {"01 JAN"}
 	2  {"02 FEB"}
 	3  {"03 MAR"}
@@ -50,47 +55,55 @@ function CopyFile { param([string]$SourcePath, [string]$TargetDir, [int]$Date, [
 	11 {"11 NOV"}
 	12 {"12 DEC"}
 	}
-	$TargetPath = "$TargetDir/$Year/$MonthDir/$Filename"
-	if (test-path "$TargetPath" -pathType leaf) {
-		"⏳ Skipping $($Filename): already existing..."
+	$TargetPath = "$targetDir/$year/$monthDir/$filename"
+	if (Test-Path "$TargetPath" -pathType leaf) {
+		Write-Host "⏳ Skipping existing $targetDir\$year\$monthDir\$filename..."
 	} else {
-		"⏳ Copying $Filename to $Year/$MonthDir..."
-		new-item -path "$TargetDir" -name "$Year" -itemType "directory" -force | out-null
-		new-item -path "$TargetDir/$Year" -name "$MonthDir" -itemType "directory" -force | out-null
-		copy-item "$SourcePath" "$TargetPath" -force
+		Write-Host "⏳ Copying $filename to $targetDir\$year\$monthDir\..."
+		New-Item -path "$targetDir" -name "$year" -itemType "directory" -force | out-null
+		New-Item -path "$targetDir/$year" -name "$monthDir" -itemType "directory" -force | out-null
+		Copy-Item "$sourcePath" "$TargetPath" -force
 	}
 }
 
 try {
-	if ($SourceDir -eq "") { $SourceDir = read-host "Enter path to source directory" }
-	if ($TargetDir -eq "") { $TargetDir = read-host "Enter path to target directory" }
+	if ($sourceDir -eq "") { $sourceDir = Read-Host "Enter file path to the source directory" }
+	if ($targetDir -eq "") { $targetDir = Read-Host "Enter file path to the target directory" }
+	$stopWatch = [system.diagnostics.stopWatch]::startNew()
 
-	$StopWatch = [system.diagnostics.stopwatch]::startNew()
-	$Files = (Get-ChildItem "$SourceDir\*.jpg" -attributes !Directory)
-	"Found $($Files.Count) photos in 📂$SourceDir..."
-	foreach ($File in $Files) {
-		$Filename = (Get-Item "$File").Name
-		if ("$Filename" -like "IMG_*_*.jpg") {
-			$Array = $Filename.split("_")
-			CopyFile "$File" "$TargetDir" $Array[1] "$Filename"
-		} elseif ("$Filename" -like "IMG-*-*.jpg") {
-			$Array = $Filename.split("-")
-			CopyFile "$File" "$TargetDir" $Array[1] "$Filename"
-		} elseif ("$Filename" -like "PANO_*_*.jpg") {
-			$Array = $Filename.split("_")
-			CopyFile "$File"  "$TargetDir" $Array[1] "$Filename"
-		} elseif ("$Filename" -like "PANO-*-*.jpg") {
-			$Array = $Filename.split("-")
-			CopyFile "$File" "$TargetDir" $Array[1] "$Filename"
-		} elseif ("$Filename" -like "SAVE_*_*.jpg") {
-			$Array = $Filename.split("_")
-			CopyFile "$File" "$TargetDir" $Array[1] "$Filename"
+	Write-Host "⏳ Checking source directory 📂$($sourceDir)..."
+	if (-not(Test-Path "$sourceDir" -pathType container)) { throw "Can't access source directory: $sourceDir" }
+	$files = (Get-ChildItem "$sourceDir\*.jpg" -attributes !Directory)
+
+	Write-Host "⏳ Checking target directory 📂$($targetDir)..."
+	if (-not(Test-Path "$targetDir" -pathType container)) { throw "Can't access target directory: $targetDir" }
+
+	foreach($file in $files) {
+		$filename = (Get-Item "$file").Name
+		if ("$filename" -like "IMG_*_*.jpg") {
+			$Array = $filename.split("_")
+			CopyFile "$file" "$targetDir" $Array[1] "$filename"
+		} elseif ("$filename" -like "IMG-*-*.jpg") {
+			$Array = $filename.split("-")
+			CopyFile "$file" "$targetDir" $Array[1] "$filename"
+		} elseif ("$filename" -like "PANO_*_*.jpg") {
+			$Array = $filename.split("_")
+			CopyFile "$file"  "$targetDir" $Array[1] "$filename"
+		} elseif ("$filename" -like "PANO-*-*.jpg") {
+			$Array = $filename.split("-")
+			CopyFile "$file" "$targetDir" $Array[1] "$filename"
+		} elseif ("$filename" -like "SAVE_*_*.jpg") {
+			$Array = $filename.split("_")
+			CopyFile "$file" "$targetDir" $Array[1] "$filename"
+		} elseif ("$filename" -like "PXL_*_*.jpg") {
+			$Array = $filename.split("_")
+			CopyFile "$file" "$targetDir" $Array[1] "$filename"
 		} else {
-			"⏳ Skipping $($Filename): unknown filename format..."
+			Write-Host "⏳ Skipping $filename with unknown filename format..."
 		}
 	}
-	[int]$Elapsed = $StopWatch.Elapsed.TotalSeconds
-	"✔️ $($Files.Count) photos copied from 📂$SourceDir to 📂$TargetDir in $Elapsed sec"
+	[int]$elapsed = $stopWatch.Elapsed.TotalSeconds
+	"✔️ Copied $($files.Count) photos to 📂$targetDir in $elapsed sec"
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
@@ -98,4 +111,4 @@ try {
 }
 ```
 
-*Generated by convert-ps2md.ps1 using the comment-based help of copy-photos-sorted.ps1*
+*(generated by convert-ps2md.ps1 using the comment-based help of copy-photos-sorted.ps1 as of 05/19/2024 10:25:19)*

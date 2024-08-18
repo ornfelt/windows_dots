@@ -4,7 +4,7 @@
 .DESCRIPTION
 	This PowerShell script lists OS releases and download URL.
 .EXAMPLE
-	PS> ./list-os-releases
+	PS> ./list-os-releases.ps1
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -15,7 +15,7 @@ try {
 	write-progress "Reading OS_IPFS_hashes.csv ..."
 
 	$PathToRepo = "$PSScriptRoot/.."
-	$PathToCsvFile = "$PathToRepo/Data/os-release.csv"
+	$PathToCsvFile = "$PathToRepo/data/os-release.csv"
 	invoke-webRequest -URI "https://fleschutz.droppages.com/downloads/OS_IPFS_hashes.csv" -outFile "$PathToCsvFile"
 
 	$Table = import-csv "$PathToCsvFile"

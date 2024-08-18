@@ -1,88 +1,28 @@
-## The *write-animated.ps1* PowerShell Script
+Script: *write-animated.ps1*
+========================
 
-This PowerShell script writes animated text.
+This PowerShell script writes text centered and animated to the console.
 
-## Parameters
+Parameters
+----------
 ```powershell
-write-animated.ps1 [[-Line1] <Object>] [[-Line2] <Object>] [[-Line3] <Object>] [[-Line4] <Object>] [[-Line5] <Object>] [[-Line6] <Object>] [[-Line7] <Object>] [[-Line8] <Object>] [[-Line9] <Object>] [[-Speed] <Int32>] [<CommonParameters>]
+PS> ./write-animated.ps1 [[-text] <String>] [[-speed] <Int32>] [<CommonParameters>]
 
--Line1 <Object>
+-text <String>
+    Specifies the text line to write ("Welcome to PowerShell" by default)
     
     Required?                    false
     Position?                    1
-    Default value                
+    Default value                Welcome to PowerShell
     Accept pipeline input?       false
     Accept wildcard characters?  false
 
--Line2 <Object>
+-speed <Int32>
+    Specifies the animation speed per character (10ms by default)
     
     Required?                    false
     Position?                    2
-    Default value                
-    Accept pipeline input?       false
-    Accept wildcard characters?  false
-
--Line3 <Object>
-    
-    Required?                    false
-    Position?                    3
-    Default value                
-    Accept pipeline input?       false
-    Accept wildcard characters?  false
-
--Line4 <Object>
-    
-    Required?                    false
-    Position?                    4
-    Default value                
-    Accept pipeline input?       false
-    Accept wildcard characters?  false
-
--Line5 <Object>
-    
-    Required?                    false
-    Position?                    5
-    Default value                
-    Accept pipeline input?       false
-    Accept wildcard characters?  false
-
--Line6 <Object>
-    
-    Required?                    false
-    Position?                    6
-    Default value                
-    Accept pipeline input?       false
-    Accept wildcard characters?  false
-
--Line7 <Object>
-    
-    Required?                    false
-    Position?                    7
-    Default value                
-    Accept pipeline input?       false
-    Accept wildcard characters?  false
-
--Line8 <Object>
-    
-    Required?                    false
-    Position?                    8
-    Default value                
-    Accept pipeline input?       false
-    Accept wildcard characters?  false
-
--Line9 <Object>
-    
-    Required?                    false
-    Position?                    9
-    Default value                
-    Accept pipeline input?       false
-    Accept wildcard characters?  false
-
--Speed <Int32>
-    
-    Required?                    false
-    Position?                    10
-    Default value                30
+    Default value                10
     Accept pipeline input?       false
     Accept wildcard characters?  false
 
@@ -91,73 +31,65 @@ write-animated.ps1 [[-Line1] <Object>] [[-Line2] <Object>] [[-Line3] <Object>] [
     WarningVariable, OutBuffer, PipelineVariable, and OutVariable.
 ```
 
-## Example
+Example
+-------
 ```powershell
-PS> ./write-animated "Hello World"
+PS> ./write-animated.ps1
+(watch and enjoy)
 
 ```
 
-## Notes
+Notes
+-----
 Author: Markus Fleschutz | License: CC0
 
-## Related Links
+Related Links
+-------------
 https://github.com/fleschutz/PowerShell
 
-## Source Code
+Script Content
+--------------
 ```powershell
 <#
 .SYNOPSIS
 	Writes animated text
 .DESCRIPTION
-	This PowerShell script writes animated text.
+	This PowerShell script writes text centered and animated to the console.
+.PARAMETER text
+	Specifies the text line to write ("Welcome to PowerShell" by default)
+.PARAMETER speed
+	Specifies the animation speed per character (10ms by default)
 .EXAMPLE
-	PS> ./write-animated "Hello World"
+	PS> ./write-animated.ps1
+	(watch and enjoy)
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param($Line1 = "", $Line2 = "", $Line3 = "", $Line4 = "", $Line5 = "", $Line6 = "", $Line7 = "", $Line8 = "", $Line9 = "", [int]$Speed = 30) # 30 ms pause
+param([string]$text = "Welcome to PowerShell", [int]$speed = 10) # 10ms
 
-$TerminalWidth = 120 # characters
-
-function WriteLine { param([string]$Line, [int]$Speed)
-	[int]$Start = 1
-	[int]$End = $Line.Length
-	$StartPosition = $HOST.UI.RawUI.CursorPosition
-	$Spaces = "                                                                     "
-
-	if ($Line -eq "") { return }
-	foreach ($Pos in $Start .. $End) {
-		$TextToDisplay = $Spaces.Substring(0, $TerminalWidth / 2 - $pos / 2) + $Line.Substring(0, $Pos)
-		write-host -nonewline $TextToDisplay
-		start-sleep -milliseconds $Speed
-		$HOST.UI.RawUI.CursorPosition = $StartPosition
+function WriteLine([string]$line) {
+	[int]$end = $line.Length
+	$startPos = $HOST.UI.RawUI.CursorPosition
+	$spaces = "                                                                     "
+	[int]$termHalfWidth = 120 / 2
+	foreach($pos in 1 .. $end) {
+		$HOST.UI.RawUI.CursorPosition = $startPos
+		Write-Host "$($spaces.Substring(0, $termHalfWidth - $pos / 2) + $line.Substring(0, $pos))" -noNewline
+		Start-Sleep -milliseconds $speed
 	}
-	write-host ""
+	Write-Host ""
 }
 
-if ($Line1 -eq "") {
-	$Line1 = "Welcome to PowerShell Scripts"
-	$Line2 = " "
-	$Line3 = "This repository contains useful and cross-platform PowerShell scripts."
-	$Line4 = " "
-	$Line5 = "Best regards,"
-	$Line6 = "Markus"
+try {
+	WriteLine $text 
+	exit 0 # success
+} catch {
+        "⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
+        exit 1
 }
-write-host ""
-WriteLine $Line1 $Speed
-WriteLine $Line2 $Speed
-WriteLine $Line3 $Speed
-WriteLine $Line4 $Speed
-WriteLine $Line5 $Speed
-WriteLine $Line6 $Speed
-WriteLine $Line7 $Speed
-WriteLine $Line8 $Speed
-WriteLine $Line9 $Speed
-write-host ""
-exit 0 # success
 ```
 
-*Generated by convert-ps2md.ps1 using the comment-based help of write-animated.ps1*
+*(generated by convert-ps2md.ps1 using the comment-based help of write-animated.ps1 as of 05/19/2024 10:25:27)*

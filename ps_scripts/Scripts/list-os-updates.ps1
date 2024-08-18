@@ -1,33 +1,36 @@
 ﻿<#
 .SYNOPSIS
-	Lists the latest operating system updates
+	Lists OS updates
 .DESCRIPTION
-	This PowerShell script lists the latest operating system update news.
+	This PowerShell script lists the latest updates for operating systems.
 .PARAMETER RSS_URL
 	Specifies the URL to the RSS feed
 .PARAMETER MaxCount
 	Specifies the number of news to list
 .EXAMPLE
-	PS> ./list-os-updates
+	PS> ./list-os-updates.ps1
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$RSS_URL = "https://distrowatch.com/news/dwd.xml", [int]$MaxCount = 20)
+param([string]$RSS_URL = "https://distrowatch.com/news/dwd.xml", [int]$MaxCount = 30)
 
 try {
-	& "$PSScriptRoot/write-big.ps1" "OS Updates"
-	[xml]$Content = (invoke-webRequest -URI $RSS_URL).Content
-	"`t(by $($Content.rss.channel.title))"
+	" "
+	"Date  OS Update"
+	"----  ---------"
+	[xml]$Content = (Invoke-WebRequest -URI $RSS_URL -userAgent "curl" -useBasicParsing).Content
+
 
 	[int]$Count = 0
 	foreach ($item in $Content.rss.channel.item) {
-		"`t→ $($item.title)"
+		"$($item.title)"
 		$Count++
 		if ($Count -eq $MaxCount) { break }
 	}
+	"      (source: DistroWatch.com)"
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"

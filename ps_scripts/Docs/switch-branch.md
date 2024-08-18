@@ -1,13 +1,15 @@
-## The *switch-branch.ps1* PowerShell Script
+Script: *switch-branch.ps1*
+========================
 
-This PowerShell script switches to another branch in a Git repository (including submodules).
+This PowerShell script switches to the given branch in a Git repository (also updates submodules).
 
-## Parameters
+Parameters
+----------
 ```powershell
-switch-branch.ps1 [[-BranchName] <String>] [[-RepoDir] <String>] [<CommonParameters>]
+PS> ./switch-branch.ps1 [[-branchName] <String>] [[-pathToRepo] <String>] [<CommonParameters>]
 
--BranchName <String>
-    Specifies the branch name
+-branchName <String>
+    Specifies the Git branch name to switch to
     
     Required?                    false
     Position?                    1
@@ -15,8 +17,8 @@ switch-branch.ps1 [[-BranchName] <String>] [[-RepoDir] <String>] [<CommonParamet
     Accept pipeline input?       false
     Accept wildcard characters?  false
 
--RepoDir <String>
-    Specifies the path to the Git repository
+-pathToRepo <String>
+    Specifies the file path to the local Git repository
     
     Required?                    false
     Position?                    2
@@ -29,76 +31,91 @@ switch-branch.ps1 [[-BranchName] <String>] [[-RepoDir] <String>] [<CommonParamet
     WarningVariable, OutBuffer, PipelineVariable, and OutVariable.
 ```
 
-## Example
+Example
+-------
 ```powershell
-PS> ./switch-branch main C:\MyRepo
+PS> ./switch-branch main C:\Repos\rust
+⏳ (1/6) Searching for Git executable...   git version 2.43.0.windows.1
+⏳ (2/6) Checking local repository...      📂C:\Repos\rust
+⏳ (3/6) Fetching remote updates...
+⏳ (4/6) Switching to branch 'main'...
+⏳ (5/6) Pulling remote updates...
+⏳ (6/6) Updating submodules...
+✔️ Switched 📂rust repo to 'main' branch in 22s.
 
 ```
 
-## Notes
+Notes
+-----
 Author: Markus Fleschutz | License: CC0
 
-## Related Links
+Related Links
+-------------
 https://github.com/fleschutz/PowerShell
 
-## Source Code
+Script Content
+--------------
 ```powershell
 <#
 .SYNOPSIS
 	Switches the Git branch
 .DESCRIPTION
-	This PowerShell script switches to another branch in a Git repository (including submodules).
-.PARAMETER BranchName
-	Specifies the branch name
-.PARAMETER RepoDir
-	Specifies the path to the Git repository
+	This PowerShell script switches to the given branch in a Git repository (also updates submodules).
+.PARAMETER branchName
+	Specifies the Git branch name to switch to
+.PARAMETER pathToRepo
+	Specifies the file path to the local Git repository
 .EXAMPLE
-	PS> ./switch-branch main C:\MyRepo
+	PS> ./switch-branch main C:\Repos\rust
+	⏳ (1/6) Searching for Git executable...   git version 2.43.0.windows.1
+	⏳ (2/6) Checking local repository...      📂C:\Repos\rust
+	⏳ (3/6) Fetching remote updates...
+	⏳ (4/6) Switching to branch 'main'...
+	⏳ (5/6) Pulling remote updates...
+	⏳ (6/6) Updating submodules...
+	✔️ Switched 📂rust repo to 'main' branch in 22s.
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
 	Author: Markus Fleschutz | License: CC0
 #>
 
-param([string]$BranchName = "", [string]$RepoDir = "$PWD")
+param([string]$branchName = "", [string]$pathToRepo = "$PWD")
 
 try {
-	if ($BranchName -eq "") { $BranchName = read-host "Enter name of branch to switch to" }
-	if ($RepoDir -eq "") { $RepoDir = read-host "Enter path to the Git repository" }
+	if ($branchName -eq "") { $branchName = Read-Host "Enter the branch name to switch to" }
 
-	$StopWatch = [system.diagnostics.stopwatch]::startNew()
+	$stopWatch = [system.diagnostics.stopwatch]::startNew()
 
-	Write-Host "⏳ (1/6) Searching for Git executable...  " -noNewline
+	Write-Host "⏳ (1/6) Searching for Git executable...   " -noNewline
 	& git --version
 	if ($lastExitCode -ne "0") { throw "Can't execute 'git' - make sure Git is installed and available" }
 
-	$RepoDir = Resolve-Path "$RepoDir"
-	$RepoDirName = (Get-Item "$RepoDir").Name
-	"⏳ (2/6) Checking folder 📂$RepoDirName..."
-	if (-not(Test-Path "$RepoDir" -pathType container)) { throw "Can't access directory: $RepoDir" }
+	Write-Host "⏳ (2/6) Checking local repository...      📂$pathToRepo"
+	if (-not(Test-Path "$pathToRepo" -pathType container)) { throw "Can't access repo folder: $pathToRepo" }
+	$result = (git -C "$pathToRepo" status)
+	if ($lastExitCode -ne "0") { throw "'git status' in $pathToRepo failed with exit code $lastExitCode" }
+	if ("$result" -notmatch "nothing to commit, working tree clean") { throw "Git repository is NOT clean: $result" }
+	$repoDirName = (Get-Item "$pathToRepo").Name
 
-	$Result = (git status)
-	if ($lastExitCode -ne "0") { throw "'git status' in $RepoDir failed with exit code $lastExitCode" }
-	if ("$Result" -notmatch "nothing to commit, working tree clean") { throw "Git repository is NOT clean: $Result" }
-
-	"⏳ (3/6) Fetching updates..."
-	& git -C "$RepoDir" fetch --all --prune --prune-tags --force
+	"⏳ (3/6) Fetching remote updates..."
+	& git -C "$pathToRepo" fetch --all --prune --prune-tags --force
 	if ($lastExitCode -ne "0") { throw "'git fetch' failed with exit code $lastExitCode" }
 
-	"⏳ (4/6) Switching to branch '$BranchName'..."
-	& git -C "$RepoDir" checkout --recurse-submodules "$BranchName"
-	if ($lastExitCode -ne "0") { throw "'git checkout $BranchName' failed with exit code $lastExitCode" }
+	"⏳ (4/6) Switching to branch '$branchName'..."
+	& git -C "$pathToRepo" checkout --recurse-submodules "$branchName"
+	if ($lastExitCode -ne "0") { throw "'git checkout $branchName' failed with exit code $lastExitCode" }
 
-	"⏳ (5/6) Pulling updates..."
-	& git -C "$RepoDir" pull --recurse-submodules
+	"⏳ (5/6) Pulling remote updates..."
+	& git -C "$pathToRepo" pull --recurse-submodules
 	if ($lastExitCode -ne "0") { throw "'git pull' failed with exit code $lastExitCode" }
 
 	"⏳ (6/6) Updating submodules..."	
-	& git -C "$RepoDir" submodule update --init --recursive
+	& git -C "$pathToRepo" submodule update --init --recursive
 	if ($lastExitCode -ne "0") { throw "'git submodule update' failed with exit code $lastExitCode" }
 
-	[int]$Elapsed = $StopWatch.Elapsed.TotalSeconds
-	"✔️ switched 📂$RepoDirName repo to $BranchName branch in $Elapsed sec"
+	[int]$elapsed = $stopWatch.Elapsed.TotalSeconds
+	"✔️ Switched 📂$repoDirName repo to '$branchName' branch in $($elapsed)s."
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"
@@ -106,4 +123,4 @@ try {
 }
 ```
 
-*Generated by convert-ps2md.ps1 using the comment-based help of switch-branch.ps1*
+*(generated by convert-ps2md.ps1 using the comment-based help of switch-branch.ps1 as of 05/19/2024 10:25:26)*

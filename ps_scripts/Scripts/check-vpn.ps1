@@ -1,10 +1,11 @@
 ﻿<#
 .SYNOPSIS
-	Checks the VPN connection
+	Checks the VPN status
 .DESCRIPTION
-	This PowerShell script queries and prints the status of any VPN connection.
+	This PowerShell script queries the status of the VPN connection(s) and prints it.
 .EXAMPLE
-	PS> ./check-vpn
+	PS> ./check-vpn.ps1
+	✅ VPN to NASA L2TP is connected
 .LINK
 	https://github.com/fleschutz/PowerShell
 .NOTES
@@ -12,17 +13,17 @@
 #>
 
 try {
-	$NoVPN = $true
+	$noVPN = $true
 	if ($IsLinux) {
 		# TODO
 	} else {
-		$Connections = (Get-VPNConnection)
-		foreach($Connection in $Connections) {
-			"✅ VPN '$($Connection.Name)' is $($Connection.ConnectionStatus)"
-			$NoVPN = $false
+		$connections = Get-VPNConnection
+		foreach($connection in $connections) {
+			Write-Host "✅ VPN to $($connection.Name) is $($connection.ConnectionStatus.ToLower())"
+			$noVPN = $false
 		}
 	}
-	if ($NoVPN) { "⚠️ No VPN connection" }
+	if ($noVPN) { Write-Host "⚠️ No VPN configured" }
 	exit 0 # success
 } catch {
 	"⚠️ Error in line $($_.InvocationInfo.ScriptLineNumber): $($Error[0])"

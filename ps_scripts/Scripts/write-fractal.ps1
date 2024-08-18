@@ -1,10 +1,10 @@
-<#
+﻿<#
 .SYNOPSIS
         Writes a fractal
 .DESCRIPTION
         This PowerShell script writes an animated Mandelbrot fractal.
 .EXAMPLE
-        PS> ./write-fractal
+        PS> ./write-fractal.ps1
 .LINK
         https://github.com/fleschutz/PowerShell
 .NOTES

@@ -502,7 +502,10 @@ end
 vim.api.nvim_set_keymap('n', '<leader>w', ':lua execute_command()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('v', '<leader>w', ':lua execute_command()<CR>', { noremap = true, silent = true })
 
-if require("actions-preview") then
+--local actions_preview = require("actions-preview")
+-- pcall for checking requirement safely
+local actions_preview = pcall(require, "actions-preview") and require("actions-preview")
+if actions_preview then
   vim.keymap.set({ "v", "n" }, "<leader>ca", require("actions-preview").code_actions)
 end
 
