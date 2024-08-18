@@ -279,61 +279,80 @@ config.keys = {
 
 --config.default_gui_startup_args = { 'connect', 'unix' }
 wezterm.on('gui-startup', function(cmd)
-  -- allow `wezterm start -- something` to affect what we spawn
-  -- in our initial window
-  local args = {}
-  if cmd then
-    args = cmd.args
-  end
+    -- allow `wezterm start -- something` to affect what we spawn
+    -- in our initial window
+    local args = {}
+    if cmd then
+        args = cmd.args
+    end
 
-  ---- Set a workspace for coding on a current project
-  ---- Top pane is for the editor, bottom pane is for the build tool
-  --local project_dir = wezterm.home_dir .. '/wezterm'
-  --local tab, build_pane, window = mux.spawn_window {
-  --  workspace = 'coding',
-  --  cwd = project_dir,
-  --  args = args,
-  --}
-  --local editor_pane = build_pane:split {
-  --  direction = 'Top',
-  --  size = 0.6,
-  --  cwd = project_dir,
-  --}
-  ---- may as well kick off a build in that pane
-  --build_pane:send_text 'cargo build\n'
+    ---- Set a workspace for coding on a current project
+    ---- Top pane is for the editor, bottom pane is for the build tool
+    --local project_dir = wezterm.home_dir .. '/wezterm'
+    --local tab, build_pane, window = mux.spawn_window {
+    --  workspace = 'coding',
+    --  cwd = project_dir,
+    --  args = args,
+    --}
+    --local editor_pane = build_pane:split {
+    --  direction = 'Top',
+    --  size = 0.6,
+    --  cwd = project_dir,
+    --}
+    ---- may as well kick off a build in that pane
+    --build_pane:send_text 'cargo build\n'
 
-  ---- A workspace for interacting with a local machine that
-  ---- runs some docker containners for home automation
-  ----local tab, pane, window = mux.spawn_window {
-  ----  workspace = 'automation',
-  ----  args = { 'ssh', 'vault' },
-  ----}
+    ---- A workspace for interacting with a local machine that
+    ---- runs some docker containners for home automation
+    ----local tab, pane, window = mux.spawn_window {
+    ----  workspace = 'automation',
+    ----  args = { 'ssh', 'vault' },
+    ----}
 
-  ---- We want to startup in the coding workspace
-  --mux.set_active_workspace 'coding'
+    ---- We want to startup in the coding workspace
+    --mux.set_active_workspace 'coding'
 
-  local code_root_dir = os.getenv("code_root_dir")
-  local full_path = code_root_dir .. "/Code2/C++"
-  --local tab1, pane, window = mux.spawn_window(cmd or {})
-  local tab1, pane, window = mux.spawn_window{cwd = full_path}
-  window:gui_window():maximize()
-  tab1:set_title("one - pwsh")
 
-  --local unix = mux.get_domain("unix")
-  --mux.set_default_domain(unix)
-  ----unix:attach()
 
-  local code_root_dir = "~/"
-  local tab2, second_pane, _ = window:spawn_tab { cwd = code_root_dir }
-  tab2:set_title("two - pwsh")
-  local tab3, third_pane, _ = window:spawn_tab { cwd = "C:\\" }
-  tab3:set_title("three - pwsh")
-  --third_pane:send_text ".cdc\n"
-  local tab4, fourth_pane, _ = window:spawn_tab { cwd = "~/" }
-  tab4:set_title("four - pwsh")
-  --fourth_pane:send_text ".cdp\n"
+    -- Try to attach...
+    -- Check if the workspace 'coding' exists
+    --local workspace_name = 'coding'
+    --local existing_workspace = false
+    --for _, workspace in ipairs(mux.get_workspaces()) do
+    --  if workspace == workspace_name then
+    --    existing_workspace = true
+    --    break
+    --  end
+    --end
 
-  tab1:activate()
+    --if existing_workspace then
+    --    window = mux.attach_workspace(workspace_name)
+    --else
+
+    --local unix = mux.get_domain("unix")
+    --mux.set_default_domain(unix)
+    --unix:attach()
+    --mux.set_active_workspace 'coding'
+
+    local code_root_dir = os.getenv("code_root_dir")
+    local full_path = code_root_dir .. "/Code2/C++"
+    --local tab1, pane, window = mux.spawn_window(cmd or {})
+    local tab1, pane, window = mux.spawn_window{cwd = full_path, workspace = 'coding' }
+    window:gui_window():maximize()
+    tab1:set_title("one - pwsh")
+
+    local code_root_dir = "~/"
+    local tab2, second_pane, _ = window:spawn_tab { cwd = code_root_dir, workspace = 'coding' }
+    tab2:set_title("two - pwsh")
+    local tab3, third_pane, _ = window:spawn_tab { cwd = "C:\\", workspace = 'coding' }
+    tab3:set_title("three - pwsh")
+    --third_pane:send_text ".cdc\n"
+    local tab4, fourth_pane, _ = window:spawn_tab { cwd = "~/", workspace = 'coding' }
+    tab4:set_title("four - pwsh")
+    --fourth_pane:send_text ".cdp\n"
+
+    tab1:activate()
+    --end
 
 end)
 
