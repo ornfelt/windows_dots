@@ -21,10 +21,19 @@ if (Test-Path -Path "H:\") {
     $vimrcDest = [System.Environment]::ExpandEnvironmentVariables("%USERPROFILE%\.vimrc")
 }
 
-# Copy the .vimrc file to the determined destination, forcing overwrite
+# Copy .vimrc file to the determined destination, forcing overwrite
 Copy-Item -Path ".\.vimrc" -Destination $vimrcDest -Force
 
 Write-Host "`n'.vimrc' file copied successfully to $vimrcDest"
+
+# ------------------------------------------------------------
+# Copy .wezterm.lua file to home dir
+$weztermDest = [System.Environment]::ExpandEnvironmentVariables("%USERPROFILE%\.wezterm.lua")
+
+# Copy .wezterm.lua file
+Copy-Item -Path ".\.wezterm.lua" -Destination $weztermDest -Force
+
+Write-Host "`n'.wezterm.lua' file copied successfully to $weztermDest"
 
 # ------------------------------------------------------------
 # Copy vscode files

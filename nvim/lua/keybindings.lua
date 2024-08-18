@@ -333,13 +333,12 @@ vim.api.nvim_set_keymap('n', '<C-B>', '<Cmd>:Llm<CR>', {noremap = true, silent =
 vim.api.nvim_set_keymap('i', '<C-B>', '<Cmd>:Llm<CR>', {noremap = true, silent = true})
 
 -- Helper function for setting key mappings for filetypes
-local function create_hellow_mapping(ft, template_file)
+local function create_hellow_mapping(ft, fe)
   local code_root_dir = os.getenv("code_root_dir") or "~/"
   code_root_dir = code_root_dir:gsub(" ", '" "')
-  if not template_file then
-    template_file = code_root_dir .. "Code2/General/utils/hellow/hellow." .. ft
-  else
-    template_file = code_root_dir .. "Code2/General/utils/hellow/hellow." .. template_file
+  local template_file = code_root_dir .. "Code2/General/utils/hellow/hellow." .. ft
+  if fe then
+      template_file = code_root_dir .. "Code2/General/utils/hellow/hellow." .. fe
   end
 
   vim.api.nvim_create_autocmd("FileType", {
