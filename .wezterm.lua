@@ -3,7 +3,7 @@ local os              = require 'os'
 local wezterm         = require 'wezterm'
 local act             = wezterm.action
 local mux             = wezterm.mux
---local session_manager = require 'wezterm-session-manager/session-manager'
+local session_manager = require 'wezterm-session-manager/session-manager'
 
 local config = {}
 
@@ -48,10 +48,10 @@ config.window_padding = {
 }
 
 -- Tab bar
-config.use_fancy_tab_bar = true
+--config.use_fancy_tab_bar = true
 config.tab_bar_at_bottom = true
 config.switch_to_last_active_tab_when_closing_tab = true
-config.tab_max_width = 10
+config.tab_max_width = 15
 config.colors = {
     tab_bar = {
         active_tab = {
@@ -69,13 +69,10 @@ config.unix_domains = {
   },
 }
 
---config.default_prog = { 'pwsh.exe', '-NoLogo' }
-config.default_prog = { 'powershell.exe' }
-
 -- Session manager
---wezterm.on("save_session", function(window) session_manager.save_state(window) end)
---wezterm.on("load_session", function(window) session_manager.load_state(window) end)
---wezterm.on("restore_session", function(window) session_manager.restore_state(window) end)
+wezterm.on("save_session", function(window) session_manager.save_state(window) end)
+wezterm.on("load_session", function(window) session_manager.load_state(window) end)
+wezterm.on("restore_session", function(window) session_manager.restore_state(window) end)
 
 -- Custom key bindings
 config.keys = {
@@ -242,9 +239,9 @@ config.keys = {
     },
 
     -- Session manager bindings
-    --{key = "n", mods = "LEADER", action = wezterm.action{EmitEvent = "save_session"}},
-    --{key = "p", mods = "LEADER", action = wezterm.action{EmitEvent = "load_session"}},
-    --{key = "-", mods = "LEADER", action = wezterm.action{EmitEvent = "restore_session"}},
+    {key = "n", mods = "LEADER", action = wezterm.action{EmitEvent = "save_session"}},
+    {key = "p", mods = "LEADER", action = wezterm.action{EmitEvent = "load_session"}},
+    {key = "-", mods = "LEADER", action = wezterm.action{EmitEvent = "restore_session"}},
 
     -- Custom
     { key = 'Enter', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment, },
@@ -278,82 +275,96 @@ config.keys = {
 }
 
 --config.default_gui_startup_args = { 'connect', 'unix' }
-wezterm.on('gui-startup', function(cmd)
-    -- allow `wezterm start -- something` to affect what we spawn
-    -- in our initial window
-    local args = {}
-    if cmd then
-        args = cmd.args
-    end
+if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple == 'x86_64-pc-windows-gnu' then
+    --config.default_prog = { 'pwsh.exe', '-NoLogo' }
+    config.default_prog = { 'powershell.exe' }
 
-    ---- Set a workspace for coding on a current project
-    ---- Top pane is for the editor, bottom pane is for the build tool
-    --local project_dir = wezterm.home_dir .. '/wezterm'
-    --local tab, build_pane, window = mux.spawn_window {
-    --  workspace = 'coding',
-    --  cwd = project_dir,
-    --  args = args,
-    --}
-    --local editor_pane = build_pane:split {
-    --  direction = 'Top',
-    --  size = 0.6,
-    --  cwd = project_dir,
-    --}
-    ---- may as well kick off a build in that pane
-    --build_pane:send_text 'cargo build\n'
+    wezterm.on('gui-startup', function(cmd)
+        -- allow `wezterm start -- something` to affect what we spawn
+        -- in our initial window
+        local args = {}
+        if cmd then
+            args = cmd.args
+        end
 
-    ---- A workspace for interacting with a local machine that
-    ---- runs some docker containners for home automation
-    ----local tab, pane, window = mux.spawn_window {
-    ----  workspace = 'automation',
-    ----  args = { 'ssh', 'vault' },
-    ----}
+        ---- Set a workspace for coding on a current project
+        ---- Top pane is for the editor, bottom pane is for the build tool
+        --local project_dir = wezterm.home_dir .. '/wezterm'
+        --local tab, build_pane, window = mux.spawn_window {
+        --  workspace = 'coding',
+        --  cwd = project_dir,
+        --  args = args,
+        --}
+        --local editor_pane = build_pane:split {
+        --  direction = 'Top',
+        --  size = 0.6,
+        --  cwd = project_dir,
+        --}
+        ---- may as well kick off a build in that pane
+        --build_pane:send_text 'cargo build\n'
 
-    ---- We want to startup in the coding workspace
-    --mux.set_active_workspace 'coding'
+        ---- A workspace for interacting with a local machine that
+        ---- runs some docker containners for home automation
+        ----local tab, pane, window = mux.spawn_window {
+        ----  workspace = 'automation',
+        ----  args = { 'ssh', 'vault' },
+        ----}
+
+        ---- We want to startup in the coding workspace
+        --mux.set_active_workspace 'coding'
 
 
 
-    -- Try to attach...
-    -- Check if the workspace 'coding' exists
-    --local workspace_name = 'coding'
-    --local existing_workspace = false
-    --for _, workspace in ipairs(mux.get_workspaces()) do
-    --  if workspace == workspace_name then
-    --    existing_workspace = true
-    --    break
-    --  end
-    --end
+        -- Try to attach...
+        -- Check if the workspace 'coding' exists
+        --local workspace_name = 'coding'
+        --local existing_workspace = false
+        --for _, workspace in ipairs(mux.get_workspaces()) do
+        --  if workspace == workspace_name then
+        --    existing_workspace = true
+        --    break
+        --  end
+        --end
 
-    --if existing_workspace then
-    --    window = mux.attach_workspace(workspace_name)
-    --else
+        --if existing_workspace then
+        --    window = mux.attach_workspace(workspace_name)
+        --else
 
-    --local unix = mux.get_domain("unix")
-    --mux.set_default_domain(unix)
-    --unix:attach()
-    --mux.set_active_workspace 'coding'
+        --local unix = mux.get_domain("unix")
+        --mux.set_default_domain(unix)
+        --unix:attach()
+        --mux.set_active_workspace 'coding'
 
-    local code_root_dir = os.getenv("code_root_dir")
-    local full_path = code_root_dir .. "/Code2/C++"
-    --local tab1, pane, window = mux.spawn_window(cmd or {})
-    local tab1, pane, window = mux.spawn_window{cwd = full_path, workspace = 'coding' }
-    window:gui_window():maximize()
-    tab1:set_title("one - pwsh")
+        --local code_root_dir = os.getenv("code_root_dir")
+        --local full_path = code_root_dir .. "/Code2/C++"
+        ----local tab1, pane, window = mux.spawn_window(cmd or {})
+        local tab1, pane, window = mux.spawn_window{cwd = full_path, workspace = 'coding' }
+        window:gui_window():maximize()
+        --tab1:set_title("one - pwsh")
 
-    local code_root_dir = "~/"
-    local tab2, second_pane, _ = window:spawn_tab { cwd = code_root_dir, workspace = 'coding' }
-    tab2:set_title("two - pwsh")
-    local tab3, third_pane, _ = window:spawn_tab { cwd = "C:\\", workspace = 'coding' }
-    tab3:set_title("three - pwsh")
-    --third_pane:send_text ".cdc\n"
-    local tab4, fourth_pane, _ = window:spawn_tab { cwd = "~/", workspace = 'coding' }
-    tab4:set_title("four - pwsh")
-    --fourth_pane:send_text ".cdp\n"
+        --local code_root_dir = "~/"
+        --local tab2, second_pane, _ = window:spawn_tab { cwd = code_root_dir, workspace = 'coding' }
+        --tab2:set_title("two - pwsh")
+        --local tab3, third_pane, _ = window:spawn_tab { cwd = "C:\\", workspace = 'coding' }
+        --tab3:set_title("three - pwsh")
+        ----third_pane:send_text ".cdc\n"
+        --local tab4, fourth_pane, _ = window:spawn_tab { cwd = "~/", workspace = 'coding' }
+        --tab4:set_title("four - pwsh")
+        ----fourth_pane:send_text ".cdp\n"
 
-    tab1:activate()
-    --end
+        --tab1:activate()
+        --end
 
+        --session_manager.restore_state(window)
+
+    end)
+end
+
+wezterm.on("format-tab-title", function(tab)
+    local new_title = tostring(tab.active_pane.current_working_dir):gsub("^file:///", "")
+    return {
+        { Text = new_title }
+    }
 end)
 
 -- Return config to wezterm
