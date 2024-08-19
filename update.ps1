@@ -36,6 +36,29 @@ Copy-Item -Path ".\.wezterm.lua" -Destination $weztermDest -Force
 Write-Host "`n'.wezterm.lua' file copied successfully to $weztermDest"
 
 # ------------------------------------------------------------
+# Check if the .wezterm/wezterm-session-manager directory exists in %USERPROFILE%
+$weztermDir = [System.Environment]::ExpandEnvironmentVariables("%USERPROFILE%\.wezterm\wezterm-session-manager")
+
+if (-not (Test-Path -Path $weztermDir)) {
+    # Create the directory if it doesn't exist
+    New-Item -Path $weztermDir -ItemType Directory -Force
+
+    Write-Host "`nDirectory '$weztermDir' created successfully"
+}
+
+# ------------------------------------------------------------
+# Copy files into wezterm-session-manager
+$myNotesPath = [System.Environment]::ExpandEnvironmentVariables("%my_notes_path%")
+
+$sessionManagerFile = Join-Path -Path $myNotesPath -ChildPath "notes\wes\session-manager.lua"
+$weztermStateFile = Join-Path -Path $myNotesPath -ChildPath "notes\wes\wezterm_state_coding.json"
+
+Copy-Item -Path $sessionManagerFile -Destination $weztermDir -Force
+Copy-Item -Path $weztermStateFile -Destination $weztermDir -Force
+
+Write-Host "`nFiles copied successfully to '$weztermDir'"
+
+# ------------------------------------------------------------
 # Copy vscode files
 
 $currentDirectory = Get-Location
