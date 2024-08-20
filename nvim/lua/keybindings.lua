@@ -199,10 +199,10 @@ end
 map('v', '<C-c>', 'y')
 
 map('n', '<leader>s', "/\\s\\+$/<CR>") -- Show extra whitespace
---map('n', '<leader>ws', ':%s/\\s\\+$<CR>') -- Remove all extra whitespace
---map('n', '<leader>wu', ':%s/\\%u200b//g<CR>') -- Remove all extra unicode chars
---map('n', '<leader>wb', ':%s/[[:cntrl:]]//g<CR>') -- Remove all hidden characters
---map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatting, go back and center screen
+map('n', '<leader>ws', ':%s/\\s\\+$<CR>') -- Remove all extra whitespace
+map('n', '<leader>wu', ':%s/\\%u200b//g<CR>') -- Remove all extra unicode chars
+map('n', '<leader>wb', ':%s/[[:cntrl:]]//g<CR>') -- Remove all hidden characters
+map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatting, go back and center screen
 map('v', '<leader>gu', ':s/\\<./\\u&/g<CR>:noh<CR>:noh<CR>') -- Capitalize first letter of each word on visually selected line
 map('n', '<leader>*', [[:/^\*\*\*$<CR>]]) -- Search for my bookmark
 map('v', '<leader>%', '/\\%V') -- Search in highlighted text
@@ -220,7 +220,7 @@ function ReplaceQuotes()
   ]])
 end
 
---vim.api.nvim_set_keymap('n', '<leader>wr', ':lua ReplaceQuotes()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>wr', ':lua ReplaceQuotes()<CR>', { noremap = true, silent = true })
 
 local function PythonCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"
@@ -578,11 +578,11 @@ end
 vim.api.nvim_set_keymap('n', '<leader>w', ':lua open_files_from_list()<CR>', { noremap = true, silent = true })
 
 local function get_current_file_path()
-  local file_path = vim.api.nvim_buf_get_name(0)  -- Get the name of the current buffer
+  local file_path = vim.api.nvim_buf_get_name(0) -- Name of current buffer
   if file_path == "" then
     return ""
   else
-    return vim.fn.fnamemodify(file_path, ":p")  -- Convert to full path
+    return vim.fn.fnamemodify(file_path, ":p") -- Convert to full path
   end
   --return vim.fn.expand("%:p")
 end

@@ -20,7 +20,7 @@ config.enable_scroll_bar = true
 config.enable_wayland = true
 -- config.font = wezterm.font('Hack')
 --config.font = wezterm.font('Monaspace Neon')
-config.font_size = 12.0
+config.font_size = 11.0
 config.hide_tab_bar_if_only_one_tab = true
 -- The leader is similar to how tmux defines a set of keys to hit in order to
 -- invoke tmux bindings. Binding to ctrl-a here to mimic tmux
@@ -98,7 +98,7 @@ config.keys = {
     -- Rename current tab; analagous to command in tmux
     {
         key = ',',
-        mods = 'LEADER',
+        mods = 'LEADER|ALT',
         action = act.PromptInputLine {
             description = 'Enter new name for tab',
             action = wezterm.action_callback(
@@ -216,7 +216,7 @@ config.keys = {
     -- Rename current session; analagous to command in tmux
     {
         key = '-',
-        mods = 'LEADER',
+        mods = 'LEADER|ALT',
         action = act.PromptInputLine {
             description = 'Enter new name for session',
             action = wezterm.action_callback(

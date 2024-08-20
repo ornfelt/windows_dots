@@ -49,3 +49,4 @@ if ($nvimPath) {
 
 # Source env vars
 . "$PSScriptRoot\env.ps1"
+
