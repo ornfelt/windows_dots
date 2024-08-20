@@ -165,11 +165,11 @@ config.keys = {
     { key = "q", mods = "LEADER", action = act.CloseCurrentPane { confirm = false } },
 
     -- Swap active pane with another one
-    --{
-    --    key = '{',
-    --    mods = 'LEADER|SHIFT',
-    --    action = act.PaneSelect { mode = "SwapWithActiveKeepFocus" },
-    --},
+    {
+        key = 'T',
+        mods = 'LEADER|SHIFT',
+        action = act.PaneSelect { mode = "SwapWithActiveKeepFocus" },
+    },
     -- Zoom current pane (toggle)
     {
         key = 'z',
@@ -193,12 +193,6 @@ config.keys = {
     --    action = act.ActivatePaneDirection('Next'),
     --},
 
-    -- ----------------------------------------------------------------
-    -- Workspaces
-    --
-    -- These are roughly equivalent to tmux sessions.
-    -- ----------------------------------------------------------------
-
     ---- Attach to muxer
     {
         key = 'a',
@@ -221,7 +215,7 @@ config.keys = {
     },
     -- Rename current session; analagous to command in tmux
     {
-        key = '.',
+        key = '-',
         mods = 'LEADER',
         action = act.PromptInputLine {
             description = 'Enter new name for session',
@@ -238,28 +232,19 @@ config.keys = {
         },
     },
 
-    -- Session manager bindings
-    {key = "n", mods = "LEADER", action = wezterm.action{EmitEvent = "save_session"}},
-    {key = "p", mods = "LEADER", action = wezterm.action{EmitEvent = "load_session"}},
-    {key = "-", mods = "LEADER", action = wezterm.action{EmitEvent = "restore_session"}},
+    -- Session manager
+    {key = "m", mods = "LEADER", action = wezterm.action{EmitEvent = "save_session"}},
+    {key = ".", mods = "LEADER", action = wezterm.action{EmitEvent = "restore_session"}},
+    --{key = "p", mods = "LEADER", action = wezterm.action{EmitEvent = "load_session"}},
 
-    -- Custom
+    -- Disable default
     { key = 'Enter', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment, },
     { key = 'l', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment, },
     { key = 'h', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment, },
     { key = 'j', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment, },
     { key = 'k', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment, },
 
-    {
-        key = 't',
-        mods = "LEADER",
-        action = wezterm.action{SpawnTab="DefaultDomain"},
-        --action = act.SpawnTab {
-        --  DomainName = 'unix',
-        --},
-    },
-
-    -- Go to tab by index
+    -- Tabs
     { key = "1", mods = "LEADER", action = wezterm.action{ActivateTab=0}, },
     { key = "2", mods = "LEADER", action = wezterm.action{ActivateTab=1}, },
     { key = "3", mods = "LEADER", action = wezterm.action{ActivateTab=2}, },
@@ -270,7 +255,7 @@ config.keys = {
     { key = "8", mods = "LEADER", action = wezterm.action{ActivateTab=7}, },
     { key = "9", mods = "LEADER", action = wezterm.action{ActivateTab=8}, },
     { key = "0", mods = "LEADER", action = wezterm.action{ActivateTab=9}, },
-
+    { key = 't', mods = "LEADER", action = wezterm.action{SpawnTab="DefaultDomain"}, },
     { key = 'q', mods = 'LEADER|CTRL', action = wezterm.action.QuitApplication },
 }
 
