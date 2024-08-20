@@ -2,14 +2,19 @@
 
 # Source directory (the trailing slash is important to copy the contents)
 src="./nvim/"
-# Target directory
+# Target dir
 dest="$HOME/.config/nvim"
 
-# Create target directory if it doesn't exist
+# Create target dir if it doesn't exist
 mkdir -p "$dest"
 
-# Copy all files and directories recursively from source to destination
+# Copy files and dirs recursively from source to destination
 cp -r "$src"* "$dest"
+echo "nvim files copied successfully from $src to $dest"
 
-echo "Files copied successfully from $src to $dest"
+# wezterm config
+src="./.wezterm.lua/"
+dest="$HOME/"
+cp "$src" "$dest"
+echo -e "\nwezterm config copied successfully from $src to $dest"
 
