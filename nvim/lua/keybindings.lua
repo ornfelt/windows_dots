@@ -86,7 +86,7 @@ map('v', '<C-k>', '<Plug>NERDCommenterToggle')
 ----map('n', '<M-a>', ':FZF ./<CR>')
 --map('n', '<M-W>', ':FZF ./<CR>')
 --map('n', '<M-A>', ':FZF ~/<CR>')
-map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
+--map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
 
 -- fzf-lua
 --local fzf_lua = require('fzf-lua')
@@ -95,8 +95,8 @@ map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>
 --vim.api.nvim_set_keymap('n', '<M-A>', ":lua require('fzf-lua').files()<CR>", opts)
 ----vim.api.nvim_set_keymap('n', 'M-W', ":lua require('fzf-lua').files({ cwd = os.getenv('HOME') })<CR>", opts)
 --map('n', '<M-W>', ":lua require('fzf-lua').files({ cwd = '~/' })<CR>")
---local root_dir = vim.fn.has('unix') == 1 and '/' or 'C:/'
---map('n', '<M-S>', ":lua require('fzf-lua').files({ cwd = '" .. root_dir .. "' })<CR>")
+local root_dir = vim.fn.has('unix') == 1 and '/' or 'C:/'
+map('n', '<M-S>', ":lua require('fzf-lua').files({ cwd = '" .. root_dir .. "' })<CR>")
 
 -- Start FZF from a given environment variable
 local function FZFStart(env_var)
@@ -534,6 +534,29 @@ function open_files_from_list()
   local my_notes_path = vim.fn.getenv("my_notes_path")
   local file_path = my_notes_path .. "/files.txt"
   local files = read_lines_from_file(file_path)
+
+  ---- Use fzf file picker to display file paths (edit/tabedit)
+  --vim.fn['fzf#run']({
+  --  source = files,
+  --  sink = function(selected)
+  --    --vim.cmd('edit ' .. selected)
+  --    vim.cmd('tabedit ' .. selected)
+  --  end,
+  --  options = '--multi --prompt "Select a file to open> "'
+  --})
+
+  ---- Use fzf-lua file picker to display file paths
+  --require('fzf-lua').fzf_exec(files, {
+  --  prompt = 'Select a file: ',
+  --  actions = {
+  --    ['default'] = function(selected)
+  --      vim.cmd('edit ' .. selected[1])
+  --    end,
+  --    ['ctrl-t'] = function(selected)
+  --      vim.cmd('tabedit ' .. selected[1])
+  --    end,
+  --  }
+  --})
 
   -- Use Telescope file picker to display file paths
   require('telescope.pickers').new({}, {
