@@ -181,9 +181,7 @@ map('n', '<M-0>', ':tablast<CR>')
 -- Session management
 map('n', '<leader>o', '<C-^>')
 map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
-map('n', '<leader>,', ':mks! ~/.vim/sessions/s2.vim<CR>')
 map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
-map('n', '<leader>-', ':so ~/.vim/sessions/s2.vim<CR>')
 
 -- Open new tabs
 map('n', '<M-m>', ':tabe ~/.config/nvim/init.lua<CR>')
@@ -201,10 +199,10 @@ end
 map('v', '<C-c>', 'y')
 
 map('n', '<leader>s', "/\\s\\+$/<CR>") -- Show extra whitespace
-map('n', '<leader>ws', ':%s/\\s\\+$<CR>') -- Remove all extra whitespace
-map('n', '<leader>wu', ':%s/\\%u200b//g<CR>') -- Remove all extra unicode chars
-map('n', '<leader>wb', ':%s/[[:cntrl:]]//g<CR>') -- Remove all hidden characters
-map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatting, go back and center screen
+--map('n', '<leader>ws', ':%s/\\s\\+$<CR>') -- Remove all extra whitespace
+--map('n', '<leader>wu', ':%s/\\%u200b//g<CR>') -- Remove all extra unicode chars
+--map('n', '<leader>wb', ':%s/[[:cntrl:]]//g<CR>') -- Remove all hidden characters
+--map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatting, go back and center screen
 map('v', '<leader>gu', ':s/\\<./\\u&/g<CR>:noh<CR>:noh<CR>') -- Capitalize first letter of each word on visually selected line
 map('n', '<leader>*', [[:/^\*\*\*$<CR>]]) -- Search for my bookmark
 map('v', '<leader>%', '/\\%V') -- Search in highlighted text
@@ -222,7 +220,7 @@ function ReplaceQuotes()
   ]])
 end
 
-vim.api.nvim_set_keymap('n', '<leader>wr', ':lua ReplaceQuotes()<CR>', { noremap = true, silent = true })
+--vim.api.nvim_set_keymap('n', '<leader>wr', ':lua ReplaceQuotes()<CR>', { noremap = true, silent = true })
 
 local function PythonCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"
@@ -481,8 +479,8 @@ vim.api.nvim_set_keymap('n', '<M-x>', '<Cmd>lua compile_run()<CR>', { noremap = 
 vim.api.nvim_set_keymap('n', '<M-S-X>', '<Cmd>!chmod +x %<CR>', { noremap = true, silent = true })
 
 -- " Execute line under the cursor
--- nnoremap <leader>w yy:@"<CR>
---vim.api.nvim_set_keymap('n', '<leader>w', 'yy:@"<CR>', { noremap = true, silent = true })
+-- nnoremap <leader>, yy:@"<CR>
+--vim.api.nvim_set_keymap('n', '<leader>,', 'yy:@"<CR>', { noremap = true, silent = true })
 --
 -- Function to execute command under cursor or highlighted text
 function execute_command()
@@ -496,11 +494,15 @@ function execute_command()
     command = vim.fn.getline('.')
   end
 
+  -- Copy to clipboard
+  --vim.fn.setreg('+', command)
+  --print("Copied to clipboard: " .. command)
+  -- Execute it
   vim.cmd(command)
 end
 
-vim.api.nvim_set_keymap('n', '<leader>w', ':lua execute_command()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('v', '<leader>w', ':lua execute_command()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>,', ':lua execute_command()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<leader>,', ':lua execute_command()<CR>', { noremap = true, silent = true })
 
 --local actions_preview = require("actions-preview")
 -- pcall for checking requirement safely
@@ -508,4 +510,92 @@ local actions_preview = pcall(require, "actions-preview") and require("actions-p
 if actions_preview then
   vim.keymap.set({ "v", "n" }, "<leader>ca", require("actions-preview").code_actions)
 end
+
+local function replace_placeholders(line)
+  --  line = line:gsub("{code_root_dir}", vim.fn.getenv("code_root_dir") or "")
+  -- Use gsub to find and replace all occurrences of {ENV_VAR_NAME}
+  -- with corresponding environment variable value
+  line = line:gsub("{(.-)}", function(env_var)
+    return vim.fn.getenv(env_var) or ""
+  end)
+  return line
+end
+
+local function read_lines_from_file(file)
+  local lines = {}
+  for line in io.lines(file) do
+    line = replace_placeholders(line)
+    table.insert(lines, line)
+  end
+  return lines
+end
+
+function open_files_from_list()
+  local my_notes_path = vim.fn.getenv("my_notes_path")
+  local file_path = my_notes_path .. "/files.txt"
+  local files = read_lines_from_file(file_path)
+
+  -- Use Telescope file picker to display file paths
+  require('telescope.pickers').new({}, {
+    prompt_title = "Select a file to open",
+    finder = require('telescope.finders').new_table({
+      results = files,
+    }),
+    sorter = require('telescope.config').values.generic_sorter({}),
+    attach_mappings = function(_, map)
+      local actions = require('telescope.actions')
+      local action_state = require('telescope.actions.state')
+
+      map('i', '<CR>', function(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        vim.cmd('edit ' .. selection.value)
+      end)
+
+      map('i', '<C-t>', function(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        vim.cmd('tabedit ' .. selection.value)
+      end)
+
+      map('n', '<CR>', function(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        vim.cmd('edit ' .. selection.value)
+      end)
+
+      map('n', '<C-t>', function(prompt_bufnr)
+        local selection = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        vim.cmd('tabedit ' .. selection.value)
+      end)
+
+      return true
+    end,
+  }):find()
+end
+
+vim.api.nvim_set_keymap('n', '<leader>w', ':lua open_files_from_list()<CR>', { noremap = true, silent = true })
+
+local function get_current_file_path()
+  local file_path = vim.api.nvim_buf_get_name(0)  -- Get the name of the current buffer
+  if file_path == "" then
+    return ""
+  else
+    return vim.fn.fnamemodify(file_path, ":p")  -- Convert to full path
+  end
+  --return vim.fn.expand("%:p")
+end
+
+function print_current_file_path()
+  local path = get_current_file_path()
+  if path == "" then
+    print("No file in current buffer")
+  else
+    vim.fn.setreg('+', path)
+    print("Copied to clipboard: " .. path)
+  end
+end
+
+vim.api.nvim_set_keymap('n', '<leader>-', ':lua print_current_file_path()<CR>', { noremap = true, silent = true })
 
