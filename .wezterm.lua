@@ -77,11 +77,10 @@ wezterm.on("restore_session", function(window) session_manager.restore_state(win
 -- Custom key bindings
 config.keys = {
     -- Copy/vim mode
-    {
-        key = 'v',
-        mods = 'LEADER',
-        action = act.ActivateCopyMode,
-    },
+    { key = 'v', mods = 'LEADER', action = act.ActivateCopyMode, },
+    { key = 'f', mods = 'LEADER', action = wezterm.action.Search {CaseInSensitiveString = 'test' } },
+    { key = 'f', mods = 'LEADER|CTRL', action = wezterm.action.Search {CaseSensitiveString = 'test' } },
+    { key = 'g', mods = 'LEADER', action = wezterm.action.Search {Regex = 'test'} },
 
     -- ----------------------------------------------------------------
     -- TABS
@@ -231,6 +230,15 @@ config.keys = {
             ),
         },
     },
+
+    -- Scroll
+    { key = 'J', mods = 'ALT|SHIFT', action = wezterm.action.ScrollByLine(1), },
+    { key = 'K', mods = 'ALT|SHIFT', action = wezterm.action.ScrollByLine(-1), },
+
+    -- Copying
+    --if wezterm.target_triple ~= "x86_64-pc-windows-msvc" and wezterm.target_triple ~= "x86_64-pc-windows-gnu" then
+    { key = 'C', mods = 'ALT|SHIFT', action = wezterm.action.CopyTo 'ClipboardAndPrimarySelection', },
+    { key = 'V', mods = 'ALT|SHIFT', action = wezterm.action.PasteFrom 'Clipboard', },
 
     -- Session manager
     {key = "m", mods = "LEADER", action = wezterm.action{EmitEvent = "save_session"}},
