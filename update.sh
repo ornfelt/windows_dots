@@ -13,7 +13,7 @@ cp -r "$src"* "$dest"
 echo "nvim files copied successfully from $src to $dest"
 
 # wezterm config
-src="./.wezterm.lua/"
+src="./.wezterm.lua"
 dest="$HOME/"
 cp "$src" "$dest"
 echo -e "\nwezterm config copied successfully from $src to $dest"
