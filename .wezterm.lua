@@ -157,10 +157,10 @@ config.keys = {
     { key = "j", mods = "LEADER", action = act.ActivatePaneDirection("Down") },
     { key = "k", mods = "LEADER", action = act.ActivatePaneDirection("Up") },
     { key = "l", mods = "LEADER", action = act.ActivatePaneDirection("Right") },
-    { key = 'H', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Left', 5 }, },
-    { key = 'J', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Down', 5 }, },
-    { key = 'K', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Up', 5 } },
-    { key = 'L', mods = 'LEADER|SHIFT', action = act.AdjustPaneSize { 'Right', 5 }, },
+    { key = 'y', mods = 'LEADER', action = act.AdjustPaneSize { 'Left', 5 }, },
+    { key = 'u', mods = 'LEADER', action = act.AdjustPaneSize { 'Down', 5 }, },
+    { key = 'i', mods = 'LEADER', action = act.AdjustPaneSize { 'Up', 5 } },
+    { key = 'o', mods = 'LEADER', action = act.AdjustPaneSize { 'Right', 5 }, },
     { key = "q", mods = "LEADER", action = act.CloseCurrentPane { confirm = false } },
 
     -- Swap active pane with another one
