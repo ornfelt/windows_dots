@@ -12,7 +12,8 @@ return require('packer').startup(function()
   }
 
   use 'preservim/nerdtree'
-  use 'tiagofumo/vim-nerdtree-syntax-highlight'
+  --use 'stevearc/oil.nvim'
+  --use 'echasnovski/mini.files'
 
   use 'vimwiki/vimwiki'
   use 'tpope/vim-surround'

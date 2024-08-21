@@ -78,39 +78,62 @@ end
 
 map('n', '<M-e>', ':lua toggle_nerdtree()<CR>')
 
+--require("oil").setup()
+--map('n', '<M-e>', ':Oil<CR>')
+--require('mini.files').setup()
+--map('n', '<M-e>', ':lua MiniFiles.open()<CR>')
+
 -- NERDCommenter
 map('n', '<C-k>', ':call nerdcommenter#Comment(0, "toggle")<CR>')
 map('v', '<C-k>', '<Plug>NERDCommenterToggle')
 
--- FZF
-----map('n', '<M-a>', ':FZF ./<CR>')
---map('n', '<M-W>', ':FZF ./<CR>')
---map('n', '<M-A>', ':FZF ~/<CR>')
---map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
-
--- fzf-lua
---local fzf_lua = require('fzf-lua')
---local opts = { noremap = true, silent = true }
---vim.api.nvim_set_keymap('n', '<M-a>', ":lua require('fzf-lua').git_files()<CR>", opts)
---vim.api.nvim_set_keymap('n', '<M-A>', ":lua require('fzf-lua').files()<CR>", opts)
-----vim.api.nvim_set_keymap('n', 'M-W', ":lua require('fzf-lua').files({ cwd = os.getenv('HOME') })<CR>", opts)
---map('n', '<M-W>', ":lua require('fzf-lua').files({ cwd = '~/' })<CR>")
-local root_dir = vim.fn.has('unix') == 1 and '/' or 'C:/'
-map('n', '<M-S>', ":lua require('fzf-lua').files({ cwd = '" .. root_dir .. "' })<CR>")
-
--- Start FZF from a given environment variable
-local function FZFStart(env_var)
-    local default_path = (env_var == "my_notes_path") and "~/Documents/my_notes" or "~"
-    local path = os.getenv(env_var) or default_path
-    path = path:gsub(" ", '\\ ')
-    vim.cmd("FZF " .. path)
-    --fzf_lua.files({ cwd = path })
+-- fzf
+local fzf_vim_installed = pcall(function() return vim.fn['fzf#run'] end)
+if fzf_vim_installed then
+    ----map('n', '<M-a>', ':FZF ./<CR>')
+    --map('n', '<M-W>', ':FZF ./<CR>')
+    --map('n', '<M-A>', ':FZF ~/<CR>')
+    map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
 end
 
-vim.api.nvim_create_user_command('RunFZFCodeRootDir', function() FZFStart("code_root_dir") end, {})
+-- fzf-lua
+local fzf_lua_installed = pcall(require, 'fzf-lua')
+if fzf_lua_installed then
+    --local opts = { noremap = true, silent = true }
+    --vim.api.nvim_set_keymap('n', '<M-a>', ":lua require('fzf-lua').git_files()<CR>", opts)
+    --vim.api.nvim_set_keymap('n', '<M-A>', ":lua require('fzf-lua').files()<CR>", opts)
+    ----vim.api.nvim_set_keymap('n', 'M-W', ":lua require('fzf-lua').files({ cwd = os.getenv('HOME') })<CR>", opts)
+    --map('n', '<M-W>', ":lua require('fzf-lua').files({ cwd = '~/' })<CR>")
+    local root_dir = vim.fn.has('unix') == 1 and '/' or 'C:/'
+    map('n', '<M-S>', ":lua require('fzf-lua').files({ cwd = '" .. root_dir .. "' })<CR>")
+end
+
+-- Start fzf/telescope from a given environment variable
+function StartFinder(env_var)
+    local default_path = (env_var == "my_notes_path") and "~/Documents/my_notes" or "~"
+    local path = os.getenv(env_var) or default_path
+
+    -- Search using fzf.vim
+    --path = path:gsub(" ", '\\ ')
+    --vim.cmd("FZF " .. path)
+
+    -- Search using fzf.lua
+    --local fzf_lua = require('fzf-lua')
+    --fzf_lua.files({ cwd = path })
+
+    -- Search using telescope
+    local telescope_builtin = require('telescope.builtin')
+    telescope_builtin.find_files({
+        cwd = path,
+        hidden = env_var == "my_notes_path",
+        prompt_title = "Search in " .. path,
+    })
+end
+
+vim.api.nvim_create_user_command('RunFZFCodeRootDir', function() StartFinder("code_root_dir") end, {})
 vim.api.nvim_set_keymap('n', '<leader>a', '<cmd>RunFZFCodeRootDir<CR>', { noremap = true, silent = true })
 
-vim.api.nvim_create_user_command('RunFZFMyNotesPath', function() FZFStart("my_notes_path") end, {})
+vim.api.nvim_create_user_command('RunFZFMyNotesPath', function() StartFinder("my_notes_path") end, {})
 vim.api.nvim_set_keymap('n', '<leader>f', '<cmd>RunFZFMyNotesPath<CR>', { noremap = true, silent = true })
 
 -- Vimgrep and QuickFix Lists
@@ -315,10 +338,17 @@ local function llm()
 
     local curl_command = 'curl -k -s -X POST -H "Content-Type: application/json" -d @- ' .. url
     local response = vim.fn.system(curl_command, vim.fn.json_encode(json_payload))
+    --local content = vim.fn.json_decode(response).content
+    --local decoded_response = vim.fn.json_decode(response)
+    local success, decoded_response = pcall(vim.fn.json_decode, response)
+    if not success then
+        decoded_response = nil
+    end
 
-    local content = vim.fn.json_decode(response).content
+    local default_msg = "llama is sleeping"
+    local content = (decoded_response and decoded_response.content) or default_msg
+
     local split_newlines = vim.split(content, '\n', true)
-
     local line_num = vim.api.nvim_win_get_cursor(0)[1]
     local lines = vim.api.nvim_buf_get_lines(0, line_num - 1, line_num, false)
     lines[1] = lines[1] .. split_newlines[1]
@@ -327,8 +357,9 @@ local function llm()
 end
 
 vim.api.nvim_create_user_command('Llm', llm, {})
-vim.api.nvim_set_keymap('n', '<C-B>', '<Cmd>:Llm<CR>', {noremap = true, silent = true})
-vim.api.nvim_set_keymap('i', '<C-B>', '<Cmd>:Llm<CR>', {noremap = true, silent = true})
+-- TODO: visual bind?
+vim.api.nvim_set_keymap('n', '<M-->', '<Cmd>:Llm<CR>', {noremap = true, silent = true})
+vim.api.nvim_set_keymap('i', '<M-->', '<Cmd>:Llm<CR>', {noremap = true, silent = true})
 
 -- Helper function for setting key mappings for filetypes
 local function create_hellow_mapping(ft, fe)
