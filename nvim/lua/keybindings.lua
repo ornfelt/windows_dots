@@ -630,3 +630,7 @@ end
 
 vim.api.nvim_set_keymap('n', '<leader>-', ':lua print_current_file_path()<CR>', { noremap = true, silent = true })
 
+vim.keymap.set('n', '<leader>gl', function()
+    require('gitgraph').draw({}, { all = true, max_count = 5000 })
+end, { desc = "GitGraph - Draw" })
+
