@@ -65,23 +65,55 @@ map('n', '<leader>3', '"3p')
 map('n', '<leader>4', '"4p')
 map('n', '<leader>5', '"5p')
 
--- NERDTree
--- map('n', '<M-w>', ':NERDTreeToggle ~/<CR>')
--- map('n', '<M-e>', ':NERDTreeToggle %:p<CR>')
-map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
---map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
-
-function toggle_nerdtree()
-  local filepath = (vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p'))
-  vim.cmd('silent! NERDTreeToggle ' .. filepath)
+-- Helper functions
+local function is_vim_plugin_installed(plugin_name)
+    return vim.fn.exists(':' .. plugin_name) ~= 0
 end
 
-map('n', '<M-e>', ':lua toggle_nerdtree()<CR>')
+local function is_plugin_installed(plugin_name)
+    local status, _ = pcall(require, plugin_name)
+    return status
+end
 
---require("oil").setup()
---map('n', '<M-e>', ':Oil<CR>')
---require('mini.files').setup()
---map('n', '<M-e>', ':lua MiniFiles.open()<CR>')
+-- File tree
+-- map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
+if is_vim_plugin_installed('NERDTreeToggle') then
+    map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
+elseif is_plugin_installed('Oil') then
+	require('oil').setup({
+        keymaps = {
+            ["<C-s>"] = { "actions.select", opts = { vertical = true, close = true }, desc = "Open the entry in a vertical split" },
+            ["<C-h>"] = { "actions.select", opts = { horizontal = true, close = true }, desc = "Open the entry in a horizontal split" },
+            ["<C-t>"] = { "actions.select", opts = { tab = true, close = true }, desc = "Open the entry in new tab" },
+        },
+		view_options = {
+			show_hidden = true,
+		},
+		select = { close = true }
+	})
+    -- map('n', '<M-w>', ':leftabove vsplit | vertical resize 40 | Oil ~/ <CR>')
+    map('n', '<M-w>', ':Oil ~/ <CR>')
+elseif pcall(require, 'mini.files') then
+    require('mini.files').setup()
+    map('n', '<M-w>', ':lua MiniFiles.open("~/")<CR>')
+end
+
+function toggle_filetree()
+    --local filepath = (vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p'))
+    local filepath = vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p:h') -- dir
+    if is_vim_plugin_installed('NERDTreeToggle') then
+        vim.cmd('silent! NERDTreeToggle ' .. filepath)
+    elseif is_plugin_installed('Oil') then
+        -- vim.cmd('leftabove vsplit | vertical resize 40 | Oil ' .. filepath)
+        vim.cmd('Oil ' .. filepath)
+    elseif pcall(require, 'mini.files') then
+        require('mini.files').open(filepath)
+    else
+        print("No file tree plugin installed...")
+    end
+end
+
+map('n', '<M-e>', ':lua toggle_filetree()<CR>')
 
 -- NERDCommenter
 map('n', '<C-k>', ':call nerdcommenter#Comment(0, "toggle")<CR>')

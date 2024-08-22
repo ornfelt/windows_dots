@@ -148,6 +148,7 @@ vim.g['jedi#popup_on_dot'] = 1
 -- NERDTree
 vim.g['NERDTreeQuitOnOpen'] = 1
 vim.g['NERDTreeShowHidden'] = 1
+-- vim.g['NERDTreeFileLines'] = 1
 
 -- NERDCommenter
 vim.g.NERDCreateDefaultMappings = 0
