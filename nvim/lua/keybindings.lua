@@ -79,7 +79,7 @@ end
 -- map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
 if is_vim_plugin_installed('NERDTreeToggle') then
     map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
-elseif is_plugin_installed('Oil') then
+elseif is_plugin_installed('oil') then
 	require('oil').setup({
         keymaps = {
             ["<C-s>"] = { "actions.select", opts = { vertical = true, close = true }, desc = "Open the entry in a vertical split" },
@@ -96,7 +96,7 @@ elseif is_plugin_installed('Oil') then
         prompt_save_on_select_new_entry = true,
     })
     -- map('n', '<M-w>', ':leftabove vsplit | vertical resize 40 | Oil ~/ <CR>')
-    map('n', '<M-w>', ':Oil ~/ <CR>')
+    map('n', '<M-w>', ':oil ~/ <CR>')
 elseif pcall(require, 'mini.files') then
     require('mini.files').setup()
     map('n', '<M-w>', ':lua MiniFiles.open("~/")<CR>')
