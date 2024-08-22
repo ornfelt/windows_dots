@@ -96,7 +96,7 @@ elseif is_plugin_installed('oil') then
         prompt_save_on_select_new_entry = true,
     })
     -- map('n', '<M-w>', ':leftabove vsplit | vertical resize 40 | Oil ~/ <CR>')
-    map('n', '<M-w>', ':oil ~/ <CR>')
+    map('n', '<M-w>', ':Oil ~/ <CR>')
 elseif pcall(require, 'mini.files') then
     require('mini.files').setup()
     map('n', '<M-w>', ':lua MiniFiles.open("~/")<CR>')
@@ -107,7 +107,7 @@ function toggle_filetree()
     local filepath = vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p:h') -- dir
     if is_vim_plugin_installed('NERDTreeToggle') then
         vim.cmd('silent! NERDTreeToggle ' .. filepath)
-    elseif is_plugin_installed('Oil') then
+    elseif is_plugin_installed('oil') then
         -- vim.cmd('leftabove vsplit | vertical resize 40 | Oil ' .. filepath)
         vim.cmd('Oil ' .. filepath)
     elseif pcall(require, 'mini.files') then
@@ -145,9 +145,13 @@ if fzf_lua_installed then
 end
 
 -- Start fzf/telescope from a given environment variable
-function StartFinder(env_var)
+function StartFinder(env_var, additional_path)
     local default_path = (env_var == "my_notes_path") and "~/Documents/my_notes" or "~"
     local path = os.getenv(env_var) or default_path
+
+    if additional_path then
+        path = path .. "/" .. additional_path
+    end
 
     -- Search using fzf.vim
     --path = path:gsub(" ", '\\ ')
@@ -166,11 +170,12 @@ function StartFinder(env_var)
     })
 end
 
-vim.api.nvim_create_user_command('RunFZFCodeRootDir', function() StartFinder("code_root_dir") end, {})
-vim.api.nvim_set_keymap('n', '<leader>a', '<cmd>RunFZFCodeRootDir<CR>', { noremap = true, silent = true })
-
-vim.api.nvim_create_user_command('RunFZFMyNotesPath', function() StartFinder("my_notes_path") end, {})
-vim.api.nvim_set_keymap('n', '<leader>f', '<cmd>RunFZFMyNotesPath<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_create_user_command('RunFZFCodeRootDirWithCode', function() StartFinder("code_root_dir", "Code") end, {})
+-- vim.api.nvim_set_keymap('n', '<leader>a', '<cmd>RunFZFCodeRootDirWithCode<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>a', ':lua StartFinder("code_root_dir", "Code")<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>s', ':lua StartFinder("code_root_dir", "Code2")<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>A', ':lua StartFinder("code_root_dir")<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>f', ':lua StartFinder("my_notes_path")<CR>', { noremap = true, silent = true })
 
 -- Vimgrep and QuickFix Lists
 map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>0f/li')
@@ -257,8 +262,8 @@ end
 -- map('n', '<C-c>', 'y')
 map('v', '<C-c>', 'y')
 
-map('n', '<leader>s', "/\\s\\+$/<CR>") -- Show extra whitespace
-map('n', '<leader>ws', ':%s/\\s\\+$<CR>') -- Remove all extra whitespace
+map('n', '<leader>ws', "/\\s\\+$/<CR>") -- Show extra whitespace
+map('n', '<leader>wr', ':%s/\\s\\+$<CR>') -- Remove all extra whitespace
 map('n', '<leader>wu', ':%s/\\%u200b//g<CR>') -- Remove all extra unicode chars
 map('n', '<leader>wb', ':%s/[[:cntrl:]]//g<CR>') -- Remove all hidden characters
 map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatting, go back and center screen
@@ -279,7 +284,7 @@ function ReplaceQuotes()
   ]])
 end
 
-vim.api.nvim_set_keymap('n', '<leader>wr', ':lua ReplaceQuotes()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>wq', ':lua ReplaceQuotes()<CR>', { noremap = true, silent = true })
 
 local function PythonCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"

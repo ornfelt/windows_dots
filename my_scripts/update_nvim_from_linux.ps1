@@ -16,7 +16,7 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
 if (-Not (Test-Path -Path $dotfilesDir)) {
     Write-Output "dotfiles directory does not exist. Cloning repository..."
     $repoUrl = "https://github.com/archornf/dotfiles"
-    $cloneTargetDir = Join-Path -Path $codeRootDir -ChildPath "Code2/General"
+    $cloneTargetDir = Join-Path -Path $codeRootDir -ChildPath "Code2/General/dotfiles"
     git clone $repoUrl $cloneTargetDir
 }
 
