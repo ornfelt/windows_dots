@@ -89,8 +89,12 @@ elseif is_plugin_installed('Oil') then
 		view_options = {
 			show_hidden = true,
 		},
-		select = { close = true }
-	})
+        -- Skip the confirmation popup for simple operations (:help oil.skip_confirm_for_simple_edits)
+        skip_confirm_for_simple_edits = false,
+        -- Selecting a new/moved/renamed file or directory will prompt you to save changes first
+        -- (:help prompt_save_on_select_new_entry)
+        prompt_save_on_select_new_entry = true,
+    })
     -- map('n', '<M-w>', ':leftabove vsplit | vertical resize 40 | Oil ~/ <CR>')
     map('n', '<M-w>', ':Oil ~/ <CR>')
 elseif pcall(require, 'mini.files') then
