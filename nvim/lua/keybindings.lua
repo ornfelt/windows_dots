@@ -32,9 +32,9 @@ map('n', '<leader>b', togglebar) -- Toggle lualine
 -- map('n', 'N', 'Nzz')
 
 -- Mimic shell movements
--- map('i', '<C-E>', '<ESC>A')
--- map('i', '<C-A>', '<ESC>I')
--- map('i', '<C-v>', '<Esc>"+p')
+map('i', '<C-E>', '<ESC>A')
+map('i', '<C-A>', '<ESC>I')
+map('i', '<C-v>', '<Esc>"+p')
 -- map('i', '<C-a>', '<Esc>gg"yG') -- Copy everything from file into clipboard
 -- map('i', '<C-BS>', '<C-W>a') -- Copy everything from file into clipboard
 -- map('i', '<S-Tab>', '<BS>')
