@@ -47,3 +47,15 @@ if (Test-Path -Path $dotfilesDir) {
 } else {
     Write-Output "dotfiles directory does not exist."
 }
+
+$weztermSourceFile = Join-Path -Path (Split-Path -Path $dotfilesDir -Parent) -ChildPath ".wezterm.lua"
+$userProfileDir = [System.Environment]::GetFolderPath('UserProfile')
+$weztermTargetFile = Join-Path -Path $userProfileDir -ChildPath ".wezterm.lua"
+
+if (Test-Path -Path $weztermSourceFile) {
+    Copy-Item -Path $weztermSourceFile -Destination $weztermTargetFile -Force
+    Write-Output ".wezterm.lua has been copied to $weztermTargetFile."
+} else {
+    Write-Output ".wezterm.lua file not found in $dotfilesDir."
+}
+
