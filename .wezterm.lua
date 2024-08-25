@@ -78,7 +78,7 @@ config.unix_domains = {
   },
 }
 
-config.disable_default_key_bindings = true,
+-- config.disable_default_key_bindings = true,
 
 -- Session manager
 wezterm.on("save_session", function(window) session_manager.save_state(window) end)
