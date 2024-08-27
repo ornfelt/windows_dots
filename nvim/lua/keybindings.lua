@@ -211,6 +211,7 @@ map('t', '<M-j>', [[<C-\><C-n><C-w>j]])
 map('t', '<M-k>', [[<C-\><C-n><C-w>k]])
 map('t', '<M-l>', [[<C-\><C-n><C-w>l]])
 map('t', '<M-q>', [[<C-\><C-n>:q<CR>]])
+map('t', '<Esc>', [[<C-\><C-n>]])
 
 -- Moving text
 map('x', 'J', ":move '>+1<CR>gv=gv")
@@ -305,13 +306,14 @@ vim.api.nvim_create_user_command('RunPythonCommand', PythonCommand, {})
 vim.api.nvim_set_keymap('v', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
 
 -- GPT binds
-
 if is_plugin_installed('chatgpt') then
     local chatgpt_config = {
         openai_api_key = os.getenv("OPENAI_API_KEY"),
     }
+
     -- Model can be changed in actions for this plugin
     require("chatgpt").setup(chatgpt_config)
+
     map('n', '<leader>e', ':ChatGPTEditWithInstructions<CR>')
     map('v', '<leader>e', ':ChatGPTEditWithInstructions<CR>')
     map('n', '<leader>x', ':ChatGPTRun explain_code<CR>')
@@ -334,6 +336,7 @@ if is_plugin_installed('chatgpt') then
     map('v', '<leader>0', ':ChatGPT<CR>')
     map('n', '<M-c>', ':ChatGPTRun send_request<CR>')
     map('v', '<M-c>', ':ChatGPTRun send_request<CR>')
+    map('i', '<M-c>', ':ChatGPTRun send_request<CR>')
 end
 
 if is_plugin_installed('gp') then
@@ -350,6 +353,7 @@ if is_plugin_installed('gp') then
 
     --require("gp").setup({openai_api_key: os.getenv("OPENAI_API_KEY")})
     require("gp").setup(gp_config)
+
     map('n', '<leader>e', ':GpAppend<CR>')
     map('v', '<leader>e', ':GpAppend<CR>')
     map('n', '<leader>x', ':GpTabnew<CR>')
@@ -375,8 +379,9 @@ if is_plugin_installed('gp') then
     map('n', '<leader>0', ':GpChatToggle<CR>')
     map('v', '<leader>0', ':GpChatToggle<CR>')
     -- TODO:
-    --map('n', '<M-c>', ':ChatGPTRun send_request<CR>')
-    --map('v', '<M-c>', ':ChatGPTRun send_request<CR>')
+    -- map('n', '<M-c>', ':ChatGPTRun send_request<CR>')
+    -- map('v', '<M-c>', ':ChatGPTRun send_request<CR>')
+    -- map('i', '<M-c>', ':ChatGPTRun send_request<CR>')
     -- There's also:
     -- :GpAgent (for info)
     -- :GpWhisper
@@ -385,7 +390,7 @@ if is_plugin_installed('gp') then
     -- etc.
 end
 
--- basic llama.cpp example request (no streaming)
+-- Basic llama.cpp example request (no streaming)
 local function llm()
     local url = "http://127.0.0.1:8080/completion"
     local buffer_content = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
@@ -445,11 +450,12 @@ if is_plugin_installed('model') then
 
     vim.api.nvim_set_keymap('n', '<M-->', '<Cmd>:Model zephyr<CR>', {noremap = true, silent = true})
     vim.api.nvim_set_keymap('i', '<M-->', '<Cmd>:Model zephyr<CR>', {noremap = true, silent = true})
+    vim.api.nvim_set_keymap('v', '<M-->', '<Cmd>:Model zephyr<CR>', {noremap = true, silent = true})
 else
     vim.api.nvim_create_user_command('Llm', llm, {})
-    -- TODO: visual bind?
     vim.api.nvim_set_keymap('n', '<M-->', '<Cmd>:Llm<CR>', {noremap = true, silent = true})
     vim.api.nvim_set_keymap('i', '<M-->', '<Cmd>:Llm<CR>', {noremap = true, silent = true})
+    vim.api.nvim_set_keymap('v', '<M-->', '<Cmd>:Llm<CR>', {noremap = true, silent = true})
 end
 
 -- Helper function for setting key mappings for filetypes
@@ -755,4 +761,5 @@ vim.api.nvim_set_keymap('n', '<leader>-', ':lua print_current_file_path()<CR>', 
 vim.keymap.set('n', '<leader>gl', function()
     require('gitgraph').draw({}, { all = true, max_count = 5000 })
 end, { desc = "GitGraph - Draw" })
+
 
