@@ -369,6 +369,10 @@ end
 
 wezterm.on("format-tab-title", function(tab)
     local new_title = tostring(tab.active_pane.current_working_dir):gsub("^file:///", "")
+    local max_title_len = 20
+    if #new_title > max_title_len then
+        new_title = "..." .. new_title:sub(-(max_title_len-3))
+    end
     return {
         { Text = new_title }
     }
