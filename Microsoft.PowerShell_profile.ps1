@@ -27,6 +27,12 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+f' -ScriptBlock {
 
 Set-PSReadLineKeyHandler -Chord 'Ctrl+g' -ScriptBlock {
     Invoke-FuzzyGitStatus
+    #Invoke-FuzzyEdit
+    #Invoke-FuzzyFasd
+    #Invoke-FuzzyZLocation
+    #Invoke-FuzzyHistory
+    #Invoke-FuzzyScoop
+    #Set-LocationFuzzyEverything
 }
 
 Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
