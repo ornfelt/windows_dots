@@ -14,7 +14,24 @@ Set-PSReadLineOption -EditMode Vi
 # Fzf
 # Install-Module -Name PSFzf -Force
 Import-Module PSFzf
-Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory 'Ctrl+r'
+#Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory 'Ctrl+r'
+Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+
+Set-PSReadLineKeyHandler -Chord 'Alt+c' -ScriptBlock {
+    Invoke-FuzzySetLocation
+}
+
+Set-PSReadLineKeyHandler -Chord 'Ctrl+f' -ScriptBlock {
+    Invoke-PsFzfRipgrep
+}
+
+Set-PSReadLineKeyHandler -Chord 'Ctrl+g' -ScriptBlock {
+    Invoke-FuzzyGitStatus
+}
+
+Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
+    Invoke-FuzzyKillProcess
+}
 
 # Alias
 $aliases = @(
