@@ -295,15 +295,45 @@ vim.api.nvim_set_keymap('n', '<leader>wq', ':lua ReplaceQuotes()<CR>', { noremap
 local function PythonCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "')
+
     local command = "!python " .. code_root_dir .. "Code2/Python/my_py/scripts/"
-    --vim.cmd('normal gv')
-    vim.fn.feedkeys(":" .. command)
-    local pos = #command
-    vim.fn.setcmdpos(pos)
+    local mode = vim.fn.mode()
+
+    -- TODO: ai scripts, append to end of last line / file end
+    if mode == 'v' or mode == 'V' or mode == '^V' then
+        --vim.cmd('normal gv')
+        vim.fn.feedkeys(":" .. command)
+        -- local pos = #command
+        -- vim.fn.setcmdpos(pos)
+    else
+        local current_file = vim.fn.expand("%:p")
+        local current_line = vim.fn.line(".")
+
+        -- local send_file_end = true
+        local send_file_end = false
+        local last_line = send_file_end and vim.fn.line("$") or ""
+
+        local args = ' "' .. current_file .. '" ' .. current_line
+        if send_file_end then
+            args = args .. " " .. last_line
+        end
+
+        local full_command = command .. args
+        vim.fn.feedkeys(":" .. full_command)
+
+        -- vim.schedule(function()
+            -- -- local pos = #command + 1
+            -- vim.fn.setcmdpos(pos)
+        -- end)
+        local move_left_count = #args
+        local move_left_keys = vim.api.nvim_replace_termcodes(string.rep("<Left>", move_left_count), true, false, true)
+        vim.api.nvim_feedkeys(move_left_keys, "n", false)
+    end
 end
 
 vim.api.nvim_create_user_command('RunPythonCommand', PythonCommand, {})
 vim.api.nvim_set_keymap('v', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
 
 -- GPT binds
 if is_plugin_installed('chatgpt') then
@@ -528,6 +558,39 @@ map('n', '<F4>', '<Esc>:set cursorline!<CR>')
 map('n', '<F5>', '<Esc>:setlocal spell! spelllang=en_us<CR>')
 map('n', '<F6>', '<Esc>:setlocal spell! spelllang=sv<CR>')
 
+local function SqlExecCommand()
+    local code_root_dir = os.getenv("code_root_dir") or "~/"
+    code_root_dir = code_root_dir:gsub(" ", '" "') -- Handle spaces in the path
+    local executable = code_root_dir .. "Code2/Sql/my_sql/SqlExec/SqlExec/bin/Debug/net8.0/SqlExec.exe"
+    local current_file = vim.fn.expand('%:p') -- Full path of current file
+    local mode = vim.fn.mode()
+    local args = { '"' .. current_file .. '"' }
+
+    if mode == 'v' or mode == 'V' then
+        vim.cmd('normal! gv') -- Re-select last visual selection to ensure it's active
+        local start_pos = vim.fn.getpos("'<")
+        local end_pos = vim.fn.getpos("'>")
+
+        if start_pos[2] >= 1 and end_pos[2] >= 1 then
+            table.insert(args, start_pos[2]) -- Start line number
+            table.insert(args, end_pos[2]) -- End line number
+        else
+            print("Invalid visual selection range.")
+            return
+        end
+    else
+        local current_line = vim.fn.line(".")
+        table.insert(args, current_line)
+    end
+
+    local formatted_args = table.concat(args, " ")
+    local output = vim.fn.system(executable .. " " .. formatted_args)
+
+    vim.cmd('belowright 15new')
+    local new_buf = vim.api.nvim_get_current_buf()
+    vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, vim.split(output, "\n"))
+end
+
 function compile_run()
     vim.cmd('w') -- Save the file first
 
@@ -598,12 +661,15 @@ function compile_run()
                 vim.cmd('!zathura ' .. pdf_path .. ' &')
             end
         end
+    elseif filetype == 'sql' then
+        SqlExecCommand()
     else
         print("Compilation of " .. filetype .. " extensions not configured..")
     end
 end
 
 vim.api.nvim_set_keymap('n', '<M-x>', '<Cmd>lua compile_run()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<M-x>', '<Cmd>lua compile_run()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<M-S-X>', '<Cmd>!chmod +x %<CR>', { noremap = true, silent = true })
 
 -- " Execute line under the cursor
@@ -761,5 +827,4 @@ vim.api.nvim_set_keymap('n', '<leader>-', ':lua print_current_file_path()<CR>', 
 vim.keymap.set('n', '<leader>gl', function()
     require('gitgraph').draw({}, { all = true, max_count = 5000 })
 end, { desc = "GitGraph - Draw" })
-
 
