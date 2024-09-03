@@ -109,7 +109,7 @@ end
 
 function toggle_filetree()
     --local filepath = (vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p'))
-    local filepath = vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p:h') -- dir
+    local filepath = vim.fn.expand('%:p') == '' and '~/' or './' -- or vim.fn.expand('%:p:h') -- dir
     if is_vim_plugin_installed('NERDTreeToggle') then
         vim.cmd('silent! NERDTreeToggle ' .. filepath)
     elseif is_plugin_installed('oil') then

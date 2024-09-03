@@ -82,6 +82,7 @@ return require('packer').startup(function()
   use 'nanotee/sqls.nvim'
   use 'preservim/nerdcommenter'
 
+  use 'tpope/vim-fugitive'
   use 'sindrets/diffview.nvim'
   use {
       'isakbm/gitgraph.nvim',
