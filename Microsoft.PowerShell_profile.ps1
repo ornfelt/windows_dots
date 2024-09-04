@@ -56,19 +56,21 @@ function RunChatGPT {
 	# python -m revChatGPT.V3 --api_key $env:OPENAI_API_KEY --submit_key enter
     python -m revChatGPT.V3 --api_key $env:OPENAI_API_KEY
 }
-
 Set-Alias -Name chatgpt -Value RunChatGPT
 
 $nvimPath = (Get-Command nvim).Source
-
 if ($nvimPath) {
     Set-Alias -Name vim -Value $nvimPath
 }
 
+function run_vimu {
+    nvim -u NONE $args
+}
+Set-Alias -Name vimu -Value run_vimu
+
 function Go-Up {
     Set-Location ..
 }
-
 Set-Alias .. Go-Up
 
 # Load all scripts
