@@ -279,9 +279,26 @@ map('v', '<leader>%', '/\\%V') -- Search in highlighted text
 map('v', '<leader>/', '"3y/<C-R>3<CR>') -- Search for highlighted text
 map("n", "Q", "<nop>") -- Remove Ex Mode
 vim.keymap.set("n", "<leader>r", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]]) -- Replace word under cursor
-vim.keymap.set("n", "<leader>t", "<cmd>silent !tmux neww tmux-sessionizer<CR>") -- Start tmux-sessionizer
+vim.keymap.set("n", "<leader>ts", "<cmd>silent !tmux neww tmux-sessionizer<CR>") -- Start tmux-sessionizer
 vim.keymap.set('n', '<leader>df', '<cmd>lua vim.diagnostic.open_float()<CR>', { noremap = true, silent = true })
 vim.keymap.set('n', '<leader>db', '<cmd>lua vim.diagnostic.setqflist()<CR>', { noremap = true, silent = true })
+
+-- au TabLeave * let g:lasttab = tabpagenr()
+vim.api.nvim_create_autocmd("TabLeave", {
+    pattern = "*",
+    callback = function()
+        vim.g.lasttab = vim.fn.tabpagenr()
+    end,
+})
+
+function goto_last_tab()
+    if vim.g.lasttab then
+        vim.cmd("tabn " .. vim.g.lasttab)
+    end
+end
+
+vim.api.nvim_set_keymap('n', '<leader>t', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<leader>t', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
 
 function ReplaceQuotes()
   vim.cmd([[
