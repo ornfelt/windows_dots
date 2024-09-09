@@ -191,7 +191,26 @@ map('n', '<M-v>', ':cdo s///gc | update<C-f><Esc>0f/li')
 map('n', '<M-n>', ':cnext<CR>')
 map('n', '<M-p>', ':cprev<CR>')
 map('n', '<M-P>', ':clast<CR>')
-map('n', '<M-b>', ':copen<CR>')
+-- map('n', '<M-b>', ':copen<CR>')
+-- Function to toggle the quickfix list
+function ToggleQuickfix()
+    local is_open = false
+
+    -- Check if the quickfix window is open
+    for _, win in ipairs(vim.fn.getwininfo()) do
+        if win.quickfix == 1 then
+            is_open = true
+            break
+        end
+    end
+
+    if is_open then
+        vim.cmd("cclose")
+    else
+        vim.cmd("copen")
+    end
+end
+vim.api.nvim_set_keymap('n', '<M-b>', ':lua ToggleQuickfix()<CR>', { noremap = true, silent = true })
 
 -- Window management and movement
 map('n', '<M-u>', ':resize +2<CR>')
