@@ -269,8 +269,260 @@ map('n', '<M-0>', ':tablast<CR>')
 
 -- Session management
 map('n', '<leader>o', '<C-^>')
-map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
+-- map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
 map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
+
+function save_buffers()
+  local buf_list = vim.api.nvim_list_bufs()
+  local file = io.open(vim.fn.expand("~/.vim/sessions/s_buffers.vim"), "w")
+
+  for _, buf in ipairs(buf_list) do
+    if vim.api.nvim_buf_get_option(buf, "buflisted") and vim.api.nvim_buf_get_option(buf, "modified") == false then
+      local buf_name = vim.api.nvim_buf_get_name(buf)
+      if buf_name ~= "" then
+        file:write(buf_name .. "\n")
+      end
+    end
+  end
+
+  file:close()
+  print("Buffers saved to ~/.vim/sessions/s_buffers.vim")
+end
+
+function save_active_buffers()
+  local tab_count = vim.fn.tabpagenr('$')
+  if tab_count > 2 then
+    local file = io.open(vim.fn.expand("~/.vim/sessions/s_buffers.vim"), "w")
+    local active_buffers = {}
+    local current_tab = vim.fn.tabpagenr()
+
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      active_buffers[buf] = true
+    end
+
+    for buf, _ in pairs(active_buffers) do
+      if vim.api.nvim_buf_get_option(buf, "buflisted") and vim.api.nvim_buf_get_option(buf, "modified") == false then
+        local buf_name = vim.api.nvim_buf_get_name(buf)
+        if buf_name ~= "" then
+          file:write(vim.fn.expand(buf_name, ':p') .. "\n")
+        end
+      end
+    end
+
+    file:write("TAB:" .. current_tab .. "\n")
+    file:close()
+    print("Active buffers and current tab saved to ~/.vim/sessions/s_buffers.vim")
+    vim.cmd("mks! ~/.vim/sessions/s.vim")
+  else
+    print("Not saving: Less than 3 tabs are open.")
+  end
+end
+
+-- Function to open each buffer in a separate tab
+function load_buffers_old()
+  local file = io.open(vim.fn.expand("~/.vim/sessions/s_buffers.vim"), "r")
+
+  if file == nil then
+    print("No saved buffers found!")
+    return
+  end
+
+  local tab_count = 0
+
+  for line in file:lines() do
+    vim.cmd("tabnew " .. line)
+    tab_count = tab_count + 1
+  end
+
+  file:close()
+
+  if tab_count > 1 then
+    vim.cmd("2tabnext")
+  end
+end
+
+function load_buffers()
+  local file = io.open(vim.fn.expand("~/.vim/sessions/s_buffers.vim"), "r")
+
+  if file == nil then
+    print("No saved buffers found!")
+    return
+  end
+
+  local lines = {}
+  local my_notes_path = vim.fn.getenv("my_notes_path")
+  my_notes_path = my_notes_path:gsub("\\", "/") -- Normalize the path
+  local saved_tab = 1 
+
+  -- Read and filter lines
+  for line in file:lines() do
+    if line:match("^TAB:") then
+      saved_tab = tonumber(line:sub(5))
+    else
+      -- Trim whitespace and normalize slashes
+      line = line:gsub("\\", "/"):gsub("^%s*(.-)%s*$", "%1")
+
+      if line ~= "" then
+        table.insert(lines, line)
+      end
+    end
+  end
+
+  file:close()
+
+  -- Custom sorting logic
+  table.sort(lines, function(a, b)
+    -- Prioritize lines starting with my_notes_path
+    local a_starts_with_notes = a:find(my_notes_path, 1, true) == 1
+    local b_starts_with_notes = b:find(my_notes_path, 1, true) == 1
+
+    if a_starts_with_notes and not b_starts_with_notes then
+      return true
+    elseif not a_starts_with_notes and b_starts_with_notes then
+      return false
+    elseif a_starts_with_notes and b_starts_with_notes then
+      -- Within my_notes_path, prioritize urls.txt, then wow.txt, then pf.txt
+      if a:match("urls%.txt$") and not b:match("urls%.txt$") then
+        return true
+      elseif not a:match("urls%.txt$") and b:match("urls%.txt$") then
+        return false
+      elseif a:match("wow%.txt$") and not b:match("wow%.txt$") then
+        return true
+      elseif not a:match("wow%.txt$") and b:match("wow%.txt$") then
+        return false
+      elseif a:match("pf%.txt$") and not b:match("pf%.txt$") then
+        return true
+      elseif not a:match("pf%.txt$") and b:match("pf%.txt$") then
+        return false
+      end
+    end
+
+    -- Finally, order by extension (.cpp, .js, .sql)
+    local a_ext = a:match("^.+(%..+)$")
+    local b_ext = b:match("^.+(%..+)$")
+
+    local ext_order = {[".cpp"] = 1, [".js"] = 2, [".sql"] = 3}
+    local a_order = ext_order[a_ext] or 999
+    local b_order = ext_order[b_ext] or 999
+
+    if a_order ~= b_order then
+      return a_order < b_order
+    else
+      -- If the extensions are the same or not recognized, sort alphabetically
+      return a < b
+    end
+  end)
+
+  -- Load buffers in the sorted order
+  local tab_count = 0
+  for _, line in ipairs(lines) do
+    if tab_count == 0 then
+      vim.cmd("edit " .. line)
+    else
+      vim.cmd("tabnew " .. line)
+    end
+    tab_count = tab_count + 1
+  end
+
+  if tab_count > 1 then
+    --vim.cmd("2tabnext")
+    vim.cmd(saved_tab .. "tabnext")
+  end
+end
+
+-- vim.api.nvim_set_keymap('n', '<leader>m', ':lua save_buffers()<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<leader>m', ':lua save_active_buffers()<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<leader>.', ':lua load_buffers()<CR>', { noremap = true, silent = true })
+
+-- Function to save the current tab and window layout
+function save_tabs_and_splits()
+  local tab_count = vim.fn.tabpagenr('$')
+
+  if tab_count > 2 then
+    local current_tab = vim.fn.tabpagenr()
+    local current_win = vim.fn.winnr()
+
+    local file = io.open(vim.fn.expand("~/.vim/sessions/s_layout.vim"), "w")
+    file:write(tab_count .. "\n")
+
+    for i = 1, tab_count do
+      vim.cmd(i .. "tabnext")
+
+      local win_count = vim.fn.winnr('$')
+      file:write(win_count .. "\n")
+
+      for j = 1, win_count do
+        vim.cmd(j .. "wincmd w")
+        local buf_name = vim.fn.bufname('%')
+        if buf_name ~= "" then
+          local full_path = vim.fn.fnamemodify(buf_name, ':p')
+          file:write(full_path .. "\n")
+        end
+      end
+    end
+
+    file:write("TAB:" .. current_tab .. "\n")
+    file:close()
+
+    vim.cmd(current_tab .. "tabnext")
+    vim.cmd(current_win .. "wincmd w")
+    print("Tabs, splits, and current tab saved to ~/.vim/sessions/s_layout.vim")
+
+    -- Call mks! to save the session
+    vim.cmd("mks! ~/.vim/sessions/s.vim")
+  else
+    print("Not saving: Less than 3 tabs are open.")
+  end
+end
+
+-- Function to load the saved tabs and window layout
+function load_tabs_and_splits()
+  local file = io.open(vim.fn.expand("~/.vim/sessions/s_layout.vim"), "r")
+
+  if file == nil then
+    print("No saved layout found!")
+    return
+  end
+
+  local tab_count = tonumber(file:read("*line"))
+  local saved_tab = 1
+
+  for i = 1, tab_count do
+    if i > 1 then
+      vim.cmd("tabnew")
+    end
+
+    local win_count = tonumber(file:read("*line"))
+
+    for j = 1, win_count do
+      if j > 1 then
+          -- vim.cmd("split")
+        vim.cmd("vsplit")
+      end
+
+      local buf_name = file:read("*line")
+      if buf_name and buf_name ~= "" then
+        vim.cmd("edit " .. buf_name)
+      end
+    end
+  end
+
+  local last_line = file:read("*line")
+  if last_line and last_line:match("^TAB:") then
+    saved_tab = tonumber(last_line:sub(5))
+  end
+
+  file:close()
+
+  if tab_count > 1 then
+    -- vim.cmd("2tabnext")
+    vim.cmd(saved_tab .. "tabnext")
+  end
+end
+
+vim.api.nvim_set_keymap('n', '<leader>m', ':lua save_tabs_and_splits()<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<leader>.', ':lua load_tabs_and_splits()<CR>', { noremap = true, silent = true })
 
 -- Open new tabs
 map('n', '<M-m>', ':tabe ~/.config/nvim/init.lua<CR>')
@@ -335,7 +587,6 @@ local function PythonCommand()
     local command = "!python " .. code_root_dir .. "Code2/Python/my_py/scripts/"
     local mode = vim.fn.mode()
 
-    -- TODO: ai scripts, append to end of last line / file end
     if mode == 'v' or mode == 'V' or mode == '^V' then
         --vim.cmd('normal gv')
         vim.fn.feedkeys(":" .. command)
@@ -368,8 +619,8 @@ local function PythonCommand()
 end
 
 vim.api.nvim_create_user_command('RunPythonCommand', PythonCommand, {})
-vim.api.nvim_set_keymap('v', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('v', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
 
 -- GPT binds
 if is_plugin_installed('chatgpt') then
@@ -444,10 +695,6 @@ if is_plugin_installed('gp') then
     map('v', '<leader>9', ':GpChatNew<CR>')
     map('n', '<leader>0', ':GpChatToggle<CR>')
     map('v', '<leader>0', ':GpChatToggle<CR>')
-    -- TODO:
-    -- map('n', '<M-c>', ':ChatGPTRun send_request<CR>')
-    -- map('v', '<M-c>', ':ChatGPTRun send_request<CR>')
-    -- map('i', '<M-c>', ':ChatGPTRun send_request<CR>')
     -- There's also:
     -- :GpAgent (for info)
     -- :GpWhisper
@@ -714,21 +961,21 @@ vim.api.nvim_set_keymap('n', '<M-S-X>', '<Cmd>!chmod +x %<CR>', { noremap = true
 --
 -- Function to execute command under cursor or highlighted text
 function execute_command()
-  local mode = vim.fn.mode()
-  local command
+    local mode = vim.fn.mode()
+    local command
 
-  if mode == 'v' or mode == 'V' then
-    vim.cmd('normal! gv"xy')
-    command = vim.fn.getreg('x')
-  else
-    command = vim.fn.getline('.')
-  end
+    if mode == 'v' or mode == 'V' then
+        vim.cmd('normal! gv"xy')
+        command = vim.fn.getreg('x')
+    else
+        command = vim.fn.getline('.')
+    end
 
-  -- Copy to clipboard
-  --vim.fn.setreg('+', command)
-  --print("Copied to clipboard: " .. command)
-  -- Execute it
-  vim.cmd(command)
+    -- Copy to clipboard
+    --vim.fn.setreg('+', command)
+    --print("Copied to clipboard: " .. command)
+    -- Execute it
+    vim.cmd(command)
 end
 
 vim.api.nvim_set_keymap('n', '<leader>,', ':lua execute_command()<CR>', { noremap = true, silent = true })
@@ -738,124 +985,124 @@ vim.api.nvim_set_keymap('v', '<leader>,', ':lua execute_command()<CR>', { norema
 -- pcall for checking requirement safely
 local actions_preview = pcall(require, "actions-preview") and require("actions-preview")
 if actions_preview then
-  vim.keymap.set({ "v", "n" }, "<leader>ca", require("actions-preview").code_actions)
+    vim.keymap.set({ "v", "n" }, "<leader>ca", require("actions-preview").code_actions)
 end
 
 local function replace_placeholders(line)
-  --  line = line:gsub("{code_root_dir}", vim.fn.getenv("code_root_dir") or "")
-  -- Use gsub to find and replace all occurrences of {ENV_VAR_NAME}
-  -- with corresponding environment variable value
-  line = line:gsub("{(.-)}", function(env_var)
-    return vim.fn.getenv(env_var) or ""
-  end)
-  return line
+    --  line = line:gsub("{code_root_dir}", vim.fn.getenv("code_root_dir") or "")
+    -- Use gsub to find and replace all occurrences of {ENV_VAR_NAME}
+    -- with corresponding environment variable value
+    line = line:gsub("{(.-)}", function(env_var)
+        return vim.fn.getenv(env_var) or ""
+    end)
+    return line
 end
 
 local function read_lines_from_file(file)
-  local lines = {}
-  for line in io.lines(file) do
-    line = replace_placeholders(line)
-    table.insert(lines, line)
-  end
-  return lines
+    local lines = {}
+    for line in io.lines(file) do
+        line = replace_placeholders(line)
+        table.insert(lines, line)
+    end
+    return lines
 end
 
 function open_files_from_list()
-  local my_notes_path = vim.fn.getenv("my_notes_path")
-  local file_path = my_notes_path .. "/files.txt"
-  local files = read_lines_from_file(file_path)
+    local my_notes_path = vim.fn.getenv("my_notes_path")
+    local file_path = my_notes_path .. "/files.txt"
+    local files = read_lines_from_file(file_path)
 
-  ---- Use fzf file picker to display file paths (edit/tabedit)
-  --vim.fn['fzf#run']({
-  --  source = files,
-  --  sink = function(selected)
-  --    vim.cmd('edit ' .. selected)
-  --  end,
-  --  options = '--multi --prompt "Select a file to open> " --expect=ctrl-t',
-  --  sinklist = function(selected)
-  --    local key = selected[1]
-  --    local file = selected[2]
-  --    if key == "ctrl-t" then
-  --      vim.cmd('tabedit ' .. file)
-  --    else
-  --      vim.cmd('edit ' .. file)
-  --    end
-  --  end
-  --})
+    ---- Use fzf file picker to display file paths (edit/tabedit)
+    --vim.fn['fzf#run']({
+    --  source = files,
+    --  sink = function(selected)
+    --    vim.cmd('edit ' .. selected)
+    --  end,
+    --  options = '--multi --prompt "Select a file to open> " --expect=ctrl-t',
+    --  sinklist = function(selected)
+    --    local key = selected[1]
+    --    local file = selected[2]
+    --    if key == "ctrl-t" then
+    --      vim.cmd('tabedit ' .. file)
+    --    else
+    --      vim.cmd('edit ' .. file)
+    --    end
+    --  end
+    --})
 
-  ---- Use fzf-lua file picker to display file paths
-  --require('fzf-lua').fzf_exec(files, {
-  --  prompt = 'Select a file: ',
-  --  actions = {
-  --    ['default'] = function(selected)
-  --      vim.cmd('edit ' .. selected[1])
-  --    end,
-  --    ['ctrl-t'] = function(selected)
-  --      vim.cmd('tabedit ' .. selected[1])
-  --    end,
-  --  }
-  --})
+    ---- Use fzf-lua file picker to display file paths
+    --require('fzf-lua').fzf_exec(files, {
+    --  prompt = 'Select a file: ',
+    --  actions = {
+    --    ['default'] = function(selected)
+    --      vim.cmd('edit ' .. selected[1])
+    --    end,
+    --    ['ctrl-t'] = function(selected)
+    --      vim.cmd('tabedit ' .. selected[1])
+    --    end,
+    --  }
+    --})
 
-  -- Use Telescope file picker to display file paths
-  require('telescope.pickers').new({}, {
-    prompt_title = "Select a file to open",
-    finder = require('telescope.finders').new_table({
-      results = files,
-    }),
-    sorter = require('telescope.config').values.generic_sorter({}),
-    attach_mappings = function(_, map)
-      local actions = require('telescope.actions')
-      local action_state = require('telescope.actions.state')
+    -- Use Telescope file picker to display file paths
+    require('telescope.pickers').new({}, {
+        prompt_title = "Select a file to open",
+        finder = require('telescope.finders').new_table({
+            results = files,
+        }),
+        sorter = require('telescope.config').values.generic_sorter({}),
+        attach_mappings = function(_, map)
+            local actions = require('telescope.actions')
+            local action_state = require('telescope.actions.state')
 
-      map('i', '<CR>', function(prompt_bufnr)
-        local selection = action_state.get_selected_entry()
-        actions.close(prompt_bufnr)
-        vim.cmd('edit ' .. selection.value)
-      end)
+            map('i', '<CR>', function(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd('edit ' .. selection.value)
+            end)
 
-      map('i', '<C-t>', function(prompt_bufnr)
-        local selection = action_state.get_selected_entry()
-        actions.close(prompt_bufnr)
-        vim.cmd('tabedit ' .. selection.value)
-      end)
+            map('i', '<C-t>', function(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd('tabedit ' .. selection.value)
+            end)
 
-      map('n', '<CR>', function(prompt_bufnr)
-        local selection = action_state.get_selected_entry()
-        actions.close(prompt_bufnr)
-        vim.cmd('edit ' .. selection.value)
-      end)
+            map('n', '<CR>', function(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd('edit ' .. selection.value)
+            end)
 
-      map('n', '<C-t>', function(prompt_bufnr)
-        local selection = action_state.get_selected_entry()
-        actions.close(prompt_bufnr)
-        vim.cmd('tabedit ' .. selection.value)
-      end)
+            map('n', '<C-t>', function(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd('tabedit ' .. selection.value)
+            end)
 
-      return true
-    end,
-  }):find()
+            return true
+        end,
+    }):find()
 end
 
 vim.api.nvim_set_keymap('n', '<leader>w', ':lua open_files_from_list()<CR>', { noremap = true, silent = true })
 
 local function get_current_file_path()
-  local file_path = vim.api.nvim_buf_get_name(0) -- Name of current buffer
-  if file_path == "" then
-    return ""
-  else
-    return vim.fn.fnamemodify(file_path, ":p") -- Convert to full path
-  end
-  --return vim.fn.expand("%:p")
+    local file_path = vim.api.nvim_buf_get_name(0) -- Name of current buffer
+    if file_path == "" then
+        return ""
+    else
+        return vim.fn.fnamemodify(file_path, ":p") -- Convert to full path
+    end
+    --return vim.fn.expand("%:p")
 end
 
 function print_current_file_path()
-  local path = get_current_file_path()
-  if path == "" then
-    print("No file in current buffer")
-  else
-    vim.fn.setreg('+', path)
-    print("Copied to clipboard: " .. path)
-  end
+    local path = get_current_file_path()
+    if path == "" then
+        print("No file in current buffer")
+    else
+        vim.fn.setreg('+', path)
+        print("Copied to clipboard: " .. path)
+    end
 end
 
 vim.api.nvim_set_keymap('n', '<leader>-', ':lua print_current_file_path()<CR>', { noremap = true, silent = true })
@@ -863,4 +1110,52 @@ vim.api.nvim_set_keymap('n', '<leader>-', ':lua print_current_file_path()<CR>', 
 vim.keymap.set('n', '<leader>gl', function()
     require('gitgraph').draw({}, { all = true, max_count = 5000 })
 end, { desc = "GitGraph - Draw" })
+
+function PythonExecCommand()
+    local code_root_dir = os.getenv("code_root_dir") or "~/"
+    code_root_dir = code_root_dir:gsub(" ", '" "')
+    local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gpt.py"
+    local print_to_current_buffer = false
+    local current_file = vim.fn.expand('%:p')
+    local mode = vim.fn.mode()
+    local args = { '"' .. current_file .. '"' }
+
+    if mode == 'v' or mode == 'V' then
+        vim.cmd('normal! gv')
+        local start_pos = vim.fn.getpos("'<")
+        local end_pos = vim.fn.getpos("'>")
+
+        if start_pos[2] >= 1 and end_pos[2] >= 1 then
+            table.insert(args, start_pos[2]) -- Start line number
+            table.insert(args, end_pos[2]) -- End line number
+        else
+            print("Invalid visual selection range.")
+            return
+        end
+    elseif mode == 'i' then
+        local current_line = vim.fn.line(".")
+        table.insert(args, current_line)
+    else
+        local current_line = vim.fn.line(".")
+        table.insert(args, current_line)
+    end
+
+    local formatted_args = table.concat(args, " ")
+    local cmd = "python3 " .. script_path .. " " .. formatted_args
+    local output = vim.fn.system(cmd)
+
+    if print_to_current_buffer then
+        local current_buf = vim.api.nvim_get_current_buf()
+        local line_count = vim.api.nvim_buf_line_count(current_buf)
+        vim.api.nvim_buf_set_lines(current_buf, line_count, line_count, false, vim.split(output, "\n"))
+    else
+        vim.cmd('belowright 15new')
+        local new_buf = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, vim.split(output, "\n"))
+    end
+end
+
+vim.api.nvim_set_keymap('n', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('i', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 
