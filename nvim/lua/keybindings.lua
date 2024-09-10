@@ -851,12 +851,20 @@ local function SqlExecCommand()
 
     if mode == 'v' or mode == 'V' then
         vim.cmd('normal! gv') -- Re-select last visual selection to ensure it's active
-        local start_pos = vim.fn.getpos("'<")
-        local end_pos = vim.fn.getpos("'>")
+        -- local start_pos = vim.fn.getpos("'<")
+        -- local end_pos = vim.fn.getpos("'>")
+        local start_pos = vim.fn.getpos("v")
+        local end_pos = vim.fn.getpos(".")
 
         if start_pos[2] >= 1 and end_pos[2] >= 1 then
-            table.insert(args, start_pos[2]) -- Start line number
-            table.insert(args, end_pos[2]) -- End line number
+            if start_pos[2] > end_pos[2] then
+                -- Visual select starts from bottom
+                table.insert(args, end_pos[2]) -- Start line number
+                table.insert(args, start_pos[2]) -- End line number
+            else
+                table.insert(args, start_pos[2]) -- Start line number
+                table.insert(args, end_pos[2]) -- End line number
+            end
         else
             print("Invalid visual selection range.")
             return
@@ -1114,20 +1122,29 @@ end, { desc = "GitGraph - Draw" })
 function PythonExecCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "')
-    local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gpt.py"
+    --local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gpt.py"
+    local script_path = code_root_dir .. "Code2/Python/my_py/scripts/read_file.py"
     local print_to_current_buffer = false
     local current_file = vim.fn.expand('%:p')
     local mode = vim.fn.mode()
     local args = { '"' .. current_file .. '"' }
 
     if mode == 'v' or mode == 'V' then
-        vim.cmd('normal! gv')
-        local start_pos = vim.fn.getpos("'<")
-        local end_pos = vim.fn.getpos("'>")
+        -- vim.cmd('normal! gv')
+        -- local start_pos = vim.fn.getpos("'<")
+        -- local end_pos = vim.fn.getpos("'>")
+        local start_pos = vim.fn.getpos("v")
+        local end_pos = vim.fn.getpos(".")
 
         if start_pos[2] >= 1 and end_pos[2] >= 1 then
-            table.insert(args, start_pos[2]) -- Start line number
-            table.insert(args, end_pos[2]) -- End line number
+            if start_pos[2] > end_pos[2] then
+                -- Visual select starts from bottom
+                table.insert(args, end_pos[2]) -- Start line number
+                table.insert(args, start_pos[2]) -- End line number
+            else
+                table.insert(args, start_pos[2]) -- Start line number
+                table.insert(args, end_pos[2]) -- End line number
+            end
         else
             print("Invalid visual selection range.")
             return
@@ -1141,8 +1158,9 @@ function PythonExecCommand()
     end
 
     local formatted_args = table.concat(args, " ")
-    local cmd = "python3 " .. script_path .. " " .. formatted_args
+    local cmd = "python " .. script_path .. " " .. formatted_args
     local output = vim.fn.system(cmd)
+    -- print("args: " .. formatted_args)
 
     if print_to_current_buffer then
         local current_buf = vim.api.nvim_get_current_buf()
@@ -1152,6 +1170,8 @@ function PythonExecCommand()
         vim.cmd('belowright 15new')
         local new_buf = vim.api.nvim_get_current_buf()
         vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, vim.split(output, "\n"))
+        -- Testing args
+        -- vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, vim.split(formatted_args, "\n"))
     end
 end
 
