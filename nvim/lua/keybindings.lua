@@ -623,14 +623,36 @@ local function create_hellow_mapping(ft, fe)
   })
 end
 
-vim.keymap.set("i", "<m-,>", function()
-    print("hi")
+vim.keymap.set("i", "<m-§>", function()
     vim.ui.input({ prompt = "Calc: " }, function(input)
         local calc = load("return " .. (input or ""))()
         if (calc) then
             vim.api.nvim_feedkeys(tostring(calc), "i", true)
         end
     end)
+end)
+
+vim.keymap.set("v", "<m-§>", function()
+    -- local start_pos = vim.fn.getpos("'<")
+    -- local end_pos = vim.fn.getpos("'>")
+    local start_pos = vim.fn.getpos("v")
+    local end_pos = vim.fn.getpos(".")
+    local lines = vim.fn.getline(start_pos[2], end_pos[2])
+    local selected_text = table.concat(lines, "\n")
+    local calc = load("return " .. selected_text)()
+    if calc then
+        vim.fn.cursor(end_pos[2], end_pos[3])
+        vim.api.nvim_put({tostring(calc)}, 'l', true, true)
+    end
+end)
+
+vim.keymap.set("n", "<m-§>", function()
+    local current_line = vim.fn.getline('.')
+    local calc = load("return " .. current_line)()
+    if calc then
+        local line_num = vim.fn.line('.')
+        vim.fn.append(line_num, tostring(calc))
+    end
 end)
 
 -- Set mappings for various filetypes
