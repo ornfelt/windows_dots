@@ -336,7 +336,7 @@ function load_tabs_and_splits()
       end
 
       local buf_name = file:read("*line")
-      if buf_name and buf_name ~= "" then
+      if buf_name and buf_name ~= "" and not buf_name:match("^term://") then
         vim.cmd("edit " .. buf_name)
       end
     end
