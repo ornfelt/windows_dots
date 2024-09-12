@@ -643,6 +643,7 @@ vim.keymap.set("v", "<m-§>", function()
     if calc then
         vim.fn.cursor(end_pos[2], end_pos[3])
         vim.api.nvim_put({tostring(calc)}, 'l', true, true)
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>k', true, false, true), 'n', true)
     end
 end)
 
@@ -652,6 +653,12 @@ vim.keymap.set("n", "<m-§>", function()
     if calc then
         local line_num = vim.fn.line('.')
         vim.fn.append(line_num, tostring(calc))
+        -- All of these work
+        -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('j', true, false, true), 'n', true)
+        -- vim.fn.cursor(line_num + 1, 0)
+        vim.cmd('normal! j')
+        -- vim.api.nvim_exec('normal! j', false)
+        -- vim.api.nvim_command('normal! j')
     end
 end)
 
@@ -706,7 +713,7 @@ local function SqlExecCommand()
     local args = { '"' .. current_file .. '"' }
 
     if mode == 'v' or mode == 'V' then
-        vim.cmd('normal! gv') -- Re-select last visual selection to ensure it's active
+        -- vim.cmd('normal! gv') -- Re-select last visual selection to ensure it's active
         -- local start_pos = vim.fn.getpos("'<")
         -- local end_pos = vim.fn.getpos("'>")
         local start_pos = vim.fn.getpos("v")
