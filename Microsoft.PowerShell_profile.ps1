@@ -1,7 +1,7 @@
 # Oh-My-Posh
-oh-my-posh init pwsh | Invoke-Expression
-$omp_config = Join-Path $PSScriptRoot ".\custom_cobalt.omp.json"
-oh-my-posh --init --shell pwsh --config $omp_config | Invoke-Expression
+#oh-my-posh init pwsh | Invoke-Expression
+#$omp_config = Join-Path $PSScriptRoot ".\custom_cobalt.omp.json"
+#oh-my-posh --init --shell pwsh --config $omp_config | Invoke-Expression
 
 # PSReadLine
 # Install-Module -Name PSReadLine -Force
@@ -72,6 +72,19 @@ function Go-Up {
     Set-Location ..
 }
 Set-Alias .. Go-Up
+
+# For wezterm cwd
+# https://wezfurlong.org/wezterm/shell-integration.html#osc-7-on-windows-with-powershell
+function prompt {
+    $p = $executionContext.SessionState.Path.CurrentLocation
+    $osc7 = ""
+    if ($p.Provider.Name -eq "FileSystem") {
+        $ansi_escape = [char]27
+        $provider_path = $p.ProviderPath -Replace "\\", "/"
+        $osc7 = "$ansi_escape]7;file://${env:COMPUTERNAME}/${provider_path}${ansi_escape}\"
+    }
+    "${osc7}PS $p$('>' * ($nestedPromptLevel + 1)) ";
+}
 
 # Load all scripts
 #Get-ChildItem (Join-Path ('$PSScriptRoot') \my_scripts\) | Where `
