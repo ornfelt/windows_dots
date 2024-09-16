@@ -623,7 +623,7 @@ local function create_hellow_mapping(ft, fe)
   })
 end
 
-vim.keymap.set("i", "<m-§>", function()
+vim.keymap.set("i", "<m-+>", function()
     vim.ui.input({ prompt = "Calc: " }, function(input)
         local calc = load("return " .. (input or ""))()
         if (calc) then
@@ -632,7 +632,7 @@ vim.keymap.set("i", "<m-§>", function()
     end)
 end)
 
-vim.keymap.set("v", "<m-§>", function()
+vim.keymap.set("v", "<m-+>", function()
     -- local start_pos = vim.fn.getpos("'<")
     -- local end_pos = vim.fn.getpos("'>")
     local start_pos = vim.fn.getpos("v")
@@ -647,7 +647,7 @@ vim.keymap.set("v", "<m-§>", function()
     end
 end)
 
-vim.keymap.set("n", "<m-§>", function()
+vim.keymap.set("n", "<m-+>", function()
     local current_line = vim.fn.getline('.')
     local calc = load("return " .. current_line)()
     if calc then
