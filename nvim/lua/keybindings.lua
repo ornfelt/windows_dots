@@ -101,11 +101,23 @@ elseif is_plugin_installed('oil') then
         prompt_save_on_select_new_entry = true,
     })
     -- map('n', '<M-w>', ':leftabove vsplit | vertical resize 40 | Oil ~/ <CR>')
-    map('n', '<M-w>', ':Oil ~/ <CR>')
+    -- map('n', '<M-w>', ':Oil ~/ <CR>')
+    vim.keymap.set('n', '<M-w>', function()
+    if vim.bo.filetype == 'oil' then
+        -- vim.cmd('bd')
+        vim.cmd('b#')
+    else
+        vim.cmd('Oil ~/')
+    end
+    end)
 elseif pcall(require, 'mini.files') then
     require('mini.files').setup()
     map('n', '<M-w>', ':lua MiniFiles.open("~/")<CR>')
 end
+
+-- vim.api.nvim_create_user_command('OilToggle', function()
+   -- vim.cmd((vim.bo.filetype == 'oil') and 'bd' or 'Oil')
+-- end, { nargs = 0 })
 
 function toggle_filetree()
     --local filepath = (vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p'))
@@ -114,7 +126,8 @@ function toggle_filetree()
         vim.cmd('silent! NERDTreeToggle ' .. filepath)
     elseif is_plugin_installed('oil') then
         -- vim.cmd('leftabove vsplit | vertical resize 40 | Oil ' .. filepath)
-        vim.cmd('Oil ' .. filepath)
+        -- vim.cmd('Oil ' .. filepath)
+        vim.cmd((vim.bo.filetype == 'oil') and 'b#' or 'Oil ' .. filepath)
     elseif pcall(require, 'mini.files') then
         require('mini.files').open(filepath)
     else
