@@ -394,7 +394,15 @@ map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatt
 map('v', '<leader>gu', ':s/\\<./\\u&/g<CR>:noh<CR>:noh<CR>') -- Capitalize first letter of each word on visually selected line
 map('n', '<leader>*', [[:/^\*\*\*$<CR>]]) -- Search for my bookmark
 map('v', '<leader>%', '/\\%V') -- Search in highlighted text
-map('v', '<leader>/', '"3y/<C-R>3<CR>') -- Search for highlighted text
+-- map('v', '<leader>/', '"3y/<C-R>3<CR>') -- Search for highlighted text
+map('n', '<leader>/', function()
+    local clipboard_text = vim.fn.getreg('+')
+    if clipboard_text ~= "" then
+        vim.cmd('/' .. vim.fn.escape(clipboard_text, '\\/'))
+    else
+        vim.notify("Clipboard is empty!", vim.log.levels.WARN)
+    end
+end)
 map("n", "Q", "<nop>") -- Remove Ex Mode
 vim.keymap.set("n", "<leader>r", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]]) -- Replace word under cursor
 vim.keymap.set("n", "<leader>ts", "<cmd>silent !tmux neww tmux-sessionizer<CR>") -- Start tmux-sessionizer
