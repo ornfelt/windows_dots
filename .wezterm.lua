@@ -179,6 +179,7 @@ config.keys = {
     { key = 'i', mods = 'LEADER', action = act.AdjustPaneSize { 'Up', 5 } },
     { key = 'o', mods = 'LEADER', action = act.AdjustPaneSize { 'Right', 5 }, },
     { key = "q", mods = "LEADER", action = act.CloseCurrentPane { confirm = false } },
+    { key = "q", mods = "LEADER|CTRL", action = act.CloseCurrentPane { confirm = false } },
 
     -- Swap active pane with another one
     {
@@ -281,7 +282,7 @@ config.keys = {
     { key = "9", mods = "LEADER", action = wezterm.action{ActivateTab=8}, },
     { key = "0", mods = "LEADER", action = wezterm.action{ActivateTab=9}, },
     { key = 't', mods = "LEADER", action = wezterm.action{SpawnTab="DefaultDomain"}, },
-    { key = 'q', mods = 'LEADER|CTRL', action = wezterm.action.QuitApplication },
+    { key = 'q', mods = 'LEADER|SHIFT', action = wezterm.action.QuitApplication },
 }
 
 --config.default_gui_startup_args = { 'connect', 'unix' }

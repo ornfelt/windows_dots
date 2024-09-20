@@ -436,6 +436,7 @@ end
 vim.api.nvim_set_keymap('n', '<leader>wq', ':lua ReplaceQuotes()<CR>', { noremap = true, silent = true })
 
 local function PythonCommand()
+    vim.cmd('w') -- Save the file first
     local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "')
 
@@ -1004,10 +1005,14 @@ vim.keymap.set('n', '<leader>gl', function()
 end, { desc = "GitGraph - Draw" })
 
 function PythonExecCommand()
+    vim.cmd('w') -- Save the file first
     local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "')
-    local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gpt.py"
     -- local script_path = code_root_dir .. "Code2/Python/my_py/scripts/read_file.py"
+    local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gpt.py"
+    -- local script_path = code_root_dir .. "Code2/Python/my_py/scripts/claude/claude.py"
+    -- local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gemini/gemini.py"
+    -- local script_path = code_root_dir .. "Code2/Python/my_py/scripts/mistral/mistral.py"
     local print_to_current_buffer = false
     local current_file = vim.fn.expand('%:p')
     local mode = vim.fn.mode()
