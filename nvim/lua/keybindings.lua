@@ -474,8 +474,8 @@ local function PythonCommand()
 end
 
 vim.api.nvim_create_user_command('RunPythonCommand', PythonCommand, {})
--- vim.api.nvim_set_keymap('v', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
--- vim.api.nvim_set_keymap('n', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>h', '<cmd>RunPythonCommand<CR>', { noremap = true, silent = true })
 
 -- GPT binds
 if is_plugin_installed('chatgpt') then
@@ -987,7 +987,7 @@ local function get_current_file_path()
     --return vim.fn.expand("%:p")
 end
 
-function print_current_file_path()
+function copy_current_file_path()
     local path = get_current_file_path()
     if path == "" then
         print("No file in current buffer")
@@ -997,7 +997,7 @@ function print_current_file_path()
     end
 end
 
-vim.api.nvim_set_keymap('n', '<leader>-', ':lua print_current_file_path()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>-', ':lua copy_current_file_path()<CR>', { noremap = true, silent = true })
 
 vim.keymap.set('n', '<leader>gl', function()
     require('gitgraph').draw({}, { all = true, max_count = 5000 })
@@ -1051,7 +1051,7 @@ function PythonExecCommand()
         local line_count = vim.api.nvim_buf_line_count(current_buf)
         vim.api.nvim_buf_set_lines(current_buf, line_count, line_count, false, vim.split(output, "\n"))
     else
-        vim.cmd('belowright 15new')
+        vim.cmd('belowright 20new')
         local new_buf = vim.api.nvim_get_current_buf()
         vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, vim.split(output, "\n"))
         -- Testing args
