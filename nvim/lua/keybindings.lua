@@ -1069,7 +1069,8 @@ vim.api.nvim_set_keymap('v', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { nore
 vim.api.nvim_set_keymap('i', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 
 function open_file_with_env()
-    local cword = vim.fn.expand("<cfile>")
+    -- local cword = vim.fn.expand("<cfile>")
+    local cword = vim.fn.expand("<cWORD>")
     -- Removes everything before drive letter (may appear in diff files)
     local trimmed_cword = cword:match("([a-zA-Z]:.*)")
     if trimmed_cword ~= nil then
