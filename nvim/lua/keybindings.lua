@@ -1068,3 +1068,120 @@ vim.api.nvim_set_keymap('n', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { nore
 vim.api.nvim_set_keymap('v', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('i', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 
+function open_file_with_env()
+    local cword = vim.fn.expand("<cfile>")
+    -- Removes everything before drive letter (may appear in diff files)
+    local trimmed_cword = cword:match("([a-zA-Z]:.*)")
+    if trimmed_cword ~= nil then
+        cword = trimmed_cword
+    end
+    -- print("cword: " .. cword)
+
+    if cword:find("{") then
+        local new_cword = cword:gsub("{(.-)}", function(var)
+            local value = os.getenv(var)
+            if value then
+                return value
+            else
+                print("Environment variable " .. var .. " not found.")
+                return nil
+            end
+        end)
+
+        if new_cword == cword then
+            return
+        end
+        -- print("new_cword: " .. new_cword)
+
+        -- vim.cmd("edit " .. new_cword)
+        vim.cmd("tabe " .. new_cword)
+    else
+        -- vim.cmd("edit " .. cword)
+        vim.cmd("tabe " .. cword)
+    end
+end
+
+vim.api.nvim_set_keymap('n', 'gf', ':lua open_file_with_env()<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', 'gx', ':!open <cWORD><CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'gx', ':!nohup firefox <cWORD> &<CR>', { noremap = true, silent = true })
+
+local function diff_copy()
+    local current_buf = vim.api.nvim_get_current_buf()
+
+    local windows = vim.api.nvim_list_wins()
+    local other_buf
+    for _, win in ipairs(windows) do
+        if vim.api.nvim_win_get_buf(win) ~= current_buf then
+            other_buf = vim.api.nvim_win_get_buf(win)
+            break
+        end
+    end
+
+    local file_paths = {}
+    if current_buf and vim.api.nvim_buf_is_loaded(current_buf) then
+        local path = vim.api.nvim_buf_get_name(current_buf)
+        if path ~= "" then
+            table.insert(file_paths, path)
+        end
+    end
+
+    if other_buf and vim.api.nvim_buf_is_loaded(other_buf) then
+        local path = vim.api.nvim_buf_get_name(other_buf)
+        if path ~= "" then
+            table.insert(file_paths, path)
+        end
+    end
+
+    if #file_paths < 2 then
+        print("Not enough files to copy.")
+        return
+    end
+
+    local target1 = "C:/local/testing_files/test1.txt"
+    local target2 = "C:/local/testing_files/test2.txt"
+
+    vim.cmd(string.format("silent !cp %s %s", file_paths[1], target1))
+    vim.cmd(string.format("silent !cp %s %s", file_paths[2], target2))
+    print("Files copied to C:/local/testing_files.")
+end
+
+vim.api.nvim_create_user_command('DiffCp', diff_copy, {})
+
+local function diff_current_lines()
+    local line_number = vim.fn.line('.')
+    local current_line = vim.fn.getline(line_number)
+    local next_line = vim.fn.getline(line_number + 1)
+
+    local file_paths = {}
+    for path in current_line:gmatch('"%s*(%S+)"%s*') do
+        table.insert(file_paths, path)
+    end
+
+    if #file_paths < 2 and next_line ~= "" then
+        for path in next_line:gmatch('"%s*(%S+)"%s*') do
+            table.insert(file_paths, path)
+            if #file_paths >= 2 then
+                break
+            end
+        end
+    end
+
+    if #file_paths < 2 then
+        print("Not enough file paths found for diff.")
+        return
+    end
+
+    for i, file_path in ipairs(file_paths) do
+        local trimmed_fp = file_path:match("([a-zA-Z]:.*)")
+        if trimmed_fp ~= nil then
+            file_paths[i] = trimmed_fp
+        end
+    end
+
+    vim.cmd(string.format("edit %s", file_paths[1]))
+    vim.cmd("diffthis")
+    vim.cmd(string.format("vert diffsplit %s", file_paths[2]))
+end
+
+vim.api.nvim_create_user_command('Diffi', diff_current_lines, {})
+
