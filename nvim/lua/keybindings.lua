@@ -196,9 +196,78 @@ vim.api.nvim_set_keymap('n', '<leader>A', ':lua StartFinder("code_root_dir")<CR>
 vim.api.nvim_set_keymap('n', '<leader>f', ':lua StartFinder("my_notes_path")<CR>', { noremap = true, silent = true })
 
 -- Vimgrep and QuickFix Lists
-map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>0f/li')
-map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>0f/li') -- Search all
-map('n', '<M-G>', ':vimgrep //g **/.*<C-f><Esc>0f/li') -- Search dotfiles
+-- map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>0f/li')
+-- map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>0f/li') -- Search all
+-- map('n', '<M-G>', ':vimgrep //g **/.*<C-f><Esc>0f/li') -- Search dotfiles
+
+local function get_git_root()
+    local git_root = vim.fn.system('git -C "' .. vim.fn.getcwd() .. '" rev-parse --show-toplevel')
+    git_root = vim.trim(git_root)
+
+    if vim.v.shell_error ~= 0 then
+        -- vim.notify("Not inside a Git repository.", vim.log.levels.ERROR)
+        -- return nil
+        return vim.fn.getcwd()
+    end
+
+    return git_root
+end
+
+function enter_vimgrep_command(pattern)
+    vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
+		if not input or input == '' then
+			-- vim.notify('No search keyword provided.', vim.log.levels.WARN)
+			return
+		end
+
+		local directory = get_git_root()
+        directory = directory:gsub('\\', '/')
+        directory = directory:gsub('/+', '/')
+        local cmd = string.format(':vimgrep /%s/g %s/%s', input, directory, pattern)
+        -- print(cmd)
+        vim.cmd(cmd)
+		-- vim.notify(string.format('vimgrep search executed for keyword: "%s"', input), vim.log.levels.INFO)
+	end)
+end
+
+local function get_current_buffer_extension()
+    if vim.bo.filetype == '' and vim.fn.expand('%') == '' then
+        -- vim.notify("Current buffer is not associated with a file.", vim.log.levels.WARN)
+        return nil
+    end
+
+    local extension = vim.fn.fnamemodify(vim.fn.expand('%'), ':e')
+    return extension
+end
+
+-- vim.keymap.set( 'n', '<M-f>', function() enter_vimgrep_command('**/*.txt') end, { noremap = true, silent = true })
+vim.keymap.set('n', '<M-f>', function()
+    local extension = get_current_buffer_extension()
+    if not extension then
+        -- return
+        extension = '.txt'
+    end
+    local pattern = '**/*.' .. extension
+    enter_vimgrep_command(pattern)
+end, { noremap = true, silent = true })
+
+vim.keymap.set( 'n', '<M-g>', function() enter_vimgrep_command('**/*.*') end, { noremap = true, silent = true })
+vim.keymap.set( 'n', '<M-G>', function() enter_vimgrep_command('**/.*') end, { noremap = true, silent = true })
+
+-- :vimgrep /mypattern/j *.xml *.js
+-- :vimgrep /mypattern/g **/*.{c,cpp,cs}
+-- The 'g' option specifies that all matches for a search will be returned instead of just one per
+-- line, and the 'j' option specifies that Vim will not jump to the first match automatically.
+local function construct_glob_pattern(extensions)
+    return '**/*.{' .. table.concat(extensions, ',') .. '}'
+end
+
+vim.keymap.set('n', '<M-F>', function()
+    local extensions = { 'c', 'cpp', 'cs', 'json', 'xml', 'lua', 'py', 'java' }
+    local pattern = construct_glob_pattern(extensions)
+    enter_vimgrep_command(pattern)
+end, { noremap = true, silent = true })
+
 map('n', '<M-v>', ':cdo s///gc | update<C-f><Esc>0f/li')
 -- map('n', '<M-v>', ':cfdo s//x/gc<left><left><left><left><left><C-f>i')
 map('n', '<M-n>', ':cnext<CR>')

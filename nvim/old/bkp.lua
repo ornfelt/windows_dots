@@ -161,3 +161,24 @@ end
 vim.api.nvim_set_keymap('n', '<leader>m', ':lua save_active_buffers()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<leader>.', ':lua load_buffers()<CR>', { noremap = true, silent = true })
 
+-----------
+function enter_vimgrep_command(pattern)
+    local git_root = get_git_root()
+    git_root = git_root:gsub('\\', '/')
+    git_root = git_root:gsub('/+', '/')
+
+    local cmd = string.format(':vimgrep //g "%s/%s"', git_root, pattern)
+    local keys = vim.api.nvim_replace_termcodes(cmd, true, false, true)
+
+    vim.api.nvim_feedkeys(keys, 'n', true)
+
+    vim.schedule(function()
+        local additional_keys = vim.api.nvim_replace_termcodes('<C-f><Esc>0f/li', true, false, true)
+        vim.api.nvim_feedkeys(additional_keys, 'n', true)
+    end)
+end
+
+vim.keymap.set( 'n', '<M-f>', function() enter_vimgrep_command('**/*.txt') end, { noremap = true, silent = true })
+vim.keymap.set( 'n', '<M-g>', function() enter_vimgrep_command('**/*.*') end, { noremap = true, silent = true })
+vim.keymap.set( 'n', '<M-G>', function() enter_vimgrep_command('**/.*') end, { noremap = true, silent = true })
+
