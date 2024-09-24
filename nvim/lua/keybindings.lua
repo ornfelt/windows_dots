@@ -798,7 +798,15 @@ map('n', '<F6>', '<Esc>:setlocal spell! spelllang=sv<CR>')
 local function SqlExecCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "') -- Handle spaces in the path
-    local executable = code_root_dir .. "Code2/Sql/my_sql/SqlExec/SqlExec/bin/Debug/net8.0/SqlExec.exe"
+
+    local executable_net8 = code_root_dir .. 'Code2/Sql/my_sql/SqlExec/SqlExec/bin/Debug/net8.0/SqlExec.exe'
+    local executable_net7 = code_root_dir .. 'Code2/Sql/my_sql/SqlExec/SqlExec/bin/Debug/net7.0/SqlExec.exe'
+    local function file_exists(path)
+        local stat = vim.loop.fs_stat(path)
+        return stat ~= nil
+    end
+    local executable = file_exists(executable_net8) and executable_net8 or executable_net7
+
     local current_file = vim.fn.expand('%:p') -- Full path of current file
     local mode = vim.fn.mode()
     local args = { '"' .. current_file .. '"' }
