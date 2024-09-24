@@ -182,3 +182,59 @@ vim.keymap.set( 'n', '<M-f>', function() enter_vimgrep_command('**/*.txt') end, 
 vim.keymap.set( 'n', '<M-g>', function() enter_vimgrep_command('**/*.*') end, { noremap = true, silent = true })
 vim.keymap.set( 'n', '<M-G>', function() enter_vimgrep_command('**/.*') end, { noremap = true, silent = true })
 
+-----------
+local function get_current_buffer_extension()
+    if vim.bo.filetype == '' and vim.fn.expand('%') == '' then
+        -- vim.notify("Current buffer is not associated with a file.", vim.log.levels.WARN)
+        return nil
+    end
+
+    local extension = vim.fn.fnamemodify(vim.fn.expand('%'), ':e')
+    return extension
+end
+
+local function get_git_root()
+    local git_root = vim.fn.system('git -C "' .. vim.fn.getcwd() .. '" rev-parse --show-toplevel')
+    git_root = vim.trim(git_root)
+
+    if vim.v.shell_error ~= 0 then
+        -- vim.notify("Not inside a Git repository.", vim.log.levels.ERROR)
+        -- return nil
+        return vim.fn.getcwd()
+    end
+
+    return git_root
+end
+
+
+function VimGrepSearch(param)
+    local git_root = get_git_root()
+    git_root = git_root:gsub('\\', '/')
+    git_root = git_root:gsub('/+', '/')
+
+    local extension = get_current_buffer_extension()
+    if not extension then
+        extension = '.txt'
+    end
+    local pattern = '**/*.' .. extension
+
+    local cmd = string.format(':vimgrep /%s/g %s/%s', param, git_root, pattern)
+    -- print(cmd)
+    vim.cmd(cmd)
+end
+
+function enter_vimgrep_command_feed()
+    local cmd = string.format(':lua VimGrepSearch("")')
+    local keys = vim.api.nvim_replace_termcodes(cmd, true, false, true)
+    vim.api.nvim_feedkeys(keys, 'n', true)
+
+    vim.schedule(function()
+        local additional_keys = vim.api.nvim_replace_termcodes('<Left><Left>', true, false, true)
+        vim.api.nvim_feedkeys(additional_keys, 'n', true)
+    end)
+end
+
+vim.keymap.set('n', '<M-f>', function()
+    enter_vimgrep_command_feed()
+end, { noremap = true, silent = true })
+
