@@ -195,6 +195,108 @@ vim.api.nvim_set_keymap('n', '<leader>s', ':lua StartFinder("code_root_dir", "Co
 vim.api.nvim_set_keymap('n', '<leader>A', ':lua StartFinder("code_root_dir")<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<leader>f', ':lua StartFinder("my_notes_path")<CR>', { noremap = true, silent = true })
 
+local function replace_placeholders(line)
+    --  line = line:gsub("{code_root_dir}", vim.fn.getenv("code_root_dir") or "")
+    -- Use gsub to find and replace all occurrences of {ENV_VAR_NAME}
+    -- with corresponding environment variable value
+    line = line:gsub("{(.-)}", function(env_var)
+        return vim.fn.getenv(env_var) or ""
+    end)
+    return line
+end
+
+local function read_lines_from_file(file)
+    local lines = {}
+    for line in io.lines(file) do
+        line = replace_placeholders(line)
+        table.insert(lines, line)
+    end
+    return lines
+end
+
+function open_files_from_list()
+    local my_notes_path = vim.fn.getenv("my_notes_path")
+    local file_path = my_notes_path .. "/files.txt"
+    local files = read_lines_from_file(file_path)
+
+    -- Use fzf file picker to display file paths (edit/tabedit)
+    --vim.fn['fzf#run']({
+    -- source = files,
+    -- -- sink = function(selected)
+    --   -- vim.cmd('edit ' .. selected)
+    -- -- end,
+    -- options = '--multi --prompt "Select a file to open> " --expect=ctrl-t',
+    -- window = {
+    --     width = 0.6,
+    --     height = 0.6,
+    --     border = 'rounded'
+    -- },
+    -- sinklist = function(selected)
+    --   local key = selected[1]
+    --   local file = selected[2]
+    --   if key == "ctrl-t" then
+    --     vim.cmd('tabedit ' .. file)
+    --   else
+    --     vim.cmd('edit ' .. file)
+    --   end
+    -- end
+    --})
+
+    -- Use fzf-lua file picker to display file paths
+    --require('fzf-lua').fzf_exec(files, {
+    --  prompt = 'Select a file: ',
+    --  actions = {
+    --    ['default'] = function(selected)
+    --      vim.cmd('edit ' .. selected[1])
+    --    end,
+    --    ['ctrl-t'] = function(selected)
+    --      vim.cmd('tabedit ' .. selected[1])
+    --    end,
+    --  }
+    --})
+
+    -- Use Telescope file picker to display file paths
+    require('telescope.pickers').new({}, {
+        prompt_title = "Select a file to open",
+        finder = require('telescope.finders').new_table({
+            results = files,
+        }),
+        sorter = require('telescope.config').values.generic_sorter({}),
+        attach_mappings = function(_, map)
+            local actions = require('telescope.actions')
+            local action_state = require('telescope.actions.state')
+
+            map('i', '<CR>', function(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd('edit ' .. selection.value)
+            end)
+
+            map('i', '<C-t>', function(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd('tabedit ' .. selection.value)
+            end)
+
+            map('n', '<CR>', function(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd('edit ' .. selection.value)
+            end)
+
+            map('n', '<C-t>', function(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd('tabedit ' .. selection.value)
+            end)
+
+            return true
+        end,
+    }):find()
+end
+
+vim.api.nvim_set_keymap('n', '<leader>w', ':lua open_files_from_list()<CR>', { noremap = true, silent = true })
+
 -- Vimgrep and QuickFix Lists
 -- map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>0f/li')
 -- map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>0f/li') -- Search all
@@ -957,103 +1059,6 @@ local actions_preview = pcall(require, "actions-preview") and require("actions-p
 if actions_preview then
     vim.keymap.set({ "v", "n" }, "<leader>ca", require("actions-preview").code_actions)
 end
-
-local function replace_placeholders(line)
-    --  line = line:gsub("{code_root_dir}", vim.fn.getenv("code_root_dir") or "")
-    -- Use gsub to find and replace all occurrences of {ENV_VAR_NAME}
-    -- with corresponding environment variable value
-    line = line:gsub("{(.-)}", function(env_var)
-        return vim.fn.getenv(env_var) or ""
-    end)
-    return line
-end
-
-local function read_lines_from_file(file)
-    local lines = {}
-    for line in io.lines(file) do
-        line = replace_placeholders(line)
-        table.insert(lines, line)
-    end
-    return lines
-end
-
-function open_files_from_list()
-    local my_notes_path = vim.fn.getenv("my_notes_path")
-    local file_path = my_notes_path .. "/files.txt"
-    local files = read_lines_from_file(file_path)
-
-    ---- Use fzf file picker to display file paths (edit/tabedit)
-    --vim.fn['fzf#run']({
-    --  source = files,
-    --  sink = function(selected)
-    --    vim.cmd('edit ' .. selected)
-    --  end,
-    --  options = '--multi --prompt "Select a file to open> " --expect=ctrl-t',
-    --  sinklist = function(selected)
-    --    local key = selected[1]
-    --    local file = selected[2]
-    --    if key == "ctrl-t" then
-    --      vim.cmd('tabedit ' .. file)
-    --    else
-    --      vim.cmd('edit ' .. file)
-    --    end
-    --  end
-    --})
-
-    ---- Use fzf-lua file picker to display file paths
-    --require('fzf-lua').fzf_exec(files, {
-    --  prompt = 'Select a file: ',
-    --  actions = {
-    --    ['default'] = function(selected)
-    --      vim.cmd('edit ' .. selected[1])
-    --    end,
-    --    ['ctrl-t'] = function(selected)
-    --      vim.cmd('tabedit ' .. selected[1])
-    --    end,
-    --  }
-    --})
-
-    -- Use Telescope file picker to display file paths
-    require('telescope.pickers').new({}, {
-        prompt_title = "Select a file to open",
-        finder = require('telescope.finders').new_table({
-            results = files,
-        }),
-        sorter = require('telescope.config').values.generic_sorter({}),
-        attach_mappings = function(_, map)
-            local actions = require('telescope.actions')
-            local action_state = require('telescope.actions.state')
-
-            map('i', '<CR>', function(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                actions.close(prompt_bufnr)
-                vim.cmd('edit ' .. selection.value)
-            end)
-
-            map('i', '<C-t>', function(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                actions.close(prompt_bufnr)
-                vim.cmd('tabedit ' .. selection.value)
-            end)
-
-            map('n', '<CR>', function(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                actions.close(prompt_bufnr)
-                vim.cmd('edit ' .. selection.value)
-            end)
-
-            map('n', '<C-t>', function(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                actions.close(prompt_bufnr)
-                vim.cmd('tabedit ' .. selection.value)
-            end)
-
-            return true
-        end,
-    }):find()
-end
-
-vim.api.nvim_set_keymap('n', '<leader>w', ':lua open_files_from_list()<CR>', { noremap = true, silent = true })
 
 local function get_current_file_path()
     local file_path = vim.api.nvim_buf_get_name(0) -- Name of current buffer
