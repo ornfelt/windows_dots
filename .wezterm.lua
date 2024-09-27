@@ -20,7 +20,14 @@ config.enable_scroll_bar = true
 config.enable_wayland = true
 -- config.font = wezterm.font('Hack')
 --config.font = wezterm.font('Monaspace Neon')
-config.font_size = 11.0
+
+local user_domain = os.getenv("USERDOMAIN") or ""
+if string.lower(user_domain):find("lenovo2") then
+  config.font_size = 10.0
+else
+  config.font_size = 11.0
+end
+
 config.hide_tab_bar_if_only_one_tab = true
 config.mouse_bindings = {
     -- Open URLs with Ctrl+Click
