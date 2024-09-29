@@ -969,6 +969,17 @@ function compile_run()
             vim.cmd('!time ./%:r')
         end
     elseif filetype == 'java' then
+        local build_script = is_windows and './build.ps1' or './build.sh'
+        local build_script_exists = vim.fn.filereadable(build_script) == 1
+        if build_script_exists then
+            if is_windows then
+                vim.cmd('!powershell -ExecutionPolicy ByPass -File build.ps1')
+            else
+                vim.cmd('!bash ./build.sh')
+            end
+            return
+        end
+
         if is_windows then
             vim.cmd('!javac %')
             vim.cmd('!java -cp %:p:h %:t:r')
@@ -979,6 +990,13 @@ function compile_run()
         vim.cmd('!time bash %')
     elseif filetype == 'python' then
         vim.cmd(is_windows and '!python %' or '!time python %')
+        -- local main_py_exists = vim.fn.filereadable('./main.py') == 1
+        -- local has_main = vim.fn.search('__main__', 'nw') > 0
+        -- if main_py_exists and not has_main then
+            -- vim.cmd(is_windows and '!python ./main.py > test.txt' or '!time python3 ./main.py > test.txt')
+        -- else
+            -- vim.cmd(is_windows and '!python % > test.txt' or '!time python3 % > test.txt')
+        -- end
     elseif filetype == 'html' then
         vim.cmd('!firefox % &')
     elseif filetype == 'php' then
