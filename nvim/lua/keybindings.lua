@@ -1204,7 +1204,8 @@ end
 
 vim.api.nvim_set_keymap('n', 'gf', ':lua open_file_with_env()<CR>', { noremap = true, silent = true })
 -- vim.api.nvim_set_keymap('n', 'gx', ':!open <cWORD><CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'gx', ':!nohup firefox <cWORD> &<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', 'gx', ':!nohup firefox <cWORD> &<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'gx', ':!firefox <cWORD> &<CR>', { noremap = true, silent = true })
 
 local function diff_copy()
     local current_buf = vim.api.nvim_get_current_buf()
