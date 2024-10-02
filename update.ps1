@@ -50,11 +50,11 @@ if (-not (Test-Path -Path $weztermDir)) {
 # Copy files into wezterm-session-manager
 $myNotesPath = [System.Environment]::ExpandEnvironmentVariables("%my_notes_path%")
 
-$sessionManagerFile = Join-Path -Path $myNotesPath -ChildPath "notes\wes\session-manager.lua"
-$weztermStateFile = Join-Path -Path $myNotesPath -ChildPath "notes\wes\wezterm_state_coding.json"
+$sessionManagerFile = Join-Path -Path $myNotesPath -ChildPath "scripts\wes\session-manager.lua"
+#$weztermStateFile = Join-Path -Path $myNotesPath -ChildPath "scripts\wes\wezterm_state_coding.json"
 
 Copy-Item -Path $sessionManagerFile -Destination $weztermDir -Force
-Copy-Item -Path $weztermStateFile -Destination $weztermDir -Force
+#Copy-Item -Path $weztermStateFile -Destination $weztermDir -Force
 
 Write-Host "`nFiles copied successfully to '$weztermDir'"
 
