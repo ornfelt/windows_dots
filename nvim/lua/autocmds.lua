@@ -89,3 +89,11 @@ if vim.fn.executable('pdflatex') == 1 then
     })
 end
 
+vim.api.nvim_create_autocmd("BufRead", {
+    -- pattern = "*",
+    pattern = {"*.txt", "*.sql"},
+    callback = function()
+        vim.cmd('edit ++ff=dos %')
+    end
+})
+
