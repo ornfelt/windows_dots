@@ -67,7 +67,7 @@ else
 end
 
 -- Tab bar
---config.use_fancy_tab_bar = true
+-- config.use_fancy_tab_bar = true
 config.tab_bar_at_bottom = true
 config.switch_to_last_active_tab_when_closing_tab = true
 config.tab_max_width = 15
