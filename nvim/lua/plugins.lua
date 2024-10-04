@@ -37,10 +37,10 @@ return require('packer').startup(function()
   use 'hrsh7th/nvim-cmp'
   use("gruvbox-community/gruvbox")
 
-  use {
-      'nvim-treesitter/nvim-treesitter',
-      build = ':TSUpdate'
-  }
+  -- use {
+      -- 'nvim-treesitter/nvim-treesitter',
+      -- build = ':TSUpdate'
+  -- }
 
   use {
     'nvim-telescope/telescope.nvim',
