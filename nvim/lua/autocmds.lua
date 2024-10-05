@@ -32,6 +32,7 @@ create_mappings("cs", {
 })
 
 create_mappings("py,python", {
+  ["sout<Tab>"] = 'print(f"");<Esc>?""<Enter>li',
   ["for<Tab>"] = 'for i in range():<Esc>hi',
   ["fore<Tab>"] = 'for i in :<Esc>i'
 })
