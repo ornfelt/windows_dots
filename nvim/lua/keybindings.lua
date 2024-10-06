@@ -368,7 +368,7 @@ local function construct_glob_pattern(extensions)
 end
 
 vim.keymap.set('n', '<M-F>', function()
-    local extensions = { 'c', 'cpp', 'cs', 'json', 'xml', 'lua', 'py', 'java' }
+    local extensions = { 'c', 'cpp', 'cs', 'css', 'go', 'h', 'hpp', 'html', 'java', 'js', 'jsx', 'json', 'lua', 'php', 'py', 'rs', 'sql', 'ts', 'tsx', 'xml', 'zig' }
     local pattern = construct_glob_pattern(extensions)
     enter_vimgrep_command(pattern)
 end, { noremap = true, silent = true })
@@ -1290,4 +1290,36 @@ local function diff_current_lines()
 end
 
 vim.api.nvim_create_user_command('Diffi', diff_current_lines, {})
+
+local function is_callable(cmd)
+  return vim.fn.executable(cmd) == 1
+end
+
+function format_file()
+  local filetype = vim.bo.filetype
+
+  if filetype == "json" then
+    if is_callable("jq") then
+      vim.cmd([[%!jq .]])
+    elseif is_callable("python") then
+      vim.cmd([[%!python -m json.tool]])
+    else
+      vim.cmd('echo "No JSON formatter available!"')
+    end
+
+  elseif filetype == "xml" then
+    if is_callable("xmllint") then
+      vim.cmd([[%!xmllint --format -]])
+    elseif is_callable("python") then
+      vim.cmd([[%!python -c "import sys, xml.dom.minidom as m; print(m.parse(sys.stdin).toprettyxml())"]])
+    else
+      vim.cmd('echo "No XML formatter available!"')
+    end
+
+  else
+    vim.cmd('echo "Unsupported file type!"')
+  end
+end
+
+vim.api.nvim_set_keymap('n', '<leader>=', ':lua format_file()<CR>', { noremap = true, silent = true })
 
