@@ -29,6 +29,7 @@ else
 end
 
 config.hide_tab_bar_if_only_one_tab = true
+config.show_close_tab_button_in_tabs = false
 config.mouse_bindings = {
     -- Open URLs with Ctrl+Click
     {
