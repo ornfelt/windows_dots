@@ -54,7 +54,7 @@ map('n', 'Y', 'y$') -- Yank till end of line
 
 --map('x', '<leader>p', "\"_dP") -- Replace from void
 map('n', '<leader>p', 'viw"_dP') -- Replace from void
-map('v', '<leader>p', '<Esc>viw"_dP') -- Replace from void
+map('v', '<leader>p', '"_dP') -- Replace from void
 map('n', '<leader>d', '"_d') -- Delete to void
 map('v', '<leader>d', '"_d') -- Delete to void
 
@@ -318,7 +318,7 @@ local function get_git_root()
     return git_root
 end
 
-function enter_vimgrep_command(pattern)
+function enter_vimgrep_command_old(pattern)
     vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
 		if not input or input == '' then
 			-- vim.notify('No search keyword provided.', vim.log.levels.WARN)
@@ -335,6 +335,32 @@ function enter_vimgrep_command(pattern)
 	end)
 end
 
+function enter_vimgrep_command(pattern, extension)
+    vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
+        if not input or input == '' then
+            return
+        end
+
+        -- Determine excluded directories based on file extension
+        local exclude_dirs = ''
+        if extension == 'rs' then
+            exclude_dirs = "--glob '!target/**'"
+        elseif extension == 'cs' then
+            exclude_dirs = "--glob '!bin/**' --glob '!obj/**'"
+        else
+            exclude_dirs = "--glob '!build/**'"
+        end
+
+        local directory = get_git_root()
+        directory = directory:gsub('\\', '/')
+        directory = directory:gsub('/+', '/')
+
+        local cmd = string.format(':vimgrep /%s/g %s/%s %s', input, directory, pattern, exclude_dirs)
+        print(cmd)
+        -- vim.cmd(cmd)
+    end)
+end
+
 local function get_current_buffer_extension()
     if vim.bo.filetype == '' and vim.fn.expand('%') == '' then
         -- vim.notify("Current buffer is not associated with a file.", vim.log.levels.WARN)
@@ -346,15 +372,25 @@ local function get_current_buffer_extension()
 end
 
 -- vim.keymap.set( 'n', '<M-f>', function() enter_vimgrep_command('**/*.txt') end, { noremap = true, silent = true })
+--vim.keymap.set('n', '<M-f>', function()
+--    local extension = get_current_buffer_extension()
+--    if not extension then
+--        extension = '.txt'
+--    end
+--    local pattern = '**/*.' .. extension
+--    enter_vimgrep_command(pattern)
+--end, { noremap = true, silent = true })
 vim.keymap.set('n', '<M-f>', function()
     local extension = get_current_buffer_extension()
+
     if not extension then
-        -- return
-        extension = '.txt'
+        extension = 'txt'
     end
+
     local pattern = '**/*.' .. extension
-    enter_vimgrep_command(pattern)
+    enter_vimgrep_command(pattern, extension)
 end, { noremap = true, silent = true })
+
 
 vim.keymap.set( 'n', '<M-g>', function() enter_vimgrep_command('**/*.*') end, { noremap = true, silent = true })
 vim.keymap.set( 'n', '<M-G>', function() enter_vimgrep_command('**/.*') end, { noremap = true, silent = true })
@@ -455,11 +491,128 @@ map('n', '<M-9>', '9gt')
 map('n', '<M-0>', ':tablast<CR>')
 map('n', '<leader>o', '<C-^>')
 
+function load_session()
+  local session_dir = vim.fn.expand('~/.vim/sessions/')
+  local pattern = 's*.vim'
+  local session_files = vim.fn.globpath(session_dir, pattern, 0, 1)
+
+  if #session_files == 0 then
+    print("No session files found in " .. session_dir)
+    return
+  end
+
+  -- Extract session indices, names, and paths
+  --local sessions = {}
+  --for _, filepath in ipairs(session_files) do
+  --  local filename = vim.fn.fnamemodify(filepath, ':t')
+  --  local index_str = filename:match('^s(%d*)%.vim$')
+  --  local index = tonumber(index_str)
+  --  if not index then
+  --    if index_str == '' then
+  --      index = 1 -- For 's.vim', set index to 1
+  --    else
+  --      index = math.huge -- For any other non-matching filename
+  --    end
+  --  end
+  --  table.insert(sessions, { index = index, name = filename, path = filepath })
+  --end
+  local sessions = {}
+  for _, filepath in ipairs(session_files) do
+    local filename = vim.fn.fnamemodify(filepath, ':t')
+    -- Exclude files with "layout" (case-insensitive)
+    if not string.match(string.lower(filename), 'layout') then
+      local index_str = filename:match('^s(%d*)%.vim$')
+      local index = tonumber(index_str)
+      if not index then
+        if index_str == '' then
+          index = 1 -- For 's.vim', set index to 1
+        else
+          index = math.huge -- For any other non-matching filename
+        end
+      end
+      table.insert(sessions, { index = index, name = filename, path = filepath })
+    end
+  end
+
+  -- Sort sessions by index
+  table.sort(sessions, function(a, b) return a.index < b.index end)
+
+  -- Build options for user selection
+  local options = {}
+  for _, session in ipairs(sessions) do
+    local option_text = session.index .. ': ' .. session.name
+    table.insert(options, option_text)
+  end
+
+  -- Prompt user to select a session
+  vim.ui.select(options, { prompt = 'Select a session to load:' }, function(choice)
+    if choice then
+      local selected_index = choice:match('^(%d+):')
+      selected_index = tonumber(selected_index)
+      if selected_index then
+        for _, session in ipairs(sessions) do
+          if session.index == selected_index then
+            vim.cmd('silent source ' .. session.path)
+            -- print('Session loaded from ' .. session.path)
+            return
+          end
+        end
+      end
+      print('Invalid selection.')
+    else
+      print('No session selected.')
+    end
+  end)
+end
+
+function load_session_also_works()
+  local session_dir = vim.fn.expand('~/.vim/sessions/')
+  local pattern = 's*.vim'
+  local session_files = vim.fn.globpath(session_dir, pattern, 0, 1)
+
+  if #session_files == 0 then
+    print("No session files found in " .. session_dir)
+    return
+  end
+
+  -- Extract session indices, names, and paths
+  --local sessions = {}
+  --local options = { 'Select a session to load:' }
+  --for idx, filepath in ipairs(session_files) do
+  --  local filename = vim.fn.fnamemodify(filepath, ':t')
+  --  table.insert(sessions, { idx = idx, name = filename, path = filepath })
+  --  table.insert(options, idx .. ': ' .. filename)
+  --end
+  local sessions = {}
+  local options = { 'Select a session to load:' }
+  for idx, filepath in ipairs(session_files) do
+    local filename = vim.fn.fnamemodify(filepath, ':t')
+    -- Exclude files with "layout" (case-insensitive)
+    if not string.match(string.lower(filename), 'layout') then
+      table.insert(sessions, { idx = idx, name = filename, path = filepath })
+      table.insert(options, idx .. ': ' .. filename)
+    end
+  end
+
+  -- Prompt user to select a session
+  local choice = vim.fn.inputlist(options)
+  if choice > 0 and choice <= #sessions then
+    local session = sessions[choice]
+    vim.cmd('silent source ' .. session.path)
+    print('Session loaded from ' .. session.path)
+  else
+    print('No session selected.')
+  end
+end
+
+
+
 -- Session management
 -- map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
-map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
+-- map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
+map('n', '<leader>.', ':lua load_session()<CR>', { noremap = true, silent = true })
 
-function save_tabs_and_splits()
+function save_tabs_and_splits_old()
   local tab_count = vim.fn.tabpagenr('$')
   if tab_count > 2 then
     local current_tab = vim.fn.tabpagenr()
@@ -497,6 +650,101 @@ function save_tabs_and_splits()
     print("Not saving: Less than 3 tabs are open.")
   end
 end
+
+function save_tabs_and_splits()
+  local tab_count = vim.fn.tabpagenr('$')
+  if tab_count > 2 then
+    local my_notes_tabs = {}
+    local current_tab = vim.fn.tabpagenr()
+    local current_win = vim.fn.winnr()
+
+    -- Iterate over tabs to count tabs containing "my_notes"
+    for i = 1, tab_count do
+      vim.cmd(i .. "tabnext")
+
+      local win_count = vim.fn.winnr('$')
+      local found_my_notes = false
+
+      for j = 1, win_count do
+        vim.cmd(j .. "wincmd w")
+        local buf_name = vim.fn.bufname('%')
+        if buf_name ~= "" then
+          local full_path = vim.fn.fnamemodify(buf_name, ':p')
+          if full_path:find("my_notes") then
+            found_my_notes = true
+            break  -- Found "my_notes" in this tab
+          end
+        end
+      end
+
+      if found_my_notes then
+        table.insert(my_notes_tabs, i)
+      end
+    end
+
+    -- Restore original tab and window
+    vim.cmd(current_tab .. "tabnext")
+    vim.cmd(current_win .. "wincmd w")
+
+    -- Determine session filenames
+    local session_dir = vim.fn.expand("~/.vim/sessions/")
+    local layout_filename
+    local session_filename
+
+    if #my_notes_tabs >= 2 then
+      -- Use default filenames
+      layout_filename = session_dir .. "s_layout.vim"
+      session_filename = session_dir .. "s.vim"
+    else
+      -- Find next available filenames
+      local index = 2
+      while true do
+        layout_filename = session_dir .. "s_layout_" .. index .. ".vim"
+        session_filename = session_dir .. "s" .. index .. ".vim"
+        if vim.fn.filereadable(layout_filename) == 0 and vim.fn.filereadable(session_filename) == 0 then
+          break
+        end
+        index = index + 1
+      end
+    end
+
+    -- Save tabs and splits layout
+    local file = io.open(layout_filename, "w")
+    file:write(tab_count .. "\n")
+
+    for i = 1, tab_count do
+      vim.cmd(i .. "tabnext")
+
+      local win_count = vim.fn.winnr('$')
+      file:write(win_count .. "\n")
+
+      for j = 1, win_count do
+        vim.cmd(j .. "wincmd w")
+        local buf_name = vim.fn.bufname('%')
+        if buf_name ~= "" then
+          local full_path = vim.fn.fnamemodify(buf_name, ':p')
+          file:write(full_path .. "\n")
+        end
+      end
+    end
+
+    file:write("TAB:" .. current_tab .. "\n")
+    file:close()
+
+    -- Restore original tab and window
+    vim.cmd(current_tab .. "tabnext")
+    vim.cmd(current_win .. "wincmd w")
+
+    print("Session data saved to " .. layout_filename)
+
+    -- Save the session
+    vim.cmd("mks! " .. session_filename)
+  else
+    print("Not saving: Less than 3 tabs are open.")
+  end
+end
+
+
 
 function load_tabs_and_splits()
   local file = io.open(vim.fn.expand("~/.vim/sessions/s_layout.vim"), "r")
@@ -1322,4 +1570,58 @@ function format_file()
 end
 
 vim.api.nvim_set_keymap('n', '<leader>=', ':lua format_file()<CR>', { noremap = true, silent = true })
+
+function VisualSubstituteCommand()
+    -- local mode = vim.fn.mode() -- Check mode if needed?
+    local start_line = vim.fn.line("v")
+    local end_line = vim.fn.line(".")
+    -- Ensure start_line <= end_line
+    if start_line > end_line then
+        start_line, end_line = end_line, start_line
+    end
+
+    -- Leave visual mode first
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), 'n', false)
+    local cmd_string = ":" .. start_line .. "," .. end_line .. "s,"
+    local keys = vim.api.nvim_replace_termcodes(cmd_string, true, false, true)
+    vim.api.nvim_feedkeys(keys, 'n', false)
+    -- vim.fn.feedkeys(":" .. start_line .. "," .. end_line .. "s,")
+    --local left_key = vim.api.nvim_replace_termcodes("<Left>", true, false, true)
+    --vim.api.nvim_feedkeys(left_key, 'n', false)
+end
+
+vim.api.nvim_set_keymap('v', '<leader>R', '<cmd>lua VisualSubstituteCommand()<CR>', { noremap = true, silent = true })
+
+local function VisualReplaceCommand()
+    local mode = vim.fn.mode()
+    if not (mode == 'v' or mode == 'V' or mode == '\22') then -- '\22' represents <C-V> (visual block)
+        print("VisualReplaceCommand can only be used in visual mode.")
+        return
+    end
+
+    -- Yank visually selected text into register z
+    vim.cmd('noau normal! "zy')
+    local selected_text = vim.fn.getreg('z')
+
+    -- Trim any leading/trailing whitespace
+    selected_text = selected_text:gsub("^%s*(.-)%s*$", "%1")
+
+    -- Replace line breaks with spaces to handle multi-line selections
+    selected_text = selected_text:gsub("\n", "\\n")
+
+    -- Escape special characters for use in the substitution command
+    -- selected_text = selected_text:gsub("([%%%^%$%(%)%%%.%[%]%*%+%-%?%|])", "\\%1")
+
+    local cmd_string = ":%s," .. selected_text .. ","
+    -- Replace termcodes to ensure special keys are interpreted correctly
+    local keys = vim.api.nvim_replace_termcodes(cmd_string, true, false, true)
+    -- Exit visual mode by sending <Esc>
+    local esc = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
+    vim.api.nvim_feedkeys(esc, 'n', false)
+    vim.api.nvim_feedkeys(keys, 'n', false)
+end
+
+vim.keymap.set('v', '<leader>r', function()
+    VisualReplaceCommand()
+end, { noremap = true, silent = true })
 
