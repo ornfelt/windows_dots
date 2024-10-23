@@ -140,3 +140,37 @@ vim.api.nvim_create_autocmd("BufRead", {
     end
 })
 
+local function update_wildignore(filetype)
+    local wildignore = vim.opt.wildignore:get()
+
+    if filetype == "rust" then
+        if not vim.tbl_contains(wildignore, "*/target/*") then
+            table.insert(wildignore, "*/target/*")
+        end
+    elseif filetype == "cs" then
+        if not vim.tbl_contains(wildignore, "*/bin/*") then
+            table.insert(wildignore, "*/bin/*")
+        end
+        if not vim.tbl_contains(wildignore, "*/obj/*") then
+            table.insert(wildignore, "*/obj/*")
+        end
+    elseif filetype == "cpp" or filetype == "c" then
+        if not vim.tbl_contains(wildignore, "*/build/*") then
+            table.insert(wildignore, "*/build/*")
+        end
+    end
+
+    vim.opt.wildignore = wildignore
+end
+
+vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
+    pattern = { "*.rs", "*.cs", "*.cpp", "*.c" },
+    callback = function()
+        local filetype = vim.bo.filetype
+        update_wildignore(filetype)
+    end,
+})
+
+-- use leader-, on line below
+-- :lua print(vim.inspect(vim.opt.wildignore:get()))
+

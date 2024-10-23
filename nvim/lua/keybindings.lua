@@ -318,7 +318,7 @@ local function get_git_root()
     return git_root
 end
 
-function enter_vimgrep_command_old(pattern)
+function enter_vimgrep_command(pattern)
     vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
 		if not input or input == '' then
 			-- vim.notify('No search keyword provided.', vim.log.levels.WARN)
@@ -329,36 +329,12 @@ function enter_vimgrep_command_old(pattern)
         directory = directory:gsub('\\', '/')
         directory = directory:gsub('/+', '/')
         local cmd = string.format(':vimgrep /%s/g %s/%s', input, directory, pattern)
+        -- local cmd = string.format(':vimgrep /%s/gj `git ls-files`', input) -- Doesn't jump to first match due to 'j'
         -- print(cmd)
         vim.cmd(cmd)
+        -- vim.cmd('copen') -- Open quickfix window
 		-- vim.notify(string.format('vimgrep search executed for keyword: "%s"', input), vim.log.levels.INFO)
 	end)
-end
-
-function enter_vimgrep_command(pattern, extension)
-    vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
-        if not input or input == '' then
-            return
-        end
-
-        -- Determine excluded directories based on file extension
-        local exclude_dirs = ''
-        if extension == 'rs' then
-            exclude_dirs = "--glob '!target/**'"
-        elseif extension == 'cs' then
-            exclude_dirs = "--glob '!bin/**' --glob '!obj/**'"
-        else
-            exclude_dirs = "--glob '!build/**'"
-        end
-
-        local directory = get_git_root()
-        directory = directory:gsub('\\', '/')
-        directory = directory:gsub('/+', '/')
-
-        local cmd = string.format(':vimgrep /%s/g %s/%s %s', input, directory, pattern, exclude_dirs)
-        print(cmd)
-        -- vim.cmd(cmd)
-    end)
 end
 
 local function get_current_buffer_extension()
