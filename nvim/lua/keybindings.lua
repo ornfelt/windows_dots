@@ -312,10 +312,10 @@ local function get_git_root()
     if vim.v.shell_error ~= 0 then
         -- vim.notify("Not inside a Git repository.", vim.log.levels.ERROR)
         -- return nil
-        return vim.fn.getcwd()
+        return vim.fn.getcwd(), false
     end
 
-    return git_root
+    return git_root, true
 end
 
 function enter_vimgrep_command(pattern)
@@ -325,12 +325,19 @@ function enter_vimgrep_command(pattern)
 			return
 		end
 
-		local directory = get_git_root()
+        local directory, is_git_repo = get_git_root()
         directory = directory:gsub('\\', '/')
         directory = directory:gsub('/+', '/')
-        -- local cmd = string.format(':vimgrep /%s/g %s/%s', input, directory, pattern)
-        local cmd = string.format(':vimgrep /%s/g `git ls-files`', input)
-        -- local cmd = string.format(':vimgrep /%s/gj `git ls-files`', input) -- Doesn't jump to first match due to 'j'
+
+        local cmd
+        if is_git_repo then
+            cmd = string.format(':vimgrep /%s/g `git ls-files`', input)
+            -- This won't jump to first match due to 'j'
+            -- cmd = string.format(':vimgrep /%s/gj `git ls-files`', input) 
+        else
+            cmd = string.format(':vimgrep /%s/g %s/%s', input, directory, pattern)
+        end
+
         -- print(cmd)
         vim.cmd(cmd)
         -- vim.cmd('copen') -- Open quickfix window
@@ -365,7 +372,7 @@ vim.keymap.set('n', '<M-f>', function()
     end
 
     local pattern = '**/*.' .. extension
-    enter_vimgrep_command(pattern, extension)
+    enter_vimgrep_command(pattern)
 end, { noremap = true, silent = true })
 
 
