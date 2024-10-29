@@ -44,7 +44,7 @@ $aliases = @(
     ".cdn", ".cdc", ".cdp", ".ioq3", ".show-wifi", ".list_files", ".list_files_gui", 
     ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
-	".mangos", ".llama", ".update_nvim_from_linux", ".down", ".cdh"
+	".mangos", ".llama", ".update_nvim_from_linux", ".down", ".cdh", ".clean_shada"
 )
 
 foreach ($alias in $aliases) {
