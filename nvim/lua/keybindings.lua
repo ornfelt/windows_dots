@@ -1334,7 +1334,52 @@ function copy_current_file_path()
     end
 end
 
-vim.api.nvim_set_keymap('n', '<leader>-', ':lua copy_current_file_path()<CR>', { noremap = true, silent = true })
+local function normalize_slashes(path)
+    path = path:gsub("\\", "/")
+    path = path:gsub("/+", "/")
+    return path
+end
+
+local function remove_file_name(path)
+    -- Use a pattern to find the last `/`, including everything up to it but not beyond
+    local directory_path = path:match("(.*/)")
+    if directory_path then
+        return directory_path
+    else
+        return path -- In case there's no slash found
+    end
+end
+
+function copy_current_file_path(replace_env)
+    local path = get_current_file_path()
+    if path == "" then
+        print("No file in current buffer")
+    else
+        if replace_env then
+            local my_notes_path = vim.fn.getenv("my_notes_path")
+            if my_notes_path then
+                my_notes_path = normalize_slashes(my_notes_path)
+                path = normalize_slashes(path)
+
+                if my_notes_path:sub(-1) == "/" then
+                    my_notes_path = my_notes_path:sub(1, -2)
+                end
+
+                local pattern = "^" .. vim.pesc(my_notes_path)
+                path = path:gsub(pattern, "{my_notes_path}")
+
+            end
+        else
+            path = remove_file_name(path)
+        end
+
+        vim.fn.setreg('+', path)
+        print("Copied to clipboard: " .. path)
+    end
+end
+
+vim.api.nvim_set_keymap('n', '<leader>-', ':lua copy_current_file_path(true)<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<leader>-', ':lua copy_current_file_path(false)<CR>', { noremap = true, silent = true })
 
 vim.keymap.set('n', '<leader>gl', function()
     require('gitgraph').draw({}, { all = true, max_count = 5000 })
