@@ -70,16 +70,25 @@ map('v', '<leader>3', ':reg<CR>')
 map('v', '<leader>4', ':put a<CR>')
 map('v', '<leader>5', '"ay$')
 
+-- Helper functions
+local function is_vim_plugin_installed(plugin_name)
+    return vim.fn.exists(':' .. plugin_name) ~= 0
+end
+
 local function is_plugin_installed(plugin_name)
     local status, _ = pcall(require, plugin_name)
     return status
 end
 
+local has_nerdtree = is_vim_plugin_installed('NERDTreeToggle')
 local has_oil = is_plugin_installed('oil')
 local has_mini_files = pcall(require, 'mini.files')
 
 -- File tree
-if has_oil then
+-- map('n', '<M-e>', ':silent! NERDTreeToggle %:p<CR>')
+if has_nerdtree then
+    map('n', '<M-w>', ':silent! NERDTreeToggle ~/<CR>')
+elseif has_oil then
 	require('oil').setup({
         keymaps = {
             ["<C-s>"] = { "actions.select", opts = { vertical = true, close = true }, desc = "Open the entry in a vertical split" },
@@ -117,7 +126,9 @@ end
 function toggle_filetree()
     --local filepath = (vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p'))
     local filepath = vim.fn.expand('%:p') == '' and '~/' or './' -- or vim.fn.expand('%:p:h') -- dir
-    if has_oil then
+    if has_nerdtree then
+        vim.cmd('silent! NERDTreeToggle ' .. filepath)
+    elseif has_oil then
         -- vim.cmd('leftabove vsplit | vertical resize 40 | Oil ' .. filepath)
         -- vim.cmd('Oil ' .. filepath)
         vim.cmd((vim.bo.filetype == 'oil') and 'b#' or 'Oil ' .. filepath)
@@ -387,13 +398,12 @@ map('n', '<M-v>', ':cdo s///gc | update<C-f><Esc>0f/li')
 map('n', '<M-n>', ':cnext<CR>')
 map('n', '<M-p>', ':cprev<CR>')
 map('n', '<M-P>', ':clast<CR>')
-map('n', '<M-b>', ':copen<CR>')
-map('n', '<M-B>', ':cclose<CR>')
+-- map('n', '<M-b>', ':copen<CR>')
 -- Function to toggle the quickfix list
 function ToggleQuickfix()
     local is_open = false
 
-    -- Check if quickfix window is open
+    -- Check if the quickfix window is open
     for _, win in ipairs(vim.fn.getwininfo()) do
         if win.quickfix == 1 then
             is_open = true
@@ -407,7 +417,7 @@ function ToggleQuickfix()
         vim.cmd("copen")
     end
 end
--- vim.api.nvim_set_keymap('n', '<M-b>', ':lua ToggleQuickfix()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<M-b>', ':lua ToggleQuickfix()<CR>', { noremap = true, silent = true })
 
 -- Window management and movement
 map('n', '<M-u>', ':resize +2<CR>')
