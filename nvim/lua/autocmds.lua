@@ -97,7 +97,7 @@ create_mappings("cs", {
 
 -- Go
 create_mappings("go", {
-  ["sout<Tab>"] = 'fmt.Println("");<Esc>?""<Enter>li', -- Basic print
+  ["sout<Tab>"] = 'fmt.Println("");<Esc>2F"li', -- Basic print
   ["souti<Tab>"] = 'fmt.Printf("x: %d\\n", x)<Esc>Fxciw', -- Print int
   ["souts<Tab>"] = 'fmt.Printf("x: %s\\n", x)<Esc>Fxciw', -- Print string
   ["soutb<Tab>"] = 'fmt.Printf("x: %t\\n", x)<Esc>Fxciw', -- Print boolean
