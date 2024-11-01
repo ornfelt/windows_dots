@@ -526,19 +526,21 @@ function load_session()
   --  table.insert(sessions, { index = index, name = filename, path = filepath })
   --end
   local sessions = {}
+  local index = 0
   for _, filepath in ipairs(session_files) do
     local filename = vim.fn.fnamemodify(filepath, ':t')
     -- Exclude files with "layout" (case-insensitive)
     if not string.match(string.lower(filename), 'layout') then
-      local index_str = filename:match('^s(%d*)%.vim$')
-      local index = tonumber(index_str)
-      if not index then
-        if index_str == '' then
-          index = 1 -- For 's.vim', set index to 1
-        else
-          index = math.huge -- For any other non-matching filename
-        end
-      end
+      -- local index_str = filename:match('^s(%d*)%.vim$')
+      -- local index = tonumber(index_str)
+      -- if not index then
+      --   if index_str == '' then
+      --     index = 1 -- For 's.vim', set index to 1
+      --   else
+      --     index = math.huge -- For any other non-matching filename
+      --   end
+      -- end
+      index = index + 1
       table.insert(sessions, { index = index, name = filename, path = filepath })
     end
   end
@@ -614,8 +616,6 @@ function load_session_also_works()
   end
 end
 
-
-
 -- Session management
 -- map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
 -- map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
@@ -660,40 +660,70 @@ function save_tabs_and_splits_old()
   end
 end
 
+local function normalize_slashes(path)
+    path = path:gsub("\\", "/")
+    path = path:gsub("/+", "/")
+    return path
+end
+
 function save_tabs_and_splits()
-  local tab_count = vim.fn.tabpagenr('$')
-  if tab_count > 2 then
+    local my_notes_path = normalize_slashes(vim.env.my_notes_path or "")
+    local tab_count = vim.fn.tabpagenr('$')
+
+    local save_restriction = (#my_notes_path > 0 and tab_count > 2) or (tab_count > 1)
+    if not save_restriction then
+        print("Not saving: Less than required tabs are open.")
+        return
+    end
+
     local my_notes_tabs = {}
+    local dir_counts = {}
     local current_tab = vim.fn.tabpagenr()
     local current_win = vim.fn.winnr()
 
-    -- Iterate over tabs to count tabs containing "my_notes"
+    -- Iterate over tabs to count tabs containing "my_notes_path"
     for i = 1, tab_count do
-      vim.cmd(i .. "tabnext")
+        vim.cmd(i .. "tabnext")
 
-      local win_count = vim.fn.winnr('$')
-      local found_my_notes = false
+        local win_count = vim.fn.winnr('$')
+        local found_my_notes = false
 
-      for j = 1, win_count do
-        vim.cmd(j .. "wincmd w")
-        local buf_name = vim.fn.bufname('%')
-        if buf_name ~= "" then
-          local full_path = vim.fn.fnamemodify(buf_name, ':p')
-          if full_path:find("my_notes") then
-            found_my_notes = true
-            break  -- Found "my_notes" in this tab
-          end
+        for j = 1, win_count do
+            vim.cmd(j .. "wincmd w")
+            local buf_name = vim.fn.bufname('%')
+            if buf_name ~= "" then
+                local full_path = normalize_slashes(vim.fn.fnamemodify(buf_name, ':p'))
+                local final_dir = full_path:match(".*/(.-)/[^/]+$") or ""
+
+                -- Count occurrences of the final directory
+                if final_dir ~= "" then
+                    dir_counts[final_dir] = (dir_counts[final_dir] or 0) + 1
+                end
+
+                if full_path:find(my_notes_path, 1, true) then
+                    found_my_notes = true
+                end
+            end
         end
-      end
 
-      if found_my_notes then
-        table.insert(my_notes_tabs, i)
-      end
+        if found_my_notes then
+            table.insert(my_notes_tabs, i)
+        end
     end
 
     -- Restore original tab and window
     vim.cmd(current_tab .. "tabnext")
     vim.cmd(current_win .. "wincmd w")
+
+    -- Determine the most common final directory
+    local most_common_dir = nil
+    local max_count = 0
+    for dir, count in pairs(dir_counts) do
+        if count > max_count then
+            max_count = count
+            most_common_dir = dir
+        end
+    end
 
     -- Determine session filenames
     local session_dir = vim.fn.expand("~/.vim/sessions/")
@@ -701,20 +731,25 @@ function save_tabs_and_splits()
     local session_filename
 
     if #my_notes_tabs >= 2 then
-      -- Use default filenames
-      layout_filename = session_dir .. "s_layout.vim"
-      session_filename = session_dir .. "s.vim"
+        -- Use default filenames if multiple my_notes_path tabs are found
+        layout_filename = session_dir .. "s_layout.vim"
+        session_filename = session_dir .. "s.vim"
     else
-      -- Find next available filenames
-      local index = 2
-      while true do
-        layout_filename = session_dir .. "s_layout_" .. index .. ".vim"
-        session_filename = session_dir .. "s" .. index .. ".vim"
-        if vim.fn.filereadable(layout_filename) == 0 and vim.fn.filereadable(session_filename) == 0 then
-          break
+        -- Use most common directory or find next available filenames
+        if most_common_dir then
+            layout_filename = session_dir .. "s_layout_" .. most_common_dir .. ".vim"
+            session_filename = session_dir .. "s_" .. most_common_dir .. ".vim"
+        else
+            local index = 2
+            while true do
+                layout_filename = session_dir .. "s_layout_" .. index .. ".vim"
+                session_filename = session_dir .. "s" .. index .. ".vim"
+                if vim.fn.filereadable(layout_filename) == 0 and vim.fn.filereadable(session_filename) == 0 then
+                    break
+                end
+                index = index + 1
+            end
         end
-        index = index + 1
-      end
     end
 
     -- Save tabs and splits layout
@@ -722,19 +757,19 @@ function save_tabs_and_splits()
     file:write(tab_count .. "\n")
 
     for i = 1, tab_count do
-      vim.cmd(i .. "tabnext")
+        vim.cmd(i .. "tabnext")
 
-      local win_count = vim.fn.winnr('$')
-      file:write(win_count .. "\n")
+        local win_count = vim.fn.winnr('$')
+        file:write(win_count .. "\n")
 
-      for j = 1, win_count do
-        vim.cmd(j .. "wincmd w")
-        local buf_name = vim.fn.bufname('%')
-        if buf_name ~= "" then
-          local full_path = vim.fn.fnamemodify(buf_name, ':p')
-          file:write(full_path .. "\n")
+        for j = 1, win_count do
+            vim.cmd(j .. "wincmd w")
+            local buf_name = vim.fn.bufname('%')
+            if buf_name ~= "" then
+                local full_path = normalize_slashes(vim.fn.fnamemodify(buf_name, ':p'))
+                file:write(full_path .. "\n")
+            end
         end
-      end
     end
 
     file:write("TAB:" .. current_tab .. "\n")
@@ -748,12 +783,7 @@ function save_tabs_and_splits()
 
     -- Save the session
     vim.cmd("mks! " .. session_filename)
-  else
-    print("Not saving: Less than 3 tabs are open.")
-  end
 end
-
-
 
 function load_tabs_and_splits()
   local file = io.open(vim.fn.expand("~/.vim/sessions/s_layout.vim"), "r")
@@ -1357,12 +1387,6 @@ function copy_current_file_path()
         vim.fn.setreg('+', path)
         print("Copied to clipboard: " .. path)
     end
-end
-
-local function normalize_slashes(path)
-    path = path:gsub("\\", "/")
-    path = path:gsub("/+", "/")
-    return path
 end
 
 local function remove_file_name(path)
