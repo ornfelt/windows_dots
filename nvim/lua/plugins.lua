@@ -15,8 +15,9 @@ return require('packer').startup(function()
   use 'stevearc/oil.nvim'
   -- use 'echasnovski/mini.files'
 
-  use 'vimwiki/vimwiki'
-  use 'tpope/vim-surround'
+  -- use 'vimwiki/vimwiki'
+  -- use 'tpope/vim-surround'
+
   -- use 'junegunn/fzf'
   use 'ibhagwan/fzf-lua'
   -- use { "ibhagwan/fzf-lua",
@@ -47,6 +48,7 @@ return require('packer').startup(function()
     requires = { {'nvim-lua/plenary.nvim'} }
   }
 
+  -- AI
   use({
       "ornfelt/ChatGPT.nvim",
       --config = function()
@@ -70,6 +72,9 @@ return require('packer').startup(function()
   --        shortcuts might be setup here (see Usage > Shortcuts in Readme)
   --    end,
   --})
+
+  -- use 'github/copilot.vim'
+  -- use 'David-Kunz/gen.nvim'
 
   use 'gsuuon/model.nvim'
 

@@ -307,8 +307,38 @@ local function get_git_root()
     return git_root, true
 end
 
-function enter_vimgrep_command(pattern)
-    vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
+function enter_vimgrep_command(pattern, use_current_word)
+    -- local current_word = use_current_word and vim.fn.expand("<cword>") or ""
+
+    -- Support visual selection
+    local current_word = ""
+    if use_current_word then
+        if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
+            -- current_word = vim.fn.getreg('"') -- Last yanked text
+            local start_pos = vim.fn.getpos("v")
+            local end_pos = vim.fn.getpos(".")
+            if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
+                start_pos, end_pos = end_pos, start_pos
+            end
+
+            local lines = vim.fn.getline(start_pos[2], end_pos[2])
+
+            if #lines == 1 then
+                -- Single line selection
+                current_word = lines[1]:sub(start_pos[3], end_pos[3])
+            else
+                -- Multi-line selection, use only the last line
+                -- current_word = lines[#lines]:sub(1, end_pos[3])
+                -- Just take current word to simplify this
+                current_word = vim.fn.expand("<cword>")
+            end
+        else
+            current_word = vim.fn.expand("<cword>")
+        end
+    end
+
+    -- vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
+    vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ', default = current_word }, function(input)
 		if not input or input == '' then
 			-- vim.notify('No search keyword provided.', vim.log.levels.WARN)
 			return
@@ -353,20 +383,25 @@ end
 --    local pattern = '**/*.' .. extension
 --    enter_vimgrep_command(pattern)
 --end, { noremap = true, silent = true })
-vim.keymap.set('n', '<M-f>', function()
-    local extension = get_current_buffer_extension()
 
-    if not extension then
-        extension = 'txt'
-    end
-
+-- Helper function to set up vimgrep command
+local function setup_vimgrep_command(use_current_word)
+    local extension = get_current_buffer_extension() or 'txt'
     local pattern = '**/*.' .. extension
-    enter_vimgrep_command(pattern)
+    enter_vimgrep_command(pattern, use_current_word)
+end
+
+-- Key mappings
+vim.keymap.set({ 'n', 'v' }, '<M-f>', function()
+    setup_vimgrep_command(true)  -- Use word under cursor or selection
 end, { noremap = true, silent = true })
 
+vim.keymap.set('n', '<M-C-f>', function()
+    setup_vimgrep_command(false) -- Do not use word under cursor or selection
+end, { noremap = true, silent = true })
 
-vim.keymap.set( 'n', '<M-g>', function() enter_vimgrep_command('**/*.*') end, { noremap = true, silent = true })
-vim.keymap.set( 'n', '<M-G>', function() enter_vimgrep_command('**/.*') end, { noremap = true, silent = true })
+vim.keymap.set( 'n', '<M-g>', function() enter_vimgrep_command('**/*.*', true) end, { noremap = true, silent = true })
+vim.keymap.set( 'n', '<M-G>', function() enter_vimgrep_command('**/.*', true) end, { noremap = true, silent = true })
 
 -- :vimgrep /mypattern/j *.xml *.js
 -- :vimgrep /mypattern/g **/*.{c,cpp,cs}
@@ -379,7 +414,7 @@ end
 vim.keymap.set('n', '<M-F>', function()
     local extensions = { 'c', 'cpp', 'cs', 'css', 'go', 'h', 'hpp', 'html', 'java', 'js', 'jsx', 'json', 'lua', 'php', 'py', 'rs', 'sql', 'ts', 'tsx', 'xml', 'zig' }
     local pattern = construct_glob_pattern(extensions)
-    enter_vimgrep_command(pattern)
+    enter_vimgrep_command(pattern, true)
 end, { noremap = true, silent = true })
 
 map('n', '<M-v>', ':cdo s///gc | update<C-f><Esc>0f/li')
