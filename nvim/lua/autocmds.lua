@@ -25,7 +25,7 @@ local function create_mappings(ft, mappings)
 end
 
 -- Text
-create_mappings("vtxt,vimwiki,wiki,text,md", {
+create_mappings("vtxt,vimwiki,wiki,text,md,markdown", {
   ["line<Tab>"] = '----------------------------------------------------------------------------------<Enter>',
   ["oline<Tab>"] = '******************************************<Enter>',
   ["date<Tab>"] = '<-- <C-R>=strftime("%Y-%m-%d %a")<CR><Esc>A -->'
