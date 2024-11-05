@@ -449,10 +449,19 @@ map('n', '<M-u>', ':resize +2<CR>')
 map('n', '<M-i>', ':resize -2<CR>')
 map('n', '<M-o>', ':vertical resize +2<CR>')
 map('n', '<M-y>', ':vertical resize -2<CR>')
-map('n', '<M-h>', '<Plug>WinMoveLeft')
-map('n', '<M-j>', '<Plug>WinMoveDown')
-map('n', '<M-k>', '<Plug>WinMoveUp')
-map('n', '<M-l>', '<Plug>WinMoveRight')
+
+local term_program = vim.fn.getenv("TERM_PROGRAM"):lower()
+if term_program == "wezterm" then
+    vim.api.nvim_set_keymap('n', '<C-w>h', '<Plug>WinMoveLeft', { noremap = false, silent = true })
+    vim.api.nvim_set_keymap('n', '<C-w>j', '<Plug>WinMoveDown', { noremap = false, silent = true })
+    vim.api.nvim_set_keymap('n', '<C-w>k', '<Plug>WinMoveUp', { noremap = false, silent = true })
+    vim.api.nvim_set_keymap('n', '<C-w>l', '<Plug>WinMoveRight', { noremap = false, silent = true })
+else
+    map('n', '<M-h>', '<Plug>WinMoveLeft')
+    map('n', '<M-j>', '<Plug>WinMoveDown')
+    map('n', '<M-k>', '<Plug>WinMoveUp')
+    map('n', '<M-l>', '<Plug>WinMoveRight')
+end
 map('n', '<C-d>', '<C-d>zz')
 map('n', '<C-u>', '<C-u>zz')
 map('n', '<leader>l', ':Tabmerge right<CR>')

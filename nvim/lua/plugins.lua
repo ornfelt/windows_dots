@@ -48,6 +48,17 @@ return require('packer').startup(function()
     requires = { {'nvim-lua/plenary.nvim'} }
   }
 
+  --use {
+  --    'letieu/wezterm-move.nvim',
+  --    config = function()
+  --    local _ = require("wezterm-move")
+  --    vim.api.nvim_set_keymap('n', '<m-h>', '<cmd>lua require("wezterm-move").move("h")<CR>', { noremap = true, silent = true })
+  --    vim.api.nvim_set_keymap('n', '<m-j>', '<cmd>lua require("wezterm-move").move("j")<CR>', { noremap = true, silent = true })
+  --    vim.api.nvim_set_keymap('n', '<m-k>', '<cmd>lua require("wezterm-move").move("k")<CR>', { noremap = true, silent = true })
+  --    vim.api.nvim_set_keymap('n', '<m-l>', '<cmd>lua require("wezterm-move").move("l")<CR>', { noremap = true, silent = true })
+  --    end
+  --}
+
   -- AI
   use({
       "ornfelt/ChatGPT.nvim",
