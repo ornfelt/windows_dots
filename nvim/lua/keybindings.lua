@@ -701,8 +701,15 @@ function save_tabs_and_splits()
             vim.cmd(j .. "wincmd w")
             local buf_name = vim.fn.bufname('%')
             if buf_name ~= "" then
+                -- .* matches any characters up to the last /.
+                -- (.-) captures the smallest sequence of characters between the last two slashes, which is the parent directory name.
+                -- [^/]+$ ensures we’re matching a file name (or final path component) after this last directory.
                 local full_path = normalize_slashes(vim.fn.fnamemodify(buf_name, ':p'))
-                local final_dir = full_path:match(".*/(.-)/[^/]+$") or ""
+                -- local final_dir = full_path:match(".*/(.-)/[^/]+$") or ""
+                -- ([^/]+/[^/]+) captures two directory levels at the end of the path.
+                -- [^/]+$ matches the filename after the last directory.
+                local final_dir = full_path:match(".*/([^/]+/[^/]+)/[^/]+$") or ""
+                final_dir = final_dir:gsub("/", "_")
 
                 -- Count occurrences of the final directory
                 if final_dir ~= "" then
