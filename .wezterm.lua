@@ -96,121 +96,6 @@ wezterm.on("save_session", function(window) session_manager.save_state(window) e
 wezterm.on("load_session", function(window) session_manager.load_state(window) end)
 wezterm.on("restore_session", function(window) session_manager.restore_state(window) end)
 
--- wezterm-move
---local function is_vim(pane)
---  local process_info = pane:get_foreground_process_info()
---  local process_name = process_info and process_info.name
---  -- return process_name == "nvim" or process_name == "vim"
---
---  if process_name then
---    process_name = process_name:lower()
---    return string.find(process_name, "vim") ~= nil
---  end
---
---  return false
---end
-
--- local function is_vim(pane)
---   -- local process_info = pane:get_foreground_process_info()
---   -- local process_name = process_info and process_info.name
---   local process_name = pane:get_foreground_process_name()
--- 
---   if process_name then
---     -- Convert to lowercase and check for the presence of "vim"
---     process_name = process_name:lower()
---     
---     -- Open a file in append mode
---     local file = io.open("C:/Users/se-jonornf-01/test_process_name.txt", "a")
---     if file then
---       file:write(process_name .. "\n")
---       file:close()
---     else
---       print("Failed to open file test_process_name.txt for writing.")
---     end
--- 
---     return string.find(process_name, "vim") ~= nil
---   end
--- 
---   return false
--- end
-
--- Define directional keys for navigation and resizing
--- local direction_keys = {
---   Left = "h",
---   Down = "j",
---   Up = "k",
---   Right = "l",
---   h = "Left",
---   j = "Down",
---   k = "Up",
---   l = "Right",
--- }
-
--- Function to create navigation keybindings tailored for vim usage or default terminal navigation/resizing
--- local function split_nav(resize_or_move, key)
---   return {
---     key = key,
---     mods = resize_or_move == "resize" and "META" or "CTRL", -- Here you specify METAs for resizing, CTRL for movement between panes
---     action = wezterm.action_callback(function(win, pane)
---       if is_vim(pane) then
---         -- Send key to vim/nvim directly
---         win:perform_action({
---           SendKey = { key = key, mods = resize_or_move == "resize" and "META" or "CTRL" },
---         }, pane)
---       else
---         if resize_or_move == "resize" then
---           win:perform_action({ AdjustPaneSize = { direction_keys[key], 3 } }, pane)
---         else
---           win:perform_action({ ActivatePaneDirection = direction_keys[key] }, pane)
---         end
---       end
---     end),
---   }
--- end
-
--- local function split_nav(resize_or_move, key)
---   return {
---     key = key,
---     mods = resize_or_move == "resize" and "LEADER" or "ALT", -- Change "resize" to use "LEADER" and "move" to use "ALT"
---     action = wezterm.action_callback(function(win, pane)
---       if is_vim(pane) then
---         --win:perform_action({
---         --  SendKey = { key = key, mods = resize_or_move == "resize" and "LEADER" or "ALT" },
---         --}, pane)
---         --win:perform_action({
---         --  SendKey = { key = key, mods = "ALT" },
---         --}, pane)
---         win:perform_action({
---           SendKey = { key = "w", mods = "CTRL" },
---         }, pane)
---         win:perform_action({
---           SendKey = { key = key },
---         }, pane)
---       else
---         if resize_or_move == "resize" then
---           win:perform_action({ AdjustPaneSize = { direction_keys[key], 3 } }, pane)
---         else
---           win:perform_action({ ActivatePaneDirection = direction_keys[key] }, pane)
---         end
---       end
---     end),
---   }
--- end
-
--- Generate the desired key mappings for nav keys and resizing
--- local nav_keys = {
---   -- movement keys between panes
---   split_nav("move", "h"),
---   split_nav("move", "j"),
---   split_nav("move", "k"),
---   split_nav("move", "l"),
---   -- resizing keys
---   split_nav("resize", "h"),
---   split_nav("resize", "j"),
---   split_nav("resize", "k"),
---   split_nav("resize", "l"),
--- }
-
 local direction_keys = {
   h = "Left",
   j = "Down",
@@ -219,6 +104,14 @@ local direction_keys = {
 }
 -- Next and Prev is also available as dir keys
 
+local resize_keys = {
+  y = "Left",
+  u = "Down",
+  i = "Up",
+  o = "Right",
+}
+
+-- Handle pane split in wezterm or vim
 local function split_nav(key)
   return {
     key = key,
@@ -240,6 +133,28 @@ local function split_nav(key)
         win:perform_action({
           SendKey = { key = key },
         }, pane)
+      end
+    end),
+  }
+end
+
+-- Handle resize in wezterm or vim
+local function resize_pane(key)
+  return {
+    key = key,
+    mods = "ALT",
+    action = wezterm.action_callback(function(win, pane)
+      local dir = resize_keys[key]
+      local tab = pane:tab()
+
+      -- Check if there's a pane in either primary dir or opposite
+      local opposite_dir = dir == "Left" and "Right" or dir == "Right" and "Left" or dir == "Up" and "Down" or "Up"
+      if tab:get_pane_direction(dir) or tab:get_pane_direction(opposite_dir) then
+        win:perform_action(act.AdjustPaneSize { dir, 5 }, pane)
+      else
+        -- Send ALT + SHIFT + key to Vim for resizing inside Vim
+        -- win:perform_action({ SendKey = { key = key:upper(), mods = "ALT|SHIFT" } }, pane)
+        win:perform_action({ SendKey = { key = key, mods = "ALT|CTRL" } }, pane)
       end
     end),
   }
@@ -440,17 +355,16 @@ config.keys = {
     { key = "0", mods = "LEADER", action = wezterm.action{ActivateTab=9}, },
     { key = 't', mods = "LEADER", action = wezterm.action{SpawnTab="DefaultDomain"}, },
     { key = 'q', mods = 'LEADER|SHIFT', action = wezterm.action.QuitApplication },
-    -- Seamless integration
+    -- Seamless nvim pane integration
     split_nav("h"),
     split_nav("j"),
     split_nav("k"),
     split_nav("l"),
+    resize_pane("y"),
+    resize_pane("u"),
+    resize_pane("i"),
+    resize_pane("o"),
 }
-
--- Append nav_keys to the default set of keybindings
--- for i = 1, #nav_keys do
---   table.insert(config.keys, nav_keys[i])
--- end
 
 --config.default_gui_startup_args = { 'connect', 'unix' }
 if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple == 'x86_64-pc-windows-gnu' then
@@ -551,71 +465,4 @@ end)
 
 -- Return config to wezterm
 return config
-
--- Kept for reference (resize with yuio and using wezterm-move)
--- local function is_vim(pane)
---   local process_info = pane:get_foreground_process_info()
---   local process_name = process_info and process_info.name
--- 
---   return process_name == "nvim" or process_name == "vim"
--- end
--- 
--- -- Define mappings for leader key resizing
--- local resize_keys = {
---   y = "h",
---   u = "j",
---   i = "k",
---   o = "l",
--- }
--- 
--- local direction_keys = {
---   Left = "h",
---   Down = "j",
---   Up = "k",
---   Right = "l",
--- }
--- 
--- local function create_resize_keybinding(leader_key, direction_key)
---   return {
---     key = leader_key,
---     mods = "LEADER",
---     action = wezterm.action_callback(function(win, pane)
---       if is_vim(pane) then
---         -- If the pane is running vim, send ALT-h/j/k/l keys
---         win:perform_action({
---           SendKey = { key = direction_key, mods = "ALT" }
---         }, pane)
---       else
---         -- Otherwise, adjust the pane size
---         win:perform_action({ AdjustPaneSize = { direction_keys[direction_key], 3 } }, pane)
---       end
---     end)
---   }
--- end
--- 
--- -- Define custom leader key resize bindings
--- local nav_keys = {
---   create_resize_keybinding("y", "h"),
---   create_resize_keybinding("u", "j"),
---   create_resize_keybinding("i", "k"),
---   create_resize_keybinding("o", "l"),
--- }
--- 
--- -- Define your complete configuration
--- local config = {}
--- 
--- -- Integrate navigation and other existing key bindings
--- config.keys = {
---   -- Original leader and sign key configurations
---   { key = 'a', mods = 'LEADER|CTRL', action = wezterm.action.SendKey { key = 'a', mods = 'CTRL' }, },
---   { key = 'v', mods = 'LEADER', action = wezterm.action.ActivateCopyMode, },
---   { key = 'f', mods = 'LEADER', action = wezterm.action.Search { CaseInSensitiveString = 'test' } },
---   
---   -- Insert the custom nav_keys configurations for resizing
--- }
--- 
--- -- Append nav_keys to the default set of keybindings
--- for i = 1, #nav_keys do
---   table.insert(config.keys, nav_keys[i])
--- end
 
