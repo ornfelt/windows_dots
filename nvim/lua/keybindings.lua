@@ -1722,5 +1722,108 @@ vim.keymap.set('v', '<leader>r', function()
     VisualReplaceCommand()
 end, { noremap = true, silent = true })
 
--- Bind leader-leader?
+-- Pick a comand to run via telescope
+local actions = require("telescope.actions")
+local action_state = require("telescope.actions.state")
+local pickers = require("telescope.pickers")
+local finders = require("telescope.finders")
+local conf = require("telescope.config").values
+
+vim.keymap.set('n', '<leader><leader>', function()
+    local commands = {
+        { label = "PackerUpdate", cmd = "PackerUpdate" },
+        { label = "PackerLoad", cmd = "PackerLoad" },
+        { label = "PackerSync", cmd = "PackerSync" },
+    }
+
+    pickers.new({}, {
+        prompt_title = "Choose Command",
+        finder = finders.new_table({
+            results = commands,
+            entry_maker = function(entry)
+                return {
+                    value = entry.cmd,
+                    display = entry.label,
+                    ordinal = entry.label,
+                }
+            end,
+        }),
+        sorter = conf.generic_sorter({}),
+        attach_mappings = function(prompt_bufnr, _)
+            actions.select_default:replace(function()
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                vim.cmd(selection.value)
+            end)
+            return true
+        end,
+    }):find()
+end, { noremap = true, silent = true })
+
+-- Pick a comand to run via ui.select
+-- vim.keymap.set('n', '<leader><leader>', function()
+--     local commands = {
+--         { label = "PackerUpdate", cmd = "PackerUpdate" },
+--         { label = "PackerLoad", cmd = "PackerLoad" },
+--         { label = "PackerSync", cmd = "PackerSync" },
+--     }
+-- 
+--     local choices = {}
+--     for _, item in ipairs(commands) do
+--         table.insert(choices, item.label)
+--     end
+-- 
+--     vim.ui.select(choices, { prompt = "Choose Command:" }, function(choice)
+--         if choice then
+--             for _, item in ipairs(commands) do
+--                 if item.label == choice then
+--                     vim.cmd(item.cmd)
+--                     return
+--                 end
+--             end
+--         end
+--     end)
+-- end, { noremap = true, silent = true })
+
+-- Pick a comand to run via vim command menu
+-- vim.keymap.set('n', '<leader><leader>', function()
+--     local choice = vim.fn.inputlist({
+--         "Choose Command:",
+--         "1. PackerUpdate",
+--         "2. PackerLoad",
+--         "3. PackerSync",
+--     })
+-- 
+--     if choice == 1 then
+--         vim.cmd("PackerUpdate")
+--     elseif choice == 2 then
+--         vim.cmd("PackerLoad")
+--     elseif choice == 3 then
+--         vim.cmd("PackerSync")
+--     end
+-- end, { noremap = true, silent = true })
+
+function count_characters()
+    local mode = vim.api.nvim_get_mode().mode
+    local text = ""
+
+    if mode == "v" or mode == "V" or mode == "\22" then  -- "\22" is for visual block mode
+        -- Yank selected text to the "v" register
+        vim.cmd('normal! "vy')
+
+        -- Get yanked text from the "v" register
+        text = vim.fn.getreg("v")
+    else
+        -- Get word under the cursor
+        text = vim.fn.expand("<cword>")
+    end
+
+    -- Count characters and print the result
+    local char_count = #text
+    print("Character count: " .. char_count)
+end
+
+-- Keybindings for counting characters
+vim.api.nvim_set_keymap("n", "<leader>cc", ":lua count_characters()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("v", "<leader>cc", "<cmd>lua count_characters()<CR>", { noremap = true, silent = true })
 

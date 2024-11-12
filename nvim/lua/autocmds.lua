@@ -194,6 +194,127 @@ create_mappings("rs,rust", {
   ["fore<Tab>"] = 'for el in arr.iter() {<Enter><Enter>}<Esc>?arr<Enter>ciw'
 })
 
+-- Helper function to read key-value pairs from config file
+-- local function read_config_file(filepath)
+--     local keys = {}
+--     for line in io.lines(filepath) do
+--         local key, value = line:match("([^:]+):%s*(.+)")
+--         if key and value and #value > 60 then
+--             table.insert(keys, key)
+--         end
+--     end
+--     return keys
+-- end
+-- 
+-- -- Function to insert the list of keys into the current buffer
+-- function insert_long_value_keys()
+--     local config_path = "C:\\local\\config.txt"
+--     local keys = read_config_file(config_path)
+--     if #keys > 0 then
+--         local keys_string = table.concat(keys, ", ")
+--         vim.api.nvim_put({ keys_string }, "l", true, true)
+--         print("Inserted keys: " .. keys_string)
+--     else
+--         print("No keys with values longer than 60 characters found.")
+--     end
+-- end
+-- 
+-- -- Create autocommand for SQL files
+-- vim.api.nvim_create_autocmd("FileType", {
+--     pattern = "sql",
+--     callback = function()
+--         local bufnr = vim.api.nvim_get_current_buf()
+--         vim.api.nvim_buf_set_keymap(bufnr, "i", "cnf<Tab>", "<cmd>lua insert_long_value_keys()<CR>", { noremap = true, silent = true })
+--     end
+-- })
+
+-- Helper function to read the Program.cs file and extract engine and env values
+local function read_program_cs()
+    local code_root_dir = os.getenv("code_root_dir")
+    if not code_root_dir then
+        print("Environment variable 'code_root_dir' is not set.")
+        return nil
+    end
+
+    local program_cs_path = code_root_dir .. "/Code2/Sql/my_sql/SqlExec/SqlExec/Program.cs"
+
+    -- Check if the file exists
+    local file = io.open(program_cs_path, "r")
+    if not file then
+        print("Program.cs file not found at: " .. program_cs_path)
+        return nil
+    end
+
+    -- Extract engine and env values
+    local engines = {}
+    table.insert(engines, "sql_server")
+    engines["sql_server"] = true
+    local envs = {}
+    for line in file:lines() do
+        -- Match engine values
+        local engine = line:match('engine:%s*(%w+)')
+        if engine and not engines[engine] then
+            table.insert(engines, engine:lower())
+            engines[engine] = true
+        end
+
+        -- Match env values
+        local env = line:match('env:%s*(%w+)')
+        if env and not envs[env] then
+            table.insert(envs, env:lower())
+            envs[env] = true
+        end
+    end
+
+    file:close()
+
+    -- Return comma-separated lists
+    return table.concat(engines, ", "), table.concat(envs, ", ")
+end
+
+-- Function to insert the engine and env values into the current buffer
+--function insert_engine_env_values()
+--    local engines, envs = read_program_cs()
+--    if not engines or not envs then
+--        return
+--    end
+--
+--    -- Insert values into the buffer
+--    local engine_line = "--engine: " .. engines
+--    local env_line = "--env: " .. envs
+--    local blank_line = ""
+--
+--    vim.api.nvim_put({ engine_line, env_line, blank_line }, "l", true, true)
+--end
+-- No initial new line
+function insert_engine_env_values()
+    local engines, envs = read_program_cs()
+    if not engines or not envs then
+        return
+    end
+
+    -- Prepare lines to insert
+    local engine_line = "--engine: " .. engines
+    local env_line = "--env: " .. envs
+    local blank_line = ""
+
+    -- Move the cursor to the end of the current line
+    local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+    vim.api.nvim_win_set_cursor(0, { row, col + 1 })
+
+    -- Insert lines into the buffer without an extra newline at the start
+    vim.api.nvim_put({ engine_line, env_line, blank_line }, "c", true, true)
+end
+
+-- Autocommand for SQL files
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "sql",
+    callback = function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_keymap(bufnr, "i", "cnf<Tab>", "<cmd>lua insert_engine_env_values()<CR>", { noremap = true, silent = true })
+    end
+})
+
 local function run_pdflatex()
     local file = vim.fn.expand('%:p')
     vim.fn.jobstart({'pdflatex', file})
