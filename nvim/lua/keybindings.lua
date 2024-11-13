@@ -1849,6 +1849,7 @@ end
 vim.api.nvim_set_keymap("n", "<leader>cc", ":lua count_characters()<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("v", "<leader>cc", "<cmd>lua count_characters()<CR>", { noremap = true, silent = true })
 
+-- See: https://wezfurlong.org/wezterm/cli/cli/split-pane.html#synopsis
 function split_pane_in_wezterm()
     local cword = vim.fn.expand("<cWORD>")
     local trimmed_cword = cword:match("([a-zA-Z]:.*)") or cword
@@ -1869,4 +1870,33 @@ function split_pane_in_wezterm()
 end
 
 vim.api.nvim_set_keymap('n', '<leader>dw', ':lua split_pane_in_wezterm()<CR>', { noremap = true, silent = true })
+
+function save_resolved_path_to_file()
+    local cword = vim.fn.expand("<cWORD>")
+    local trimmed_cword = cword:match("([a-zA-Z]:.*)") or cword
+
+    local function replace_env_vars(path)
+        return path:gsub("{(.-)}", function(var)
+            return os.getenv(var) or ""
+        end)
+    end
+
+    local resolved_path = replace_env_vars(trimmed_cword)
+    resolved_path = vim.fn.fnamemodify(resolved_path, ":p:h")
+    resolved_path = resolved_path:gsub("\\", "/")
+
+    local userprofile = os.getenv("USERPROFILE")
+    local file_path = userprofile .. "/new_wez_dir.txt"
+
+    local file = io.open(file_path, "w")
+    if file then
+        file:write(resolved_path .. "\n")
+        file:close()
+        print("Resolved path saved to: " .. file_path)
+    else
+        print("Error: Could not open file for writing: " .. file_path)
+    end
+end
+
+vim.api.nvim_set_keymap('n', '<C-w>d', ':lua save_resolved_path_to_file()<CR>', { noremap = true, silent = true })
 

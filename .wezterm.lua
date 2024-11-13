@@ -367,64 +367,66 @@ config.keys = {
 }
 
 -- Read dir path and start a split pane
---local function split_to_directory_with_delay(win, pane)
---    --win:perform_action({
---    --    SendKey = { key = "w", mods = "CTRL" },
---    --}, pane)
---    --win:perform_action({
---    --    SendKey = { key = "d" },
---    --}, pane)
---
---    wezterm.sleep_ms(500)
---
---    local userprofile = os.getenv("USERPROFILE")
---    local file_path = userprofile .. "/new_wez_dir.txt"
---
---    -- print("file_path:" .. file_path)
---    -- win:toast_notification("WezTerm Notification", "file_path: " .. file_path, nil, 4000)
---
---    local file = io.open(file_path, "r")
---    if not file then
---        -- wezterm.log_info("File not found: " .. file_path)
---        win:toast_notification("WezTerm Notification", "File not found: " .. file_path, nil, 4000)
---        return
---    end
---
---    -- Read dir path from file
---    local directory = file:read("*line")
---    file:close()
---
---    -- Validate dir path
---    -- Might be in: %TEMP%\wezterm.log or /tmp/wezterm.log
---    -- https://wezfurlong.org/wezterm/troubleshooting.html
---    if directory and directory ~= "" then --and wezterm.path.exists(directory) then
---        -- wezterm.log_info("Splitting to directory: " .. directory)
---        win:toast_notification("WezTerm Notification", "Splitting to dir: " .. directory, nil, 4000)
---
---        -- TODO: open pane in dir...
---        local command = {
---            args = { "cwd " .. directory }
---        }
---
---        win:perform_action(
---        wezterm.action.SplitPane {
---            direction = "Right",
---            size = { Percent = 50 },
---            -- command = command,
---        },
---        pane
---        )
---    else
---        -- wezterm.log_info("Invalid directory path: " .. (directory or "nil"))
---        win:toast_notification("WezTerm Notification", "Invalid directory path: " .. (directory or "nil"), nil, 4000)
---    end
---end
---
---table.insert(config.keys, {
---    key = "d",
---    mods = "LEADER",
---    action = wezterm.action_callback(split_to_directory_with_delay),
---})
+local function split_to_directory_with_delay(win, pane)
+    -- Save dir under cursor into file in nvim...
+    win:perform_action({
+        SendKey = { key = "w", mods = "CTRL" },
+    }, pane)
+    win:perform_action({
+        SendKey = { key = "d" },
+    }, pane)
+
+    wezterm.sleep_ms(500)
+
+    -- Open the saved dir in wezterm pane
+    local userprofile = os.getenv("USERPROFILE")
+    local file_path = userprofile .. "/new_wez_dir.txt"
+
+    -- print("file_path:" .. file_path)
+    -- win:toast_notification("WezTerm Notification", "file_path: " .. file_path, nil, 4000)
+
+    local file = io.open(file_path, "r")
+    if not file then
+        -- wezterm.log_info("File not found: " .. file_path)
+        win:toast_notification("WezTerm Notification", "File not found: " .. file_path, nil, 4000)
+        return
+    end
+
+    -- Read dir path from file
+    local directory = file:read("*line")
+    file:close()
+
+    -- Validate path
+    -- Might be in: %TEMP%\wezterm.log or /tmp/wezterm.log
+    -- https://wezfurlong.org/wezterm/troubleshooting.html
+    if directory and directory ~= "" then --and wezterm.path.exists(directory) then
+        -- wezterm.log_info("Splitting to directory: " .. directory)
+        -- win:toast_notification("WezTerm Notification", "Splitting to dir: " .. directory, nil, 4000)
+
+        local command = {
+            cwd = directory
+        }
+
+        win:perform_action(
+        wezterm.action.SplitPane {
+            direction = "Right",
+            size = { Percent = 50 },
+            command = command
+            -- command = { cwd = directory }
+        },
+        pane
+        )
+    --else
+    --    wezterm.log_info("Invalid directory path: " .. (directory or "nil"))
+    --    win:toast_notification("WezTerm Notification", "Invalid directory path: " .. (directory or "nil"), nil, 4000)
+    end
+end
+
+table.insert(config.keys, {
+    key = "d",
+    mods = "LEADER",
+    action = wezterm.action_callback(split_to_directory_with_delay),
+})
 
 --config.default_gui_startup_args = { 'connect', 'unix' }
 if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple == 'x86_64-pc-windows-gnu' then
