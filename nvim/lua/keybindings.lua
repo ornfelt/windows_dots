@@ -871,7 +871,14 @@ map('n', '<leader>wr', ':%s/\\s\\+$<CR>') -- Remove all extra whitespace
 map('n', '<leader>wu', ':%s/\\%u200b//g<CR>') -- Remove all extra unicode chars
 map('n', '<leader>wb', ':%s/[[:cntrl:]]//g<CR>') -- Remove all hidden characters
 map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatting, go back and center screen
-map('n', '<leader>wp', ':s,\\\\,/,g<CR>') -- Normalize path
+-- map('n', '<leader>wp', ':s,\\\\,/,g<CR>') -- Normalize path
+function NormalizePath()
+    vim.cmd('normal! 0')
+    vim.cmd('silent! s,\\\\,/,g')
+    vim.cmd('silent! s,/\\+,/,g')
+    vim.cmd('silent! noh')
+end
+vim.api.nvim_set_keymap('n', '<leader>wp', ':lua NormalizePath()<CR>', { noremap = true, silent = true })
 map('v', '<leader>gu', ':s/\\<./\\u&/g<CR>:noh<CR>:noh<CR>') -- Capitalize first letter of each word on visually selected line
 map('n', '<leader>*', [[:/^\*\*\*$<CR>]]) -- Search for my bookmark
 map('v', '<leader>%', '/\\%V') -- Search in highlighted text
@@ -1422,29 +1429,47 @@ function copy_current_file_path(replace_env)
     local path = get_current_file_path()
     if path == "" then
         print("No file in current buffer")
-    else
-        if replace_env then
-            local my_notes_path = vim.fn.getenv("my_notes_path")
-            if my_notes_path then
-                my_notes_path = normalize_slashes(my_notes_path)
-                path = normalize_slashes(path)
+        return
+    end
 
-                if my_notes_path:sub(-1) == "/" then
-                    my_notes_path = my_notes_path:sub(1, -2)
-                end
+    if replace_env then
+        -- Replace "my_notes_path"
+        local my_notes_path = vim.fn.getenv("my_notes_path")
+        if my_notes_path then
+            my_notes_path = normalize_slashes(my_notes_path)
+            path = normalize_slashes(path)
 
-                local pattern = "^" .. vim.pesc(my_notes_path)
-                path = path:gsub(pattern, "{my_notes_path}")
-
+            if my_notes_path:sub(-1) == "/" then
+                my_notes_path = my_notes_path:sub(1, -2)
             end
-        else
-            path = remove_file_name(path)
+
+            local pattern = "^" .. vim.pesc(my_notes_path)
+            path = path:gsub(pattern, "{my_notes_path}")
         end
 
-        vim.fn.setreg('+', path)
-        print("Copied to clipboard: " .. path)
+        -- Replace "code_root_dir"
+        local code_root_dir = vim.fn.getenv("code_root_dir")
+        if code_root_dir then
+            code_root_dir = normalize_slashes(code_root_dir)
+
+            if code_root_dir:sub(-1) == "/" then
+                code_root_dir = code_root_dir:sub(1, -2)
+            end
+
+            local pattern = "^" .. vim.pesc(code_root_dir)
+            path = path:gsub(pattern, "{code_root_dir}")
+        end
+    else
+        path = remove_file_name(path)
     end
+
+    vim.fn.setreg('+', path)
+    print("Copied to clipboard: " .. path)
 end
+
+-- Keybindings
+vim.api.nvim_set_keymap('n', '<leader>-', ':lua copy_current_file_path(true)<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<leader>-', ':lua copy_current_file_path(false)<CR>', { noremap = true, silent = true })
 
 vim.api.nvim_set_keymap('n', '<leader>-', ':lua copy_current_file_path(true)<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('v', '<leader>-', ':lua copy_current_file_path(false)<CR>', { noremap = true, silent = true })
@@ -1808,17 +1833,14 @@ function count_characters()
     local text = ""
 
     if mode == "v" or mode == "V" or mode == "\22" then  -- "\22" is for visual block mode
-        -- Yank selected text to the "v" register
+        -- Yank selection to "v" register
         vim.cmd('normal! "vy')
-
-        -- Get yanked text from the "v" register
         text = vim.fn.getreg("v")
     else
-        -- Get word under the cursor
+        -- Word under cursor
         text = vim.fn.expand("<cword>")
     end
 
-    -- Count characters and print the result
     local char_count = #text
     print("Character count: " .. char_count)
 end
@@ -1826,4 +1848,25 @@ end
 -- Keybindings for counting characters
 vim.api.nvim_set_keymap("n", "<leader>cc", ":lua count_characters()<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("v", "<leader>cc", "<cmd>lua count_characters()<CR>", { noremap = true, silent = true })
+
+function split_pane_in_wezterm()
+    local cword = vim.fn.expand("<cWORD>")
+    local trimmed_cword = cword:match("([a-zA-Z]:.*)") or cword
+
+    local function replace_env_vars(path)
+        return path:gsub("{(.-)}", function(var)
+            return os.getenv(var) or ""
+        end)
+    end
+
+    local resolved_path = replace_env_vars(trimmed_cword)
+    resolved_path = vim.fn.fnamemodify(resolved_path, ":p:h")
+    resolved_path = resolved_path:gsub("\\", "/")
+
+    local wezterm_command = "wezterm cli split-pane --right --percent 50 --cwd " .. vim.fn.shellescape(resolved_path)
+    -- print("x: " .. wezterm_command)
+    os.execute(wezterm_command)
+end
+
+vim.api.nvim_set_keymap('n', '<leader>dw', ':lua split_pane_in_wezterm()<CR>', { noremap = true, silent = true })
 
