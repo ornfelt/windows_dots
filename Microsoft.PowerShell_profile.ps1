@@ -73,6 +73,11 @@ function Go-Up {
 }
 Set-Alias .. Go-Up
 
+function run_keepawake {
+    python "$env:code_root_dir\Code2\C#\wowbot\keep_awake.py" @args
+}
+Set-Alias -Name keepawake -Value run_keepawake -Scope Global
+
 # For wezterm cwd
 # https://wezfurlong.org/wezterm/shell-integration.html#osc-7-on-windows-with-powershell
 function prompt {
