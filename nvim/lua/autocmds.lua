@@ -194,6 +194,28 @@ create_mappings("rs,rust", {
   ["fore<Tab>"] = 'for el in arr.iter() {<Enter><Enter>}<Esc>?arr<Enter>ciw'
 })
 
+-- Bash
+create_mappings("sh,bash", {
+  ["sout<Tab>"] = 'echo "";<Esc>?""<Enter>li',
+  ["souti<Tab>"] = 'echo "x: $x";<Esc>0f$ciw',
+  ["souts<Tab>"] = 'echo "x: $x";<Esc>0f$ciw',
+  ["soutb<Tab>"] = 'if [ "$x" = "true" ]; then echo "x: true"; else echo "x: false"; fi;<Esc>0f$ciw',
+  ["soutf<Tab>"] = 'printf "x: %.2f\\n" "$x";<Esc>0f$ciw',
+  ["for<Tab>"] = 'for i in {1..10}; do<Enter>echo "Element: $i"<Enter>done<Esc>kA<Enter>',
+  ["fore<Tab>"] = 'for item in "${array[@]}"; do<Enter>echo "Item: $item"<Enter>done<Esc>kA<Enter>'
+})
+
+-- PowerShell
+create_mappings("ps1,powershell", {
+  ["sout<Tab>"] = 'Write-Output ""<Esc>?""<Enter>li',
+  ["souti<Tab>"] = 'Write-Output "x: $x"<Esc>0f$ciw',
+  ["souts<Tab>"] = 'Write-Output "x: $x"<Esc>0f$ciw',
+  ["soutb<Tab>"] = 'Write-Output ("x: " + ($x -eq $true ? "true" : "false"))<Esc>0f$ciw',
+  ["soutf<Tab>"] = 'Write-Output ("x: " + "{0:N2}" -f $x)<Esc>0f$ciw',
+  ["for<Tab>"] = 'for ($i = 0; $i -lt 10; $i++) {<Enter>Write-Output "Element: $i"<Enter>}<Esc>kA<Enter>',
+  ["fore<Tab>"] = 'foreach ($item in $array) {<Enter>Write-Output "Item: $item"<Enter>}<Esc>kA<Enter>'
+})
+
 -- Helper function to read key-value pairs from config file
 -- local function read_config_file(filepath)
 --     local keys = {}

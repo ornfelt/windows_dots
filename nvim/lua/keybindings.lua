@@ -1862,11 +1862,20 @@ function split_pane_in_wezterm()
 
     local resolved_path = replace_env_vars(trimmed_cword)
     resolved_path = vim.fn.fnamemodify(resolved_path, ":p:h")
+    -- :p (full path) converts given path to an absolute (full) path
+    -- :h (head) returns the dir portion of the path (removes the file name)
+    -- resolved_path will default to current dir if invalid dir...
     resolved_path = resolved_path:gsub("\\", "/")
 
-    local wezterm_command = "wezterm cli split-pane --right --percent 50 --cwd " .. vim.fn.shellescape(resolved_path)
-    -- print("x: " .. wezterm_command)
-    os.execute(wezterm_command)
+    -- Hmm... redundant, but whatever
+    -- if vim.fn.isdirectory(resolved_path) == 1 then
+    if resolved_path:find("/") then
+        local wezterm_command = "wezterm cli split-pane --right --percent 50 --cwd " .. vim.fn.shellescape(resolved_path)
+        -- print("wezterm_command: " .. wezterm_command)
+        os.execute(wezterm_command)
+    else
+        print("Error: Invalid directory path: " .. resolved_path)
+    end
 end
 
 vim.api.nvim_set_keymap('n', '<leader>dw', ':lua split_pane_in_wezterm()<CR>', { noremap = true, silent = true })
