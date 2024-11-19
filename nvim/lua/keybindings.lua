@@ -706,7 +706,7 @@ function save_tabs_and_splits()
             if buf_name ~= "" then
                 -- .* matches any characters up to the last /.
                 -- (.-) captures the smallest sequence of characters between the last two slashes, which is the parent directory name.
-                -- [^/]+$ ensures we’re matching a file name (or final path component) after this last directory.
+                -- [^/]+$ ensures we're matching a file name (or final path component) after this last directory.
                 local full_path = normalize_slashes(vim.fn.fnamemodify(buf_name, ':p'))
                 -- local final_dir = full_path:match(".*/(.-)/[^/]+$") or ""
                 -- ([^/]+/[^/]+) captures two directory levels at the end of the path.
@@ -879,6 +879,62 @@ function NormalizePath()
     vim.cmd('silent! noh')
 end
 vim.api.nvim_set_keymap('n', '<leader>wp', ':lua NormalizePath()<CR>', { noremap = true, silent = true })
+
+local function normalize_path(path)
+    if not path then return nil end
+    -- Replace backslashes with forward slashes and remove duplicate forward slashes
+    path = path:gsub("\\", "/"):gsub("//+", "/")
+    return path
+end
+
+function ReplaceWithEnvPath()
+    local my_notes_path = os.getenv("my_notes_path")
+    local code_root_dir = os.getenv("code_root_dir")
+
+    my_notes_path = normalize_path(my_notes_path)
+    code_root_dir = normalize_path(code_root_dir)
+
+    local line = vim.fn.getline(".")
+
+    if my_notes_path and line:find(my_notes_path, 1, true) then
+        line = line:gsub(vim.pesc(my_notes_path), "{my_notes_path}/")
+    end
+
+    if code_root_dir and line:find(code_root_dir, 1, true) then
+        line = line:gsub(vim.pesc(code_root_dir), "{code_root_dir}/")
+    end
+
+    line = normalize_path(line) -- Just to replace any concecutive slashes again...
+    -- Update line in buffer
+    vim.fn.setline(".", line)
+end
+
+vim.api.nvim_set_keymap('n', '<leader>we', ':lua ReplaceWithEnvPath()<CR>', { noremap = true, silent = true })
+
+function ReplaceWithActualPath()
+    local my_notes_path = os.getenv("my_notes_path")
+    local code_root_dir = os.getenv("code_root_dir")
+
+    my_notes_path = normalize_path(my_notes_path)
+    code_root_dir = normalize_path(code_root_dir)
+
+    local line = vim.fn.getline(".")
+
+    if my_notes_path and line:find("{my_notes_path}/", 1, true) then
+        line = line:gsub("{my_notes_path}/", vim.pesc(my_notes_path))
+    end
+
+    if code_root_dir and line:find("{code_root_dir}/", 1, true) then
+        line = line:gsub("{code_root_dir}/", vim.pesc(code_root_dir))
+    end
+
+    line = normalize_path(line) -- Just to replace any consecutive slashes again...
+    -- Update line in buffer
+    vim.fn.setline(".", line)
+end
+
+vim.api.nvim_set_keymap('n', '<leader>wo', ':lua ReplaceWithActualPath()<CR>', { noremap = true, silent = true })
+
 map('v', '<leader>gu', ':s/\\<./\\u&/g<CR>:noh<CR>:noh<CR>') -- Capitalize first letter of each word on visually selected line
 map('n', '<leader>*', [[:/^\*\*\*$<CR>]]) -- Search for my bookmark
 map('v', '<leader>%', '/\\%V') -- Search in highlighted text
@@ -1550,6 +1606,8 @@ function open_file_with_env()
     if trimmed_cword ~= nil then
         cword = trimmed_cword
     end
+    -- hmmm
+    cword = cword:gsub("#", "\\#")
     -- print("cword: " .. cword)
 
     if cword:find("{") then
