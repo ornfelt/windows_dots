@@ -5,5 +5,6 @@ require('lsp')
 require('keybindings')
 require('autocmds')
 require('telescope_conf')
+require('trouble_conf')
 -- require('treesitter_conf')
 

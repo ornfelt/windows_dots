@@ -1817,6 +1817,54 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "PackerUpdate", cmd = "PackerUpdate" },
         { label = "PackerLoad", cmd = "PackerLoad" },
         { label = "PackerSync", cmd = "PackerSync" },
+        { label = "Diffi", cmd = "Diffi" },
+        { label = "DiffCp", cmd = "DiffCp" },
+        { label = "MakefileTargets", cmd = "MakefileTargets" },
+        { label = "GoLangTestFiles", cmd = "GoLangTestFiles" },
+        -- LSP
+        { label = "LSP Document Symbols", cmd = "lua vim.lsp.buf.document_symbol()" },
+        { label = "LSP Client Attached", cmd = "lua print(vim.lsp.buf.server_ready())" },
+        { label = "LSP Client Capabilities", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()[1].server_capabilities))" },
+        { label = "LSP Client Name", cmd = "lua print(vim.lsp.get_active_clients()[1].name)" },
+        { label = "Start LSP Client", cmd = "lua vim.lsp.start_client({ name = 'example', cmd = {'path/to/server'} })" },
+        { label = "Stop LSP Client", cmd = "lua vim.lsp.stop_client(vim.lsp.get_active_clients())" },
+        -- Treesitter
+        { label = "Installed Parsers", cmd = "lua print(vim.inspect(require('nvim-treesitter.parsers').installed_parsers()))" },
+        { label = "Toggle Highlighting", cmd = "lua vim.cmd('TSBufToggle highlight')" },
+        { label = "Active Tree-sitter Parser", cmd = "lua print(require('nvim-treesitter.parsers').get_parser():inspect())" },
+        -- Diagnostics
+        { label = "Buffer Diagnostics", cmd = "lua print(vim.inspect(vim.diagnostic.get(0)))" },
+        { label = "Workspace Diagnostics", cmd = "lua print(vim.inspect(vim.diagnostic.get()))" },
+        { label = "Cursor Diagnostics", cmd = "lua print(vim.inspect(vim.diagnostic.get_cursor()))" },
+        -- Trouble
+        { label = "Trouble diagnostics", cmd = "Trouble diagnostics" },
+        -- { label = "Trouble fzf", cmd = "Trouble fzf" },
+        -- { label = "Trouble fzf_files", cmd = "Trouble fzf" },
+        { label = "Trouble loclist", cmd = "Trouble loclist" },
+        { label = "Trouble lsp", cmd = "Trouble lsp" },
+        { label = "Trouble lsp_command", cmd = "Trouble lsp_command" },
+        { label = "Trouble lsp_declarations", cmd = "Trouble lsp_declarations" },
+        { label = "Trouble lsp_definitions", cmd = "Trouble lsp_definitions" },
+        { label = "Trouble lsp_document_symbols", cmd = "Trouble lsp_document_symbols" },
+        { label = "Trouble lsp_implementations", cmd = "Trouble lsp_implementations" },
+        { label = "Trouble lsp_incoming_calls", cmd = "Trouble lsp_incoming_calls" },
+        { label = "Trouble lsp_outgoing_calls", cmd = "Trouble lsp_outgoing_calls" },
+        { label = "Trouble lsp_references", cmd = "Trouble lsp_references" },
+        { label = "Trouble lsp_type_definitions", cmd = "Trouble lsp_type_definitions" },
+        { label = "Trouble qflist", cmd = "Trouble qflist" },
+        { label = "Trouble quickfix", cmd = "Trouble quickfix" },
+        { label = "Trouble symbols", cmd = "Trouble symbols" },
+        { label = "Trouble telescope", cmd = "Trouble telescope" },
+        { label = "Trouble telescope_files", cmd = "Trouble telescope_files" },
+        -- General
+        -- { label = "messages", cmd = "messages" },
+        { label = "Reload Configuration", cmd = "lua vim.cmd('source $MYVIMRC')" },
+        { label = "Inspect Current Line", cmd = "lua print(vim.inspect(vim.api.nvim_get_current_line()))" },
+        { label = "Active LSP Clients", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()))" },
+        { label = "List Buffers", cmd = "lua print(vim.inspect(vim.api.nvim_list_bufs()))" },
+        { label = "Toggle Relative Numbers", cmd = "lua vim.o.relativenumber = not vim.o.relativenumber" },
+        { label = "Open Neovim Log", cmd = "lua vim.cmd('edit $HOME/.local/state/nvim/log')" },
+        { label = "Check Health", cmd = "lua vim.cmd('checkhealth')" },
     }
 
     pickers.new({}, {
@@ -1832,14 +1880,64 @@ vim.keymap.set('n', '<leader><leader>', function()
             end,
         }),
         sorter = conf.generic_sorter({}),
+
+        -- Just run the command
+        --attach_mappings = function(prompt_bufnr, _)
+        --    actions.select_default:replace(function()
+        --        local selection = action_state.get_selected_entry()
+        --        actions.close(prompt_bufnr)
+        --        vim.cmd(selection.value)
+        --    end)
+        --    return true
+        --end,
+
+        -- Display in telescope if command starts with "lua print"
+        --attach_mappings = function(prompt_bufnr, _)
+        --    actions.select_default:replace(function()
+        --        local selection = action_state.get_selected_entry()
+        --        actions.close(prompt_bufnr)
+        --        if selection.value:match("^lua print") then
+        --            -- Run command and capture output
+        --            local cmd_output = vim.fn.execute(selection.value)
+
+        --            require("telescope.pickers").new({}, {
+        --                prompt_title = "Command Output",
+        --                finder = require("telescope.finders").new_table({
+        --                    results = vim.split(cmd_output, "\n"),
+        --                }),
+        --                sorter = require("telescope.config").values.generic_sorter({}),
+        --            }):find()
+        --        else
+        --            vim.cmd(selection.value)
+        --        end
+        --    end)
+        --    return true
+        --end
+
+        -- Display in buffer below
         attach_mappings = function(prompt_bufnr, _)
             actions.select_default:replace(function()
                 local selection = action_state.get_selected_entry()
                 actions.close(prompt_bufnr)
-                vim.cmd(selection.value)
+
+                if selection.value:match("^lua print") then
+                    local cmd_output = vim.fn.execute(selection.value)
+
+                    vim.cmd("belowright 10split")
+                    local buf = vim.api.nvim_create_buf(false, true)
+                    vim.api.nvim_win_set_buf(0, buf)
+                    vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(cmd_output, "\n"))
+                    -- vim.api.nvim_buf_set_option(buf, "modifiable", false)
+                    -- vim.api.nvim_buf_set_option(buf, "filetype", "output") -- For syntax highlighting
+                    vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe") -- Automatically wipe the buffer when closed
+                    -- vim.api.nvim_win_set_option(0, "number", false) -- Disable line numbers in the split
+                else
+                    vim.cmd(selection.value)
+                end
             end)
             return true
-        end,
+        end
+
     }):find()
 end, { noremap = true, silent = true })
 
