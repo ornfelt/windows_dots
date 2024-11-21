@@ -48,7 +48,10 @@ return require('packer').startup(function()
   --    after = "nvim-treesitter",
   --    requires = "nvim-treesitter/nvim-treesitter",
   --})
-  --use { 'echasnovski/mini.ai', version = false }
+  use({
+      "nvim-treesitter/nvim-treesitter-textobjects",
+      requires = "nvim-treesitter/nvim-treesitter",
+  })
 
   use {
     'nvim-telescope/telescope.nvim',

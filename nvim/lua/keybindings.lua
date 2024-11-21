@@ -2086,7 +2086,7 @@ vim.api.nvim_set_keymap('n', '<C-w>d', ':lua save_resolved_path_to_file()<CR>', 
 
 local treesitter_utils = require("treesitter_utils")
 
--- Define the `add_async` function
+-- Add async to function if using await inside function
 local function add_async()
   -- Feed the "t" key back as part of the operation
   vim.api.nvim_feedkeys("t", "n", true)
@@ -2100,7 +2100,7 @@ local function add_async()
     return
   end
 
-  -- Get the current Tree-sitter node, ignoring injections for embedded JS
+  -- Get current Tree-sitter node, ignoring injections for embedded JS
   local current_node = vim.treesitter.get_node { ignore_injections = false }
   local function_node = treesitter_utils.find_node_ancestor(
     { "arrow_function", "function_declaration", "function" },
@@ -2110,79 +2110,22 @@ local function add_async()
     return
   end
 
-  -- Check if the function is already "async"
+  -- Check if function is already "async"
   local function_text = vim.treesitter.get_node_text(function_node, 0)
   if vim.startswith(function_text, "async") then
     return
   end
 
-  -- Add "async" at the start of the function
+  -- Add async at the start of the function
   local start_row, start_col = function_node:start()
   vim.api.nvim_buf_set_text(buffer, start_row, start_col, start_row, start_col, { "async " })
 end
 
--- Set the keybinding for JavaScript and TypeScript
+-- Set keybinding for JavaScript and TypeScript
 vim.api.nvim_create_autocmd("FileType", {
   pattern = { "javascript", "typescript" },
   callback = function()
     vim.keymap.set("i", "t", add_async, { buffer = true })
   end,
 })
-
--- Test treesitter textobjects
--- function select_function_node(inner)
---   local bufnr = vim.api.nvim_get_current_buf()
---   local cursor = vim.api.nvim_win_get_cursor(0)
---   local row, col = cursor[1] - 1, cursor[2] -- Convert to zero-indexed
--- 
---   -- Get the current node at the cursor position
---   local node = vim.treesitter.get_node({ buf = bufnr, pos = { row, col } })
---   if not node then
---     print("No node found under the cursor.")
---     return
---   end
--- 
---   -- Find the ancestor node that is a function
---   while node do
---     if vim.tbl_contains({
---       "function",              -- Generic function
---       "function_definition",   -- Python/JavaScript
---       "method_definition",     -- JavaScript/TypeScript
---       "arrow_function",        -- JavaScript/TypeScript
---       "function_declaration",  -- C, C++
---       "class_method"           -- Ruby/Python
---     }, node:type()) then
---       break
---     end
---     node = node:parent()
---   end
--- 
---   if not node then
---     print("No function node found.")
---     return
---   end
--- 
---   -- Determine range to select
---   local start_row, start_col, end_row, end_col
---   if inner then
---     -- Select inside function body
---     local body = node:field("body")[1]
---     if not body then
---       print("No function body found.")
---       return
---     end
---     start_row, start_col, end_row, end_col = body:range()
---   else
---     -- Select entire function (including its declaration)
---     start_row, start_col, end_row, end_col = node:range()
---   end
--- 
---   -- Enter visual mode and select the range
---   vim.api.nvim_buf_set_mark(bufnr, "<", start_row + 1, start_col, {})
---   vim.api.nvim_buf_set_mark(bufnr, ">", end_row + 1, end_col, {})
---   vim.cmd("normal! gv")
--- end
--- 
--- vim.api.nvim_set_keymap("n", "vif", ":lua select_function_node(true)<CR>", { noremap = true, silent = true })
--- vim.api.nvim_set_keymap("n", "vaf", ":lua select_function_node(false)<CR>", { noremap = true, silent = true })
 
