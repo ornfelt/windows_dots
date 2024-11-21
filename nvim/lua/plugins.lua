@@ -43,6 +43,13 @@ return require('packer').startup(function()
       build = ':TSUpdate'
   }
 
+  --use({
+  --    "nvim-treesitter/nvim-treesitter-textobjects",
+  --    after = "nvim-treesitter",
+  --    requires = "nvim-treesitter/nvim-treesitter",
+  --})
+  --use { 'echasnovski/mini.ai', version = false }
+
   use {
     'nvim-telescope/telescope.nvim',
     requires = { {'nvim-lua/plenary.nvim'} }
@@ -135,13 +142,13 @@ return require('packer').startup(function()
           -- require('render-markdown').setup({})
       -- end,
   -- })
-  -- use ({
-      -- "OXY2DEV/markview.nvim",
-      -- dependencies = {
-          -- "nvim-treesitter/nvim-treesitter",
-          -- "nvim-tree/nvim-web-devicons"
-      -- }
-  -- })
+  use ({
+      "OXY2DEV/markview.nvim",
+      dependencies = {
+          "nvim-treesitter/nvim-treesitter",
+          "nvim-tree/nvim-web-devicons"
+      }
+  })
 
   -- use 'alexghergh/nvim-tmux-navigation'
   -- use 'mhinz/vim-startify'

@@ -1427,20 +1427,22 @@ function execute_command()
     local mode = vim.fn.mode()
     local command
 
-    if mode == 'v' or mode == 'V' then
-        vim.cmd('normal! gv"xy')
-        command = vim.fn.getreg('x')
+    if mode == "v" or mode == "V" or mode == "\22" then -- "\22" is for visual block mode
+        -- Yank selection to "v" register
+        vim.cmd('normal! "vy')
+        command = vim.fn.getreg("v")
     else
         command = vim.fn.getline('.')
     end
 
     -- Copy to clipboard
-    --vim.fn.setreg('+', command)
-    --print("Copied to clipboard: " .. command)
+    -- vim.fn.setreg('+', command)
+    -- print("Copied to clipboard: " .. command)
     -- Execute it
     vim.cmd(command)
 end
 
+--
 vim.api.nvim_set_keymap('n', '<leader>,', ':lua execute_command()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('v', '<leader>,', ':lua execute_command()<CR>', { noremap = true, silent = true })
 
@@ -1598,6 +1600,7 @@ vim.api.nvim_set_keymap('n', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { nore
 vim.api.nvim_set_keymap('v', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('i', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 
+-- lua print(vim.fn.expand("<cWORD>"))
 function open_file_with_env()
     -- local cword = vim.fn.expand("<cfile>")
     local cword = vim.fn.expand("<cWORD>")
@@ -1635,9 +1638,23 @@ function open_file_with_env()
 end
 
 vim.api.nvim_set_keymap('n', 'gf', ':lua open_file_with_env()<CR>', { noremap = true, silent = true })
+
+function open_in_firefox()
+    local cword = vim.fn.expand("<cWORD>")
+    if cword:find("http") or cword:find(":") then
+        vim.fn.system("firefox " .. vim.fn.shellescape(cword) .. " &")
+    else
+        -- cword = cword:gsub('"', ''):gsub(',', ''):gsub("'", '')
+        cword = cword:match([["(.-)"]]) or cword:match([['(.-)']]) or cword
+        local url = "https://github.com/" .. cword
+        vim.fn.system("firefox " .. vim.fn.shellescape(url) .. " &")
+    end
+end
+
 -- vim.api.nvim_set_keymap('n', 'gx', ':!open <cWORD><CR>', { noremap = true, silent = true })
 -- vim.api.nvim_set_keymap('n', 'gx', ':!nohup firefox <cWORD> &<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'gx', ':!firefox <cWORD> &<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', 'gx', ':!firefox <cWORD> &<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'gx', ':lua open_in_firefox()<CR>', { noremap = true, silent = true })
 
 local function diff_copy()
     local current_buf = vim.api.nvim_get_current_buf()
@@ -1814,9 +1831,11 @@ local conf = require("telescope.config").values
 
 vim.keymap.set('n', '<leader><leader>', function()
     local commands = {
+        -- Packer
         { label = "PackerUpdate", cmd = "PackerUpdate" },
         { label = "PackerLoad", cmd = "PackerLoad" },
         { label = "PackerSync", cmd = "PackerSync" },
+        -- Custom
         { label = "Diffi", cmd = "Diffi" },
         { label = "DiffCp", cmd = "DiffCp" },
         { label = "MakefileTargets", cmd = "MakefileTargets" },
@@ -1826,12 +1845,13 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "LSP Client Attached", cmd = "lua print(vim.lsp.buf.server_ready())" },
         { label = "LSP Client Capabilities", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()[1].server_capabilities))" },
         { label = "LSP Client Name", cmd = "lua print(vim.lsp.get_active_clients()[1].name)" },
+        { label = "Active LSP Clients", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()))" },
         { label = "Start LSP Client", cmd = "lua vim.lsp.start_client({ name = 'example', cmd = {'path/to/server'} })" },
         { label = "Stop LSP Client", cmd = "lua vim.lsp.stop_client(vim.lsp.get_active_clients())" },
         -- Treesitter
-        { label = "Installed Parsers", cmd = "lua print(vim.inspect(require('nvim-treesitter.parsers').installed_parsers()))" },
         { label = "Toggle Highlighting", cmd = "lua vim.cmd('TSBufToggle highlight')" },
-        { label = "Active Tree-sitter Parser", cmd = "lua print(require('nvim-treesitter.parsers').get_parser():inspect())" },
+        { label = "Inspect Tree", cmd = "InspectTree" },
+        { label = "Install info", cmd = "TSInstallInfo" },
         -- Diagnostics
         { label = "Buffer Diagnostics", cmd = "lua print(vim.inspect(vim.diagnostic.get(0)))" },
         { label = "Workspace Diagnostics", cmd = "lua print(vim.inspect(vim.diagnostic.get()))" },
@@ -1860,7 +1880,6 @@ vim.keymap.set('n', '<leader><leader>', function()
         -- { label = "messages", cmd = "messages" },
         { label = "Reload Configuration", cmd = "lua vim.cmd('source $MYVIMRC')" },
         { label = "Inspect Current Line", cmd = "lua print(vim.inspect(vim.api.nvim_get_current_line()))" },
-        { label = "Active LSP Clients", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()))" },
         { label = "List Buffers", cmd = "lua print(vim.inspect(vim.api.nvim_list_bufs()))" },
         { label = "Toggle Relative Numbers", cmd = "lua vim.o.relativenumber = not vim.o.relativenumber" },
         { label = "Open Neovim Log", cmd = "lua vim.cmd('edit $HOME/.local/state/nvim/log')" },
@@ -1988,7 +2007,7 @@ function count_characters()
     local mode = vim.api.nvim_get_mode().mode
     local text = ""
 
-    if mode == "v" or mode == "V" or mode == "\22" then  -- "\22" is for visual block mode
+    if mode == "v" or mode == "V" or mode == "\22" then -- "\22" is for visual block mode
         -- Yank selection to "v" register
         vim.cmd('normal! "vy')
         text = vim.fn.getreg("v")
@@ -2064,4 +2083,106 @@ function save_resolved_path_to_file()
 end
 
 vim.api.nvim_set_keymap('n', '<C-w>d', ':lua save_resolved_path_to_file()<CR>', { noremap = true, silent = true })
+
+local treesitter_utils = require("treesitter_utils")
+
+-- Define the `add_async` function
+local function add_async()
+  -- Feed the "t" key back as part of the operation
+  vim.api.nvim_feedkeys("t", "n", true)
+
+  -- Get the current buffer and text before the cursor
+  local buffer = vim.fn.bufnr()
+  local text_before_cursor = vim.fn.getline("."):sub(vim.fn.col(".") - 4, vim.fn.col(".") - 1)
+
+  -- Only proceed if the text before the cursor matches "awai"
+  if text_before_cursor ~= "awai" then
+    return
+  end
+
+  -- Get the current Tree-sitter node, ignoring injections for embedded JS
+  local current_node = vim.treesitter.get_node { ignore_injections = false }
+  local function_node = treesitter_utils.find_node_ancestor(
+    { "arrow_function", "function_declaration", "function" },
+    current_node
+  )
+  if not function_node then
+    return
+  end
+
+  -- Check if the function is already "async"
+  local function_text = vim.treesitter.get_node_text(function_node, 0)
+  if vim.startswith(function_text, "async") then
+    return
+  end
+
+  -- Add "async" at the start of the function
+  local start_row, start_col = function_node:start()
+  vim.api.nvim_buf_set_text(buffer, start_row, start_col, start_row, start_col, { "async " })
+end
+
+-- Set the keybinding for JavaScript and TypeScript
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "javascript", "typescript" },
+  callback = function()
+    vim.keymap.set("i", "t", add_async, { buffer = true })
+  end,
+})
+
+-- Test treesitter textobjects
+-- function select_function_node(inner)
+--   local bufnr = vim.api.nvim_get_current_buf()
+--   local cursor = vim.api.nvim_win_get_cursor(0)
+--   local row, col = cursor[1] - 1, cursor[2] -- Convert to zero-indexed
+-- 
+--   -- Get the current node at the cursor position
+--   local node = vim.treesitter.get_node({ buf = bufnr, pos = { row, col } })
+--   if not node then
+--     print("No node found under the cursor.")
+--     return
+--   end
+-- 
+--   -- Find the ancestor node that is a function
+--   while node do
+--     if vim.tbl_contains({
+--       "function",              -- Generic function
+--       "function_definition",   -- Python/JavaScript
+--       "method_definition",     -- JavaScript/TypeScript
+--       "arrow_function",        -- JavaScript/TypeScript
+--       "function_declaration",  -- C, C++
+--       "class_method"           -- Ruby/Python
+--     }, node:type()) then
+--       break
+--     end
+--     node = node:parent()
+--   end
+-- 
+--   if not node then
+--     print("No function node found.")
+--     return
+--   end
+-- 
+--   -- Determine range to select
+--   local start_row, start_col, end_row, end_col
+--   if inner then
+--     -- Select inside function body
+--     local body = node:field("body")[1]
+--     if not body then
+--       print("No function body found.")
+--       return
+--     end
+--     start_row, start_col, end_row, end_col = body:range()
+--   else
+--     -- Select entire function (including its declaration)
+--     start_row, start_col, end_row, end_col = node:range()
+--   end
+-- 
+--   -- Enter visual mode and select the range
+--   vim.api.nvim_buf_set_mark(bufnr, "<", start_row + 1, start_col, {})
+--   vim.api.nvim_buf_set_mark(bufnr, ">", end_row + 1, end_col, {})
+--   vim.cmd("normal! gv")
+-- end
+-- 
+-- vim.api.nvim_set_keymap("n", "vif", ":lua select_function_node(true)<CR>", { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap("n", "vaf", ":lua select_function_node(false)<CR>", { noremap = true, silent = true })
 
