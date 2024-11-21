@@ -99,6 +99,21 @@ return require('packer').startup(function()
 
   use 'gsuuon/model.nvim'
 
+  -- avante (cursor-like)
+  --use 'stevearc/dressing.nvim'
+  ---- use 'nvim-lua/plenary.nvim'
+  --use 'MunifTanjim/nui.nvim'
+  ---- Optional dependencies
+  ---- use 'nvim-tree/nvim-web-devicons' -- or 'echasnovski/mini.icons'
+  ---- use 'HakonHarnes/img-clip.nvim'
+  ---- use 'zbirenbaum/copilot.lua'
+  --use {
+  --  'yetone/avante.nvim',
+  --  branch = 'main',
+  --  run = 'make'
+  --}
+  -- end avante
+
   use {
     "aznhe21/actions-preview.nvim",
     config = function()
