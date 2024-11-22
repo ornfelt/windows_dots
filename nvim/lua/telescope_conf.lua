@@ -1,4 +1,22 @@
-require('telescope').setup({})
+-- require('telescope').setup({})
+require('telescope').setup({
+  defaults = {
+    -- Enable the preview window
+    --previewer = true,
+    preview = {
+      hide_on_startup = false, -- Show preview by default
+    },
+    -- Customize layout
+    layout_config = {
+      horizontal = {
+        preview_width = 0.6,
+      },
+      vertical = {
+        preview_height = 0.5,
+      },
+    },
+  },
+})
 
 --local builtin = require('telescope.builtin')
 --vim.keymap.set('n', '<leader>pf', builtin.find_files, {})

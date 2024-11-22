@@ -153,6 +153,10 @@ vim.g['jedi#popup_on_dot'] = 1
 -- NERDCommenter
 vim.g.NERDCreateDefaultMappings = 0
 vim.g.NERDSpaceDelims = 1
+-- Align line-wise comment delimiters flush left instead of following code indentation
+vim.g.NERDDefaultAlign = 'left'
+-- Add spaces after comment delimiters by default
+vim.g.NERDSpaceDelims = 0
 
 -- Vimwiki Plugin Settings
 vim.g['vimwiki_key_mappings'] = { table_mappings = 0 }
@@ -165,4 +169,8 @@ vim.cmd("colorscheme gruvbox")
 -- vim.g['python3_host_prog'] = '/path/to/python3'
 --vim.g.python3_host_prog = 'C:/Windows/python.exe'
 vim.g.python3_host_prog = os.getenv("PYTHON_PATH")
+
+-- Disable netrw (fileexplorer that comes with vim)
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
 

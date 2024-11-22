@@ -392,3 +392,10 @@ vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
 -- use leader-, on line below
 -- :lua print(vim.inspect(vim.opt.wildignore:get()))
 
+-- Highlight on yank
+vim.api.nvim_create_autocmd("TextYankPost", {
+    callback = function()
+        vim.highlight.on_yank()
+    end,
+})
+

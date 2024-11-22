@@ -1841,6 +1841,8 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "MakefileTargets", cmd = "MakefileTargets" },
         { label = "GoLangTestFiles", cmd = "GoLangTestFiles" },
         -- LSP
+        { label = "Lsp Info", cmd = "LspInfo" },
+        { label = "Lsp Log", cmd = "LspLog" },
         { label = "LSP Document Symbols", cmd = "lua vim.lsp.buf.document_symbol()" },
         { label = "LSP Client Attached", cmd = "lua print(vim.lsp.buf.server_ready())" },
         { label = "LSP Client Capabilities", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()[1].server_capabilities))" },
@@ -1882,7 +1884,7 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "Inspect Current Line", cmd = "lua print(vim.inspect(vim.api.nvim_get_current_line()))" },
         { label = "List Buffers", cmd = "lua print(vim.inspect(vim.api.nvim_list_bufs()))" },
         { label = "Toggle Relative Numbers", cmd = "lua vim.o.relativenumber = not vim.o.relativenumber" },
-        { label = "Open Neovim Log", cmd = "lua vim.cmd('edit ' .. vim.fn.stdpath('state') .. '/log')" },
+        { label = "Neovim Log", cmd = "lua vim.cmd('tabedit ' .. vim.fn.stdpath('state') .. '/log')" },
         { label = "Check Health", cmd = "lua vim.cmd('checkhealth')" },
     }
 
