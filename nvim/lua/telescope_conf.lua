@@ -1,22 +1,22 @@
--- require('telescope').setup({})
-require('telescope').setup({
-  defaults = {
-    -- Enable the preview window
-    --previewer = true,
-    preview = {
-      hide_on_startup = false, -- Show preview by default
-    },
-    -- Customize layout
-    layout_config = {
-      horizontal = {
-        preview_width = 0.6,
-      },
-      vertical = {
-        preview_height = 0.5,
-      },
-    },
-  },
-})
+ require('telescope').setup({})
+--require('telescope').setup({
+--  defaults = {
+--    -- Enable the preview window
+--    previewer = true,
+--    preview = {
+--      hide_on_startup = false, -- Show preview by default
+--    },
+--    -- Customize layout
+--    layout_config = {
+--      horizontal = {
+--        preview_width = 0.6,
+--      },
+--      vertical = {
+--        preview_height = 0.5,
+--      },
+--    },
+--  },
+--})
 
 --local builtin = require('telescope.builtin')
 --vim.keymap.set('n', '<leader>pf', builtin.find_files, {})
@@ -40,9 +40,15 @@ local builtin = require('telescope.builtin')
 function project_files()
     local _, ret, _ = utils.get_os_command_output({ 'git', 'rev-parse', '--is-inside-work-tree' })
     if ret == 0 then
-        builtin.git_files()
+        --builtin.git_files()
+        builtin.git_files({
+            previewer = true,
+        })
     else
-        builtin.find_files()
+        --builtin.find_files()
+        builtin.find_files({
+            previewer = true,
+        })
     end
 end
 vim.api.nvim_set_keymap('n', '<M-a>', '<cmd>lua project_files()<CR>', { noremap = true, silent = true })

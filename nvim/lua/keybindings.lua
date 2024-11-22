@@ -177,6 +177,7 @@ function StartFinder(env_var, additional_path)
         cwd = path,
         hidden = env_var == "my_notes_path",
         prompt_title = "Search in " .. path,
+        previewer = true,
     })
 end
 
@@ -1533,6 +1534,7 @@ vim.api.nvim_set_keymap('n', '<leader>-', ':lua copy_current_file_path(true)<CR>
 vim.api.nvim_set_keymap('v', '<leader>-', ':lua copy_current_file_path(false)<CR>', { noremap = true, silent = true })
 
 vim.keymap.set('n', '<leader>gl', function()
+    vim.cmd('tabnew')
     require('gitgraph').draw({}, { all = true, max_count = 5000 })
 end, { desc = "GitGraph - Draw" })
 
@@ -1841,27 +1843,76 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "MakefileTargets", cmd = "MakefileTargets" },
         { label = "GoLangTestFiles", cmd = "GoLangTestFiles" },
         -- LSP
-        { label = "Lsp Info", cmd = "LspInfo" },
-        { label = "Lsp Log", cmd = "LspLog" },
+        { label = "LSP Info", cmd = "LspInfo" },
+        { label = "LSP Log", cmd = "LspLog" },
         { label = "LSP Document Symbols", cmd = "lua vim.lsp.buf.document_symbol()" },
         { label = "LSP Client Attached", cmd = "lua print(vim.lsp.buf.server_ready())" },
         { label = "LSP Client Capabilities", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()[1].server_capabilities))" },
         { label = "LSP Client Name", cmd = "lua print(vim.lsp.get_active_clients()[1].name)" },
-        { label = "Active LSP Clients", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()))" },
-        { label = "Start LSP Client", cmd = "lua vim.lsp.start_client({ name = 'example', cmd = {'path/to/server'} })" },
-        { label = "Stop LSP Client", cmd = "lua vim.lsp.stop_client(vim.lsp.get_active_clients())" },
+        { label = "LSP Active Clients", cmd = "lua print(vim.inspect(vim.lsp.get_active_clients()))" },
+        { label = "LSP Start Client", cmd = "lua vim.lsp.start_client({ name = 'example', cmd = {'path/to/server'} })" },
+        { label = "LSP Stop Client", cmd = "lua vim.lsp.stop_client(vim.lsp.get_active_clients())" },
+        -- Telescope file pickers
+        { label = "Telescope Find files", cmd = "lua require('telescope.builtin').find_files()" },
+        { label = "Telescope Git files", cmd = "lua require('telescope.builtin').git_files()" },
+        { label = "Telescope Grep string", cmd = "lua require('telescope.builtin').grep_string()" },
+        { label = "Telescope Live grep", cmd = "lua require('telescope.builtin').live_grep()" },
+        -- Telescope vim pickers
+        { label = "Telescope Buffers", cmd = "lua require('telescope.builtin').buffers()" },
+        { label = "Telescope Old files", cmd = "lua require('telescope.builtin').oldfiles()" },
+        { label = "Telescope Commands", cmd = "lua require('telescope.builtin').commands()" },
+        { label = "Telescope Tags", cmd = "lua require('telescope.builtin').tags()" },
+        { label = "Telescope Command history", cmd = "lua require('telescope.builtin').command_history()" },
+        { label = "Telescope Search history", cmd = "lua require('telescope.builtin').search_history()" },
+        { label = "Telescope Help tags", cmd = "lua require('telescope.builtin').help_tags()" },
+        { label = "Telescope Man pages", cmd = "lua require('telescope.builtin').man_pages()" },
+        { label = "Telescope Marks", cmd = "lua require('telescope.builtin').marks()" },
+        { label = "Telescope Colorscheme", cmd = "lua require('telescope.builtin').colorscheme()" },
+        { label = "Telescope Quickfix", cmd = "lua require('telescope.builtin').quickfix()" },
+        { label = "Telescope Loclist", cmd = "lua require('telescope.builtin').loclist()" },
+        { label = "Telescope Jumplist", cmd = "lua require('telescope.builtin').jumplist()" },
+        { label = "Telescope Vim options", cmd = "lua require('telescope.builtin').vim_options()" },
+        { label = "Telescope Registers", cmd = "lua require('telescope.builtin').registers()" },
+        { label = "Telescope Keymaps", cmd = "lua require('telescope.builtin').keymaps()" },
+        { label = "Telescope Filetypes", cmd = "lua require('telescope.builtin').filetypes()" },
+        { label = "Telescope Highlights", cmd = "lua require('telescope.builtin').highlights()" },
+        { label = "Telescope Resume last picker", cmd = "lua require('telescope.builtin').resume()" }, -- Inception?
+        { label = "Telescope Pickers", cmd = "lua require('telescope.builtin').pickers()" },
+        -- Telescope LSP pickers
+        { label = "Telescope LSP references", cmd = "lua require('telescope.builtin').lsp_references()" },
+        { label = "Telescope LSP incoming calls", cmd = "lua require('telescope.builtin').lsp_incoming_calls()" },
+        { label = "Telescope LSP outgoing calls", cmd = "lua require('telescope.builtin').lsp_outgoing_calls()" },
+        { label = "Telescope LSP document symbols", cmd = "lua require('telescope.builtin').lsp_document_symbols()" },
+        { label = "Telescope LSP workspace symbols", cmd = "lua require('telescope.builtin').lsp_workspace_symbols()" },
+        { label = "Telescope LSP dynamic workspace symbols", cmd = "lua require('telescope.builtin').lsp_dynamic_workspace_symbols()" },
+        { label = "Telescope Diagnostics", cmd = "lua require('telescope.builtin').diagnostics()" },
+        { label = "Telescope LSP implementations", cmd = "lua require('telescope.builtin').lsp_implementations()" },
+        { label = "Telescope LSP definitions", cmd = "lua require('telescope.builtin').lsp_definitions()" },
+        { label = "Telescope LSP type definitions", cmd = "lua require('telescope.builtin').lsp_type_definitions()" },
+        -- Telescope git pickers
+        { label = "Telescope Git commits", cmd = "lua require('telescope.builtin').git_commits()" },
+        { label = "Telescope Git branches", cmd = "lua require('telescope.builtin').git_branches()" },
+        { label = "Telescope Git status", cmd = "lua require('telescope.builtin').git_status()" },
+        { label = "Telescope Git stash", cmd = "lua require('telescope.builtin').git_stash()" },
+        -- Telescope Treesitter pickers
+        { label = "Telescope Treesitter", cmd = "lua require('telescope.builtin').treesitter()" },
+        -- Telescope list pickers
+        { label = "Telescope Planets", cmd = "lua require('telescope.builtin').planets()" },
+        { label = "Telescope Built-in pickers", cmd = "lua require('telescope.builtin').builtin()" },
+        { label = "Telescope Lua reloader", cmd = "lua require('telescope.builtin').reloader()" },
+        { label = "Telescope Symbols", cmd = "lua require('telescope.builtin').symbols()" },
         -- Treesitter
-        { label = "Toggle Highlighting", cmd = "lua vim.cmd('TSBufToggle highlight')" },
-        { label = "Inspect Tree", cmd = "InspectTree" },
-        { label = "Install info", cmd = "TSInstallInfo" },
+        { label = "Treesitter Toggle Highlighting", cmd = "lua vim.cmd('TSBufToggle highlight')" },
+        { label = "Treesitter Inspect Tree", cmd = "InspectTree" },
+        { label = "Treesitter Install info", cmd = "TSInstallInfo" },
         -- Diagnostics
-        { label = "Buffer Diagnostics", cmd = "lua print(vim.inspect(vim.diagnostic.get(0)))" },
-        { label = "Workspace Diagnostics", cmd = "lua print(vim.inspect(vim.diagnostic.get()))" },
-        { label = "Cursor Diagnostics", cmd = "lua print(vim.inspect(vim.diagnostic.get_cursor()))" },
+        { label = "Diagnostics Buffer ", cmd = "lua print(vim.inspect(vim.diagnostic.get(0)))" },
+        { label = "Diagnostics Workspace ", cmd = "lua print(vim.inspect(vim.diagnostic.get()))" },
+        { label = "Diagnostics Cursor ", cmd = "lua print(vim.inspect(vim.diagnostic.get_cursor()))" },
         -- Trouble
         { label = "Trouble diagnostics", cmd = "Trouble diagnostics" },
-        -- { label = "Trouble fzf", cmd = "Trouble fzf" },
-        -- { label = "Trouble fzf_files", cmd = "Trouble fzf" },
+        { label = "Trouble fzf", cmd = "Trouble fzf" },
+        { label = "Trouble fzf_files", cmd = "Trouble fzf" },
         { label = "Trouble loclist", cmd = "Trouble loclist" },
         { label = "Trouble lsp", cmd = "Trouble lsp" },
         { label = "Trouble lsp_command", cmd = "Trouble lsp_command" },
