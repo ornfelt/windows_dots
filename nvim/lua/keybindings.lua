@@ -1877,12 +1877,12 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "Trouble telescope", cmd = "Trouble telescope" },
         { label = "Trouble telescope_files", cmd = "Trouble telescope_files" },
         -- General
-        -- { label = "messages", cmd = "messages" },
-        { label = "Reload Configuration", cmd = "lua vim.cmd('source $MYVIMRC')" },
+        { label = "messages", cmd = "messages" },
+        { label = "Reload Configuration", cmd = "lua vim.cmd('source ' .. vim.env.MYVIMRC)" },
         { label = "Inspect Current Line", cmd = "lua print(vim.inspect(vim.api.nvim_get_current_line()))" },
         { label = "List Buffers", cmd = "lua print(vim.inspect(vim.api.nvim_list_bufs()))" },
         { label = "Toggle Relative Numbers", cmd = "lua vim.o.relativenumber = not vim.o.relativenumber" },
-        { label = "Open Neovim Log", cmd = "lua vim.cmd('edit $HOME/.local/state/nvim/log')" },
+        { label = "Open Neovim Log", cmd = "lua vim.cmd('edit ' .. vim.fn.stdpath('state') .. '/log')" },
         { label = "Check Health", cmd = "lua vim.cmd('checkhealth')" },
     }
 
@@ -1915,7 +1915,7 @@ vim.keymap.set('n', '<leader><leader>', function()
         --    actions.select_default:replace(function()
         --        local selection = action_state.get_selected_entry()
         --        actions.close(prompt_bufnr)
-        --        if selection.value:match("^lua print") then
+        --        if selection.value:match("^lua print") or selection.value == 'messages' then
         --            -- Run command and capture output
         --            local cmd_output = vim.fn.execute(selection.value)
 
@@ -1939,7 +1939,7 @@ vim.keymap.set('n', '<leader><leader>', function()
                 local selection = action_state.get_selected_entry()
                 actions.close(prompt_bufnr)
 
-                if selection.value:match("^lua print") then
+                if selection.value:match("^lua print") or selection.value == 'messages' then
                     local cmd_output = vim.fn.execute(selection.value)
 
                     vim.cmd("belowright 10split")
