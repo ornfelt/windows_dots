@@ -29,7 +29,6 @@ else
 end
 
 config.hide_tab_bar_if_only_one_tab = true
-config.show_close_tab_button_in_tabs = false
 config.mouse_bindings = {
     -- Open URLs with Ctrl+Click
     {
@@ -46,6 +45,8 @@ config.warn_about_missing_glyphs = false
 --config.window_decorations = 'NONE'
 config.window_decorations = 'RESIZE'
 if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple == 'x86_64-pc-windows-gnu' then
+    config.show_close_tab_button_in_tabs = false
+
     -- The leader is similar to how tmux defines a set of keys to hit in order to
     -- invoke tmux bindings. Binding to ctrl-a here to mimic tmux
     config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1000 }
@@ -120,8 +121,13 @@ local function split_nav(key)
       -- Check if there are multiple panes to navigate
       local dir = direction_keys[key]
       local tab = pane:tab()
+
+      local opposite_dir = dir == "Left" and "Right" or dir == "Right" and "Left" or dir == "Up" and "Down" or "Up"
+
       if tab:get_pane_direction(dir) then
         win:perform_action({ ActivatePaneDirection = dir }, pane)
+      elseif tab:get_pane_direction(opposite_dir) then
+        win:perform_action({ ActivatePaneDirection = opposite_dir }, pane)
       else
         -- Send the key sequence to process, e.g., vim
         -- win:perform_action({
