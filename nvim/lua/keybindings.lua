@@ -425,7 +425,8 @@ map('n', '<M-p>', ':cprev<CR>')
 map('n', '<M-P>', ':clast<CR>')
 map('n', '<M-b>', ':copen<CR>')
 map('n', '<M-B>', ':cclose<CR>')
--- Function to toggle the quickfix list
+
+-- Function to toggle quickfix list
 function ToggleQuickfix()
     local is_open = false
 
@@ -513,6 +514,13 @@ map('n', '<M-9>', '9gt')
 map('n', '<M-0>', ':tablast<CR>')
 map('n', '<leader>o', '<C-^>')
 
+local function normalize_slashes(path)
+    path = path:gsub("\\", "/")
+    path = path:gsub("/+", "/")
+    return path
+end
+
+-- Session management
 function load_session()
   local session_dir = vim.fn.expand('~/.vim/sessions/')
   local pattern = 's*.vim'
@@ -523,36 +531,13 @@ function load_session()
     return
   end
 
-  -- Extract session indices, names, and paths
-  --local sessions = {}
-  --for _, filepath in ipairs(session_files) do
-  --  local filename = vim.fn.fnamemodify(filepath, ':t')
-  --  local index_str = filename:match('^s(%d*)%.vim$')
-  --  local index = tonumber(index_str)
-  --  if not index then
-  --    if index_str == '' then
-  --      index = 1 -- For 's.vim', set index to 1
-  --    else
-  --      index = math.huge -- For any other non-matching filename
-  --    end
-  --  end
-  --  table.insert(sessions, { index = index, name = filename, path = filepath })
-  --end
+  -- Extract session and indices
   local sessions = {}
   local index = 0
   for _, filepath in ipairs(session_files) do
     local filename = vim.fn.fnamemodify(filepath, ':t')
     -- Exclude files with "layout" (case-insensitive)
     if not string.match(string.lower(filename), 'layout') then
-      -- local index_str = filename:match('^s(%d*)%.vim$')
-      -- local index = tonumber(index_str)
-      -- if not index then
-      --   if index_str == '' then
-      --     index = 1 -- For 's.vim', set index to 1
-      --   else
-      --     index = math.huge -- For any other non-matching filename
-      --   end
-      -- end
       index = index + 1
       table.insert(sessions, { index = index, name = filename, path = filepath })
     end
@@ -599,14 +584,6 @@ function load_session_also_works()
     return
   end
 
-  -- Extract session indices, names, and paths
-  --local sessions = {}
-  --local options = { 'Select a session to load:' }
-  --for idx, filepath in ipairs(session_files) do
-  --  local filename = vim.fn.fnamemodify(filepath, ':t')
-  --  table.insert(sessions, { idx = idx, name = filename, path = filepath })
-  --  table.insert(options, idx .. ': ' .. filename)
-  --end
   local sessions = {}
   local options = { 'Select a session to load:' }
   for idx, filepath in ipairs(session_files) do
@@ -623,60 +600,54 @@ function load_session_also_works()
   if choice > 0 and choice <= #sessions then
     local session = sessions[choice]
     vim.cmd('silent source ' .. session.path)
-    print('Session loaded from ' .. session.path)
+    --print('Session loaded from ' .. session.path)
   else
     print('No session selected.')
   end
 end
 
--- Session management
--- map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
--- map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
-map('n', '<leader>.', ':lua load_session()<CR>', { noremap = true, silent = true })
+function load_tabs_and_splits()
+  local file = io.open(vim.fn.expand("~/.vim/sessions/s_layout.vim"), "r")
 
-function save_tabs_and_splits_old()
-  local tab_count = vim.fn.tabpagenr('$')
-  if tab_count > 2 then
-    local current_tab = vim.fn.tabpagenr()
-    local current_win = vim.fn.winnr()
+  if file == nil then
+    print("No saved layout found!")
+    return
+  end
 
-    local file = io.open(vim.fn.expand("~/.vim/sessions/s_layout.vim"), "w")
-    file:write(tab_count .. "\n")
+  local tab_count = tonumber(file:read("*line"))
+  local saved_tab = 1
 
-    for i = 1, tab_count do
-      vim.cmd(i .. "tabnext")
-
-      local win_count = vim.fn.winnr('$')
-      file:write(win_count .. "\n")
-
-      for j = 1, win_count do
-        vim.cmd(j .. "wincmd w")
-        local buf_name = vim.fn.bufname('%')
-        if buf_name ~= "" then
-          local full_path = vim.fn.fnamemodify(buf_name, ':p')
-          file:write(full_path .. "\n")
-        end
-      end
+  for i = 1, tab_count do
+    if i > 1 then
+      vim.cmd("tabnew")
     end
 
-    file:write("TAB:" .. current_tab .. "\n")
-    file:close()
+    local win_count = tonumber(file:read("*line"))
 
-    vim.cmd(current_tab .. "tabnext")
-    vim.cmd(current_win .. "wincmd w")
-    print("Session data saved to ~/.vim/sessions/")
+    for j = 1, win_count do
+      if j > 1 then
+          -- vim.cmd("split")
+        vim.cmd("vsplit")
+      end
 
-    -- Call mks! to save the session
-    vim.cmd("mks! ~/.vim/sessions/s.vim")
-  else
-    print("Not saving: Less than 3 tabs are open.")
+      local buf_name = file:read("*line")
+      if buf_name and buf_name ~= "" and not buf_name:match("^term://") then
+        vim.cmd("edit " .. buf_name)
+      end
+    end
   end
-end
 
-local function normalize_slashes(path)
-    path = path:gsub("\\", "/")
-    path = path:gsub("/+", "/")
-    return path
+  local last_line = file:read("*line")
+  if last_line and last_line:match("^TAB:") then
+    saved_tab = tonumber(last_line:sub(5))
+  end
+
+  file:close()
+
+  if tab_count > 1 then
+    -- vim.cmd("2tabnext")
+    vim.cmd(saved_tab .. "tabnext")
+  end
 end
 
 function save_tabs_and_splits()
@@ -805,52 +776,15 @@ function save_tabs_and_splits()
     vim.cmd("mks! " .. session_filename)
 end
 
-function load_tabs_and_splits()
-  local file = io.open(vim.fn.expand("~/.vim/sessions/s_layout.vim"), "r")
+-- Load session keybind
+-- map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
+-- map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
+map('n', '<leader>.', ':lua load_session()<CR>', { noremap = true, silent = true })
+--map('n', '<leader>.', ':lua load_session_also_works()<CR>', { noremap = true, silent = true })
+ --vim.api.nvim_set_keymap('n', '<leader>.', ':lua load_tabs_and_splits()<CR>', { noremap = true, silent = true })
 
-  if file == nil then
-    print("No saved layout found!")
-    return
-  end
-
-  local tab_count = tonumber(file:read("*line"))
-  local saved_tab = 1
-
-  for i = 1, tab_count do
-    if i > 1 then
-      vim.cmd("tabnew")
-    end
-
-    local win_count = tonumber(file:read("*line"))
-
-    for j = 1, win_count do
-      if j > 1 then
-          -- vim.cmd("split")
-        vim.cmd("vsplit")
-      end
-
-      local buf_name = file:read("*line")
-      if buf_name and buf_name ~= "" and not buf_name:match("^term://") then
-        vim.cmd("edit " .. buf_name)
-      end
-    end
-  end
-
-  local last_line = file:read("*line")
-  if last_line and last_line:match("^TAB:") then
-    saved_tab = tonumber(last_line:sub(5))
-  end
-
-  file:close()
-
-  if tab_count > 1 then
-    -- vim.cmd("2tabnext")
-    vim.cmd(saved_tab .. "tabnext")
-  end
-end
-
+-- Save session keybind
 vim.api.nvim_set_keymap('n', '<leader>m', ':lua save_tabs_and_splits()<CR>', { noremap = true, silent = true })
--- vim.api.nvim_set_keymap('n', '<leader>.', ':lua load_tabs_and_splits()<CR>', { noremap = true, silent = true })
 
 -- Open new tabs
 map('n', '<M-m>', ':tabe ~/.config/nvim/init.lua<CR>')
