@@ -38,3 +38,4 @@ else
 	$path = $path -replace ' ','` '
 	Invoke-Expression "$path\Wow.exe"
 }
+

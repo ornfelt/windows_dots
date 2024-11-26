@@ -5,3 +5,4 @@ Get-ChildItem -Path 'C:\Users\Svea User\Documents\code' -Recurse -Force -File |
         ,@{Name='SizeKB';Expression={$_.Length / 1KB}} |
     Sort-Object { $_.SizeKB } -Descending |
     Out-GridView
+

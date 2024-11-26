@@ -65,3 +65,4 @@ if ($args.Count -gt 0) {
 	# Good to go. Invoke executable with administrative privileges
 	Start-Process -FilePath $exePath -Verb RunAs
 }
+

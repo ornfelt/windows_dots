@@ -20,3 +20,4 @@ if (Test-Path $basePath) {
 echo "$path\supertuxkart.exe"
 $path = $path -replace ' ','` '
 Invoke-Expression "$path\supertuxkart.exe"
+

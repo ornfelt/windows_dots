@@ -27,3 +27,4 @@ foreach ($SSID in $ListOfSSID){
     }
     Write-Output "$SSID : $passphrase"
 }
+

@@ -23,3 +23,4 @@ $devices = $lines | Where-Object { $_ -match "(\d{1,3}(\.\d{1,3}){3})\s+([\da-fA
 
 # Display the results
 $devices | Format-Table -AutoSize
+

@@ -19,3 +19,4 @@ if (Test-Path $basePath) {
 
 echo "$path\openmw-launcher.exe"
 Invoke-Expression "$path\openmw-launcher.exe"
+

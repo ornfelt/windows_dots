@@ -585,13 +585,15 @@ function load_session_also_works()
   end
 
   local sessions = {}
+  local index = 0
   local options = { 'Select a session to load:' }
   for idx, filepath in ipairs(session_files) do
     local filename = vim.fn.fnamemodify(filepath, ':t')
     -- Exclude files with "layout" (case-insensitive)
     if not string.match(string.lower(filename), 'layout') then
-      table.insert(sessions, { idx = idx, name = filename, path = filepath })
-      table.insert(options, idx .. ': ' .. filename)
+      index = index + 1
+      table.insert(sessions, { idx = index, name = filename, path = filepath })
+      table.insert(options, index .. ': ' .. filename)
     end
   end
 
@@ -779,8 +781,8 @@ end
 -- Load session keybind
 -- map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
 -- map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
-map('n', '<leader>.', ':lua load_session()<CR>', { noremap = true, silent = true })
---map('n', '<leader>.', ':lua load_session_also_works()<CR>', { noremap = true, silent = true })
+map('n', '<leader>.', ':lua load_session()<CR>')
+--map('n', '<leader>.', ':lua load_session_also_works()<CR>')
  --vim.api.nvim_set_keymap('n', '<leader>.', ':lua load_tabs_and_splits()<CR>', { noremap = true, silent = true })
 
 -- Save session keybind

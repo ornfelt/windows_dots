@@ -45,3 +45,4 @@ cd $path
 
 echo "$path\realmd.exe; $path\mangosd.exe"
 #Invoke-Expression "$path\mangosd.exe"
+

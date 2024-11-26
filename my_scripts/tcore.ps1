@@ -19,3 +19,4 @@ cd $path
 
 echo "python $path\overwrite.py; $path\worldserver.exe"
 #Invoke-Expression "python $path\overwrite.py; $path\worldserver.exe"
+

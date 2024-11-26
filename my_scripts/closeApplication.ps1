@@ -46,3 +46,4 @@ foreach($Process in Get-Process -Name $ProcessName -ErrorAction SilentlyContinue
 }
 
 Write-Host "Terminated $ClosedCount processes with name '$ProcessName'."
+
