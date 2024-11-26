@@ -1260,10 +1260,10 @@ local function read_config(key, default_value)
     local my_notes_path = os.getenv("MY_NOTES_PATH")
     local config_file_path = my_notes_path .. "/scripts/files/nvim_config.txt"
     local value = default_value
-    local key_lower = key:lower() -- Convert the key to lowercase
+    local key_lower = key:lower()
 
     for line in io.lines(config_file_path) do
-        local line_lower = line:lower() -- Convert the line to lowercase for comparison
+        local line_lower = line:lower()
         if line_lower:match("^" .. key_lower .. ":") then
             value = line:match(key .. ": (%S+)")
             if value then
@@ -1289,9 +1289,9 @@ local function is_prioritized_filetype(filetype)
     local prioritized_filetypes = {
         'c', 'cpp', 'cs', 'css', 'go', 'h', 'hpp', 'html',
         'java', 'js', 'jsx', 'lua', 'php', 'py', 'rs',
-        'sql', 'ts', 'tsx', 'zig'
+        'ts', 'tsx', 'zig'
     }
-    -- Use a loop to check membership
+
     for _, ft in ipairs(prioritized_filetypes) do
         if ft == filetype then
             return true
