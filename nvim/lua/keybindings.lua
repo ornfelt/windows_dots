@@ -1254,6 +1254,7 @@ local function SqlExecCommand()
     vim.cmd('belowright 15new')
     local new_buf = vim.api.nvim_get_current_buf()
     vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, vim.split(output, "\n"))
+    vim.api.nvim_buf_set_option(new_buf, "bufhidden", "wipe") -- Automatically wipe the buffer when closed
 end
 
 local function read_config(key, default_value)

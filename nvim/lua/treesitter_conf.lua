@@ -17,7 +17,6 @@ require("nvim-treesitter.configs").setup({
         'jsdoc',
         'json',
         'lua',
-        'lua',
         'markdown',
         'markdown_inline',
         'php',
