@@ -1256,11 +1256,68 @@ local function SqlExecCommand()
     vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, vim.split(output, "\n"))
 end
 
+local function read_config(key, default_value)
+    local my_notes_path = os.getenv("MY_NOTES_PATH")
+    local config_file_path = my_notes_path .. "/scripts/files/nvim_config.txt"
+    local value = default_value
+    local key_lower = key:lower() -- Convert the key to lowercase
+
+    for line in io.lines(config_file_path) do
+        local line_lower = line:lower() -- Convert the line to lowercase for comparison
+        if line_lower:match("^" .. key_lower .. ":") then
+            value = line:match(key .. ": (%S+)")
+            if value then
+                value = value:match("^%s*(.-)%s*$") -- Trim leading and trailing whitespace
+            end
+            if not value or value == "" then
+                value = default_value
+            end
+            break
+        end
+    end
+
+    return value
+end
+
+-- Check if prioritizing build scripts is enabled
+local function should_prioritize_build_script()
+    local prioritize = read_config("PrioritizeBuildScript", "false")
+    return prioritize:lower() == "true"
+end
+
+local function is_prioritized_filetype(filetype)
+    local prioritized_filetypes = {
+        'c', 'cpp', 'cs', 'css', 'go', 'h', 'hpp', 'html',
+        'java', 'js', 'jsx', 'lua', 'php', 'py', 'rs',
+        'sql', 'ts', 'tsx', 'zig'
+    }
+    -- Use a loop to check membership
+    for _, ft in ipairs(prioritized_filetypes) do
+        if ft == filetype then
+            return true
+        end
+    end
+    return false
+end
+
 function compile_run()
     vim.cmd('w') -- Save the file first
 
     local filetype = vim.bo.filetype
     local is_windows = vim.fn.has('win32') == 1 -- or vim.fn.has('win16') == 1 or vim.fn.has('win64') == 1
+    local build_script = is_windows and './build.ps1' or './build.sh'
+
+    if should_prioritize_build_script() and is_prioritized_filetype(filetype) then
+        local build_script_exists = vim.fn.filereadable(build_script) == 1
+        if build_script_exists then
+            if is_windows then
+                vim.cmd('!powershell -ExecutionPolicy ByPass -File build.ps1')
+            else
+                vim.cmd('!bash ./build.sh')
+            end
+            return
+        end
+    end
 
     if filetype == 'c' then
         if is_windows then
@@ -1279,17 +1336,16 @@ function compile_run()
             vim.cmd('!time ./%:r')
         end
     elseif filetype == 'java' then
-        local build_script = is_windows and './build.ps1' or './build.sh'
-        local build_script_exists = vim.fn.filereadable(build_script) == 1
-        if build_script_exists then
-            if is_windows then
-                vim.cmd('!powershell -ExecutionPolicy ByPass -File build.ps1')
-            else
-                vim.cmd('!bash ./build.sh')
-            end
-            return
-        end
-
+        --local build_script = is_windows and './build.ps1' or './build.sh'
+        --local build_script_exists = vim.fn.filereadable(build_script) == 1
+        --if build_script_exists then
+        --    if is_windows then
+        --        vim.cmd('!powershell -ExecutionPolicy ByPass -File build.ps1')
+        --    else
+        --        vim.cmd('!bash ./build.sh')
+        --    end
+        --    return
+        --end
         if is_windows then
             vim.cmd('!javac %')
             vim.cmd('!java -cp %:p:h %:t:r')
@@ -1451,8 +1507,10 @@ function copy_current_file_path(replace_env)
                 code_root_dir = code_root_dir:sub(1, -2)
             end
 
-            local pattern = "^" .. vim.pesc(code_root_dir)
-            path = path:gsub(pattern, "{code_root_dir}")
+            --local pattern = "^" .. vim.pesc(code_root_dir)
+            --path = path:gsub(pattern, "{code_root_dir}")
+            local pattern = "^" .. vim.pesc(code_root_dir .. "/Code")
+            path = path:gsub(pattern, "{code_root_dir}/Code")
         end
     else
         path = remove_file_name(path)
@@ -1478,11 +1536,16 @@ function PythonExecCommand()
     vim.cmd('w') -- Save the file first
     local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "')
-    -- local script_path = code_root_dir .. "Code2/Python/my_py/scripts/read_file.py"
-    local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gpt.py"
-    -- local script_path = code_root_dir .. "Code2/Python/my_py/scripts/claude/claude.py"
-    -- local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gemini/gemini.py"
-    -- local script_path = code_root_dir .. "Code2/Python/my_py/scripts/mistral/mistral.py"
+
+    --local script_path = code_root_dir .. "Code2/Python/my_py/scripts/read_file.py"
+    --local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gpt.py"
+    --local script_path = code_root_dir .. "Code2/Python/my_py/scripts/claude/claude.py"
+    --local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gemini/gemini.py"
+    --local script_path = code_root_dir .. "Code2/Python/my_py/scripts/mistral/mistral.py"
+    local command = read_config("PythonExecCommand", "gpt")
+    local script_path = code_root_dir .. "Code2/Python/my_py/scripts/" .. command .. ".py"
+    --print(script_path)
+
     local print_to_current_buffer = false
     local current_file = vim.fn.expand('%:p')
     local mode = vim.fn.mode()
@@ -1519,7 +1582,7 @@ function PythonExecCommand()
     local formatted_args = table.concat(args, " ")
     local cmd = "python " .. script_path .. " " .. formatted_args
     local output = vim.fn.system(cmd)
-    -- print("args: " .. formatted_args)
+    --print("args: " .. formatted_args)
 
     if print_to_current_buffer then
         local current_buf = vim.api.nvim_get_current_buf()
@@ -1537,6 +1600,90 @@ end
 vim.api.nvim_set_keymap('n', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('v', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('i', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
+
+function CyclePythonExecCommand()
+    local my_notes_path = os.getenv("MY_NOTES_PATH")
+    local config_file_path = my_notes_path .. "/scripts/files/nvim_config.txt"
+    local possible_commands = { "read_file", "gpt", "claude", "gemini", "mistral" }
+    local current_command = read_config("PythonExecCommand", "gpt")
+
+    -- Identify current index, then rotate to the next
+    local current_index = nil
+    for i, cmd in ipairs(possible_commands) do
+        if cmd == current_command then
+            current_index = i
+            break
+        end
+    end
+
+    local next_index = current_index % #possible_commands + 1
+    local new_command = possible_commands[next_index]
+
+    -- Rewrite config file with the new command
+    local lines = {}
+    local command_updated = false
+
+    for line in io.lines(config_file_path) do
+        if line:match("^PythonExecCommand:") then
+            table.insert(lines, "PythonExecCommand: " .. new_command)
+            command_updated = true
+        else
+            table.insert(lines, line)
+        end
+    end
+
+    -- If there's no existing command, append it
+    if not command_updated then
+        table.insert(lines, "PythonExecCommand: " .. new_command)
+    end
+
+    -- Write changes back to the file
+    local file = io.open(config_file_path, "w")
+    for _, line in ipairs(lines) do
+        file:write(line .. "\n")
+    end
+    file:close()
+
+    print("New PythonExecCommand: " .. new_command)
+end
+
+function TogglePrioritizeBuildScript()
+    local my_notes_path = os.getenv("MY_NOTES_PATH")
+    local config_file_path = my_notes_path .. "/scripts/files/nvim_config.txt"
+
+    local lines = {}
+    local current_value = "false"
+    local updated = false
+
+    for line in io.lines(config_file_path) do
+        if line:match("^PrioritizeBuildScript:") then
+            current_value = line:match("PrioritizeBuildScript: (%S+)")
+            local new_value = current_value:lower() == "true" and "false" or "true"
+            table.insert(lines, "PrioritizeBuildScript: " .. new_value)
+            updated = true
+        else
+            table.insert(lines, line)
+        end
+    end
+
+    -- If the key wasn't found, append it with the new value
+    if not updated then
+        table.insert(lines, "PrioritizeBuildScript: true")
+    end
+
+    -- Write changes back to file
+    local file = io.open(config_file_path, "w")
+    for _, line in ipairs(lines) do
+        file:write(line .. "\n")
+    end
+    file:close()
+
+    local new_value = current_value:lower() == "true" and "false" or "true"
+    print("PrioritizeBuildScript toggled to: " .. new_value)
+end
+
+vim.api.nvim_create_user_command('CyclePythonExecCommand', CyclePythonExecCommand, {})
+vim.api.nvim_create_user_command('TogglePrioritizeBuildScript', TogglePrioritizeBuildScript, {})
 
 -- lua print(vim.fn.expand("<cWORD>"))
 function open_file_with_env()
@@ -1778,6 +1925,8 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "DiffCp", cmd = "DiffCp" },
         { label = "MakefileTargets", cmd = "MakefileTargets" },
         { label = "GoLangTestFiles", cmd = "GoLangTestFiles" },
+        { label = "Update Config - CyclePythonExecCommand", cmd = "CyclePythonExecCommand" },
+        { label = "Update Config - TogglePrioritizeBuildScript", cmd = "TogglePrioritizeBuildScript" },
         -- LSP
         { label = "LSP Info", cmd = "LspInfo" },
         { label = "LSP Log", cmd = "LspLog" },
@@ -1875,6 +2024,12 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "Check Health", cmd = "lua vim.cmd('checkhealth')" },
     }
 
+    local selections_to_print = {
+        ["messages"] = true,
+        ["CyclePythonExecCommand"] = true,
+        ["TogglePrioritizeBuildScript"] = true,
+    }
+
     pickers.new({}, {
         prompt_title = "Choose Command",
         finder = finders.new_table({
@@ -1904,8 +2059,7 @@ vim.keymap.set('n', '<leader><leader>', function()
         --    actions.select_default:replace(function()
         --        local selection = action_state.get_selected_entry()
         --        actions.close(prompt_bufnr)
-        --        if selection.value:match("^lua print") or selection.value == 'messages' then
-        --            -- Run command and capture output
+        --        if selections_to_print[selection.value] or selection.value:match("^lua print") then
         --            local cmd_output = vim.fn.execute(selection.value)
 
         --            require("telescope.pickers").new({}, {
@@ -1928,7 +2082,7 @@ vim.keymap.set('n', '<leader><leader>', function()
                 local selection = action_state.get_selected_entry()
                 actions.close(prompt_bufnr)
 
-                if selection.value:match("^lua print") or selection.value == 'messages' then
+                if selections_to_print[selection.value] or selection.value:match("^lua print") then
                     local cmd_output = vim.fn.execute(selection.value)
 
                     vim.cmd("belowright 10split")
@@ -1991,6 +2145,47 @@ end, { noremap = true, silent = true })
 --         vim.cmd("PackerSync")
 --     end
 -- end, { noremap = true, silent = true })
+
+-- Read and display keybinds from a file
+local function read_lines_from_file(file_path)
+    local lines = {}
+    for line in io.lines(file_path) do
+        table.insert(lines, line)
+    end
+    return lines
+end
+
+vim.keymap.set('n', '<leader>?', function()
+    local my_notes_path = os.getenv("my_notes_path")  -- Make sure this environment variable is set
+    local file_path = my_notes_path .. "/scripts/files/nvim_keys.txt"
+    local lines = read_lines_from_file(file_path)
+
+    -- Use Telescope picker to display lines
+    require('telescope.pickers').new({}, {
+        prompt_title = "Choose Line",
+        finder = require('telescope.finders').new_table({
+            results = lines,
+            entry_maker = function(entry)
+                return {
+                    value = entry,
+                    display = entry,
+                    ordinal = entry,
+                }
+            end,
+        }),
+        sorter = require('telescope.config').values.generic_sorter({}),
+
+        attach_mappings = function(prompt_bufnr, _)
+            require('telescope.actions').select_default:replace(function()
+                local selection = require('telescope.actions.state').get_selected_entry()
+                require('telescope.actions').close(prompt_bufnr)
+                print(selection.value)
+            end)
+            return true
+        end
+
+    }):find()
+end, { noremap = true, silent = true })
 
 function count_characters()
     local mode = vim.api.nvim_get_mode().mode
