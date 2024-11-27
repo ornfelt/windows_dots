@@ -216,6 +216,69 @@ create_mappings("ps1,powershell", {
   ["fore<Tab>"] = 'foreach ($item in $array) {<Enter>Write-Output "Item: $item"<Enter>}<Esc>kA<Enter>'
 })
 
+local function run_pdflatex()
+    local file = vim.fn.expand('%:p')
+    vim.fn.jobstart({'pdflatex', file})
+end
+
+-- Autocommand to run pdflatex on write for .tex files
+if vim.fn.executable('pdflatex') == 1 then
+    vim.api.nvim_create_autocmd('BufWritePost', {
+    pattern = '*.tex',
+    callback = run_pdflatex,
+    })
+end
+
+vim.api.nvim_create_autocmd("BufRead", {
+    -- pattern = "*",
+    pattern = {"*.txt", "*.sql"},
+    callback = function()
+        vim.cmd('edit ++ff=dos %')
+    end
+})
+
+local function update_wildignore(filetype)
+    local wildignore = vim.opt.wildignore:get()
+
+    if filetype == "rust" then
+        if not vim.tbl_contains(wildignore, "*/target/*") then
+            table.insert(wildignore, "*/target/*")
+        end
+    elseif filetype == "cs" then
+        if not vim.tbl_contains(wildignore, "*/bin/*") then
+            table.insert(wildignore, "*/bin/*")
+        end
+        if not vim.tbl_contains(wildignore, "*/obj/*") then
+            table.insert(wildignore, "*/obj/*")
+        end
+    elseif filetype == "cpp" or filetype == "c" then
+        if not vim.tbl_contains(wildignore, "*/build/*") then
+            table.insert(wildignore, "*/build/*")
+        end
+    end
+
+    vim.opt.wildignore = wildignore
+end
+
+-- use leader-, on line below
+-- :lua print(vim.inspect(vim.opt.wildignore:get()))
+vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
+    pattern = { "*.rs", "*.cs", "*.cpp", "*.c" },
+    callback = function()
+        local filetype = vim.bo.filetype
+        update_wildignore(filetype)
+    end,
+})
+
+-- Highlight on yank
+vim.api.nvim_create_autocmd("TextYankPost", {
+    callback = function()
+        vim.highlight.on_yank()
+    end,
+})
+
+-- Autocommands for SQL files
+
 -- Helper function to read key-value pairs from config file
 -- local function read_config_file(filepath)
 --     local keys = {}
@@ -328,73 +391,162 @@ function insert_engine_env_values()
     vim.api.nvim_put({ engine_line, env_line, blank_line }, "c", true, true)
 end
 
--- Autocommand for SQL files
 vim.api.nvim_create_autocmd("FileType", {
     pattern = "sql",
     callback = function()
         local bufnr = vim.api.nvim_get_current_buf()
-        vim.api.nvim_buf_set_keymap(bufnr, "i", "cnf<Tab>", "<cmd>lua insert_engine_env_values()<CR>", { noremap = true, silent = true })
+        vim.api.nvim_buf_set_keymap(bufnr, "i", "cnfa<Tab>", "<cmd>lua insert_engine_env_values()<CR>", { noremap = true, silent = true })
     end
 })
 
-local function run_pdflatex()
-    local file = vim.fn.expand('%:p')
-    vim.fn.jobstart({'pdflatex', file})
-end
-
--- Autocommand to run pdflatex on write for .tex files
-if vim.fn.executable('pdflatex') == 1 then
-    vim.api.nvim_create_autocmd('BufWritePost', {
-    pattern = '*.tex',
-    callback = run_pdflatex,
-    })
-end
-
-vim.api.nvim_create_autocmd("BufRead", {
-    -- pattern = "*",
-    pattern = {"*.txt", "*.sql"},
-    callback = function()
-        vim.cmd('edit ++ff=dos %')
+local function get_notes_path()
+    local code_root_dir = os.getenv("code_root_dir")
+    if not code_root_dir then
+        print("Environment variable 'code_root_dir' is not set.")
+        return nil
     end
-})
+    return code_root_dir .. "/Code2/Sql/my_sql/config/dbs"
+end
 
-local function update_wildignore(filetype)
-    local wildignore = vim.opt.wildignore:get()
+local function parse_db_files(path)
+    local db_data = {}
+    local engine_env_map = {}
 
-    if filetype == "rust" then
-        if not vim.tbl_contains(wildignore, "*/target/*") then
-            table.insert(wildignore, "*/target/*")
+    -- Iterate through all files in dir
+    local files = vim.fn.glob(path .. "/*.txt", false, true)
+    for _, file in ipairs(files) do
+        local tables = {}
+        local env = nil
+
+        -- Read file
+        for line in io.lines(file) do
+            if not env then
+                -- First line is env
+                env = line:lower()
+            else
+                table.insert(tables, line:lower())
+            end
         end
-    elseif filetype == "cs" then
-        if not vim.tbl_contains(wildignore, "*/bin/*") then
-            table.insert(wildignore, "*/bin/*")
+
+        -- Infer engine from the filename
+        local db_name = file:match("([^/\\]+)%.txt$"):lower()
+        local engine = db_name:match("^(%w+)_")
+        if engine == "sqlserver" then
+            engine = "sql_server" -- Convert sqlserver to sql_server
         end
-        if not vim.tbl_contains(wildignore, "*/obj/*") then
-            table.insert(wildignore, "*/obj/*")
-        end
-    elseif filetype == "cpp" or filetype == "c" then
-        if not vim.tbl_contains(wildignore, "*/build/*") then
-            table.insert(wildignore, "*/build/*")
+
+        -- Map engine and environment to file name
+        db_data[db_name] = tables
+        engine_env_map[db_name] = { engine = engine, env = env }
+    end
+
+    return db_data, engine_env_map
+end
+
+local function extract_tables_from_buffer()
+    local tables = {}
+    local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+    for _, line in ipairs(buffer_lines) do
+        -- Extract all occurrences of "from <table_name>" case-insensitively
+        for table_name in line:lower():gmatch("from%s+([%w_]+)") do
+            tables[table_name] = true
         end
     end
 
-    vim.opt.wildignore = wildignore
+    -- Return unique table names
+    local result = {}
+    for table_name, _ in pairs(tables) do
+        table.insert(result, table_name)
+    end
+    return result
 end
 
--- use leader-, on line below
--- :lua print(vim.inspect(vim.opt.wildignore:get()))
-vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
-    pattern = { "*.rs", "*.cs", "*.cpp", "*.c" },
-    callback = function()
-        local filetype = vim.bo.filetype
-        update_wildignore(filetype)
-    end,
-})
+local function find_matching_databases(tables, db_data)
+    local db_matches = {}
 
--- Highlight on yank
-vim.api.nvim_create_autocmd("TextYankPost", {
+    for db_name, db_tables in pairs(db_data) do
+        for _, table_name in ipairs(tables) do
+            if vim.tbl_contains(db_tables, table_name) then
+                if not db_matches[table_name] then
+                    db_matches[table_name] = {}
+                end
+                table.insert(db_matches[table_name], db_name)
+            end
+        end
+    end
+
+    return db_matches
+end
+
+local function determine_engine_env(matches, engine_env_map)
+    local engines_set, envs_set = {}, {}
+    local engines_list, envs_list = {}, {}
+
+    for _, db_names in pairs(matches) do
+        for _, db_name in ipairs(db_names) do
+            local details = engine_env_map[db_name]
+            if details then
+                if not engines_set[details.engine] then
+                    engines_set[details.engine] = true
+                    table.insert(engines_list, details.engine)
+                end
+                if not envs_set[details.env] then
+                    envs_set[details.env] = true
+                    table.insert(envs_list, details.env)
+                end
+            end
+        end
+    end
+
+    return table.concat(engines_list, ", "), table.concat(envs_list, ", ")
+end
+
+local function print_results(matches, engine_env_map)
+    for table_name, db_names in pairs(matches) do
+        for _, db_name in ipairs(db_names) do
+            local details = engine_env_map[db_name]
+            print(string.format(
+                "Table: %s, DB: %s, Engine: %s, Env: %s",
+                table_name, db_name, details.engine, details.env
+            ))
+        end
+    end
+end
+
+function insert_engine_env_from_db()
+    local db_path = get_notes_path()
+    if not db_path then
+        return
+    end
+
+    local db_data, engine_env_map = parse_db_files(db_path)
+    local tables = extract_tables_from_buffer()
+    local matches = find_matching_databases(tables, db_data)
+    -- print_results(matches, engine_env_map)
+
+    local engines, envs = determine_engine_env(matches, engine_env_map)
+
+    if not engines or engines == "" then
+        print("No matching databases found.")
+        return
+    end
+
+    local engine_line = "--engine: " .. engines
+    local env_line = "--env: " .. envs
+    local blank_line = ""
+
+    local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+    vim.api.nvim_win_set_cursor(0, { row, col + 1 })
+
+    vim.api.nvim_put({ engine_line, env_line, blank_line }, "c", true, true)
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "sql",
     callback = function()
-        vim.highlight.on_yank()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_keymap(bufnr, "i", "cnf<Tab>", "<cmd>lua insert_engine_env_from_db()<CR>", { noremap = true, silent = true })
     end,
 })
 
