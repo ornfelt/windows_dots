@@ -344,7 +344,8 @@ local function read_program_cs()
         end
 
         -- Match env values
-        local env = line:match('env:%s*(%w+)')
+        --local env = line:match('env:%s*(%w+)')
+        local env = line:match('env:%s*([%w_]+)')
         if env and not envs[env] then
             table.insert(envs, env:lower())
             envs[env] = true
@@ -428,7 +429,7 @@ local function parse_db_files(path)
             end
         end
 
-        -- Infer engine from the filename
+        -- Infer engine from filename
         local db_name = file:match("([^/\\]+)%.txt$"):lower()
         local engine = db_name:match("^(%w+)_")
         if engine == "sqlserver" then
@@ -449,7 +450,9 @@ local function extract_tables_from_buffer()
 
     for _, line in ipairs(buffer_lines) do
         -- Extract all occurrences of "from <table_name>" case-insensitively
-        for table_name in line:lower():gmatch("from%s+([%w_]+)") do
+        --for table_name in line:lower():gmatch("from%s+([%w_]+)") do
+        -- Make sure we get schema as well...
+        for table_name in line:lower():gmatch("from%s+([%w_%.]+)") do
             tables[table_name] = true
         end
     end
