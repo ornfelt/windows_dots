@@ -381,6 +381,8 @@ local function update_wildignore(filetype)
     vim.opt.wildignore = wildignore
 end
 
+-- use leader-, on line below
+-- :lua print(vim.inspect(vim.opt.wildignore:get()))
 vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
     pattern = { "*.rs", "*.cs", "*.cpp", "*.c" },
     callback = function()
@@ -388,9 +390,6 @@ vim.api.nvim_create_autocmd({"BufRead", "BufNewFile"}, {
         update_wildignore(filetype)
     end,
 })
-
--- use leader-, on line below
--- :lua print(vim.inspect(vim.opt.wildignore:get()))
 
 -- Highlight on yank
 vim.api.nvim_create_autocmd("TextYankPost", {
