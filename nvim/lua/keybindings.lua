@@ -824,20 +824,26 @@ local function normalize_path(path)
     return path
 end
 
-function ReplaceWithEnvPath()
+function ReplacePathBasedOnContext()
     local my_notes_path = os.getenv("my_notes_path")
     local code_root_dir = os.getenv("code_root_dir")
 
+    if not my_notes_path or not code_root_dir then
+        print("Environment variables 'my_notes_path' or 'code_root_dir' are not set.")
+        return
+    end
+
+    -- Normalize paths
     my_notes_path = normalize_path(my_notes_path)
     code_root_dir = normalize_path(code_root_dir)
 
     local line = vim.fn.getline(".")
 
-    if my_notes_path and line:find(my_notes_path, 1, true) then
+    if line:find("{my_notes_path}/", 1, true) or line:find("{code_root_dir}/", 1, true) then
+        line = line:gsub("{my_notes_path}/", vim.pesc(my_notes_path))
+        line = line:gsub("{code_root_dir}/", vim.pesc(code_root_dir))
+    else
         line = line:gsub(vim.pesc(my_notes_path), "{my_notes_path}/")
-    end
-
-    if code_root_dir and line:find(code_root_dir, 1, true) then
         line = line:gsub(vim.pesc(code_root_dir), "{code_root_dir}/")
     end
 
@@ -846,31 +852,7 @@ function ReplaceWithEnvPath()
     vim.fn.setline(".", line)
 end
 
-vim.api.nvim_set_keymap('n', '<leader>we', ':lua ReplaceWithEnvPath()<CR>', { noremap = true, silent = true })
-
-function ReplaceWithActualPath()
-    local my_notes_path = os.getenv("my_notes_path")
-    local code_root_dir = os.getenv("code_root_dir")
-
-    my_notes_path = normalize_path(my_notes_path)
-    code_root_dir = normalize_path(code_root_dir)
-
-    local line = vim.fn.getline(".")
-
-    if my_notes_path and line:find("{my_notes_path}/", 1, true) then
-        line = line:gsub("{my_notes_path}/", vim.pesc(my_notes_path))
-    end
-
-    if code_root_dir and line:find("{code_root_dir}/", 1, true) then
-        line = line:gsub("{code_root_dir}/", vim.pesc(code_root_dir))
-    end
-
-    line = normalize_path(line) -- Just to replace any consecutive slashes again...
-    -- Update line in buffer
-    vim.fn.setline(".", line)
-end
-
-vim.api.nvim_set_keymap('n', '<leader>wo', ':lua ReplaceWithActualPath()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>wo', ':lua ReplacePathBasedOnContext()<CR>', { noremap = true, silent = true })
 
 map('v', '<leader>gu', ':s/\\<./\\u&/g<CR>:noh<CR>:noh<CR>') -- Capitalize first letter of each word on visually selected line
 map('n', '<leader>*', [[:/^\*\*\*$<CR>]]) -- Search for my bookmark

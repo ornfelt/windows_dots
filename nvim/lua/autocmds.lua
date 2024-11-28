@@ -321,12 +321,18 @@ local function read_envs_from_appsettings()
         return nil
     end
 
-    local appsettings_path = code_root_dir .. "/Code2/Sql/my_sql/SqlExec/SqlExec/appsettings.json"
+    local appsettings_path = code_root_dir .. "/Code2/SQL/my_sql/SqlExec/SqlExec/appsettings.json"
 
     local file = io.open(appsettings_path, "r")
     if not file then
-        print("appsettings.json file not found at: " .. appsettings_path)
-        return nil
+        -- Check alternative path
+        appsettings_path = code_root_dir .. "/Code2/Sql/my_sql/SqlExec/SqlExec/appsettings.json"
+        file = io.open(appsettings_path, "r")
+
+        if not file then
+            print("appsettings.json file not found at either of the paths.")
+            return nil
+        end
     end
 
     local envs = {}
@@ -354,23 +360,28 @@ local function read_envs_from_appsettings()
     local unique_envs = {}
     local seen_envs = {}
     local engine_prefixes = { "oracle_", "mysql_", "sql_server_", "sqlite_", "postgresql_" }
+    local suffixes = { "_local", "_dev", "_test", "_uat", "_stage", "_prod" }
 
     for _, env in ipairs(envs) do
         -- Remove engine prefixes
         for _, prefix in ipairs(engine_prefixes) do
             if env:sub(1, #prefix) == prefix then
-                env = env:sub(#prefix + 1) -- Remove prefix
+                env = env:sub(#prefix + 1)
                 break
             end
         end
 
-        -- Extract part before '_'
-        local filtered_env = env:match("^[^_]+")
+        -- Remove suffixes
+        for _, suffix in ipairs(suffixes) do
+            if env:sub(-#suffix) == suffix then
+                env = env:sub(1, -(#suffix + 1))
+                break
+            end
+        end
 
         -- Avoid duplicates
-        if filtered_env and not seen_envs[filtered_env] then
-            seen_envs[filtered_env] = true
-            -- table.insert(unique_envs, filtered_env)
+        if env and not seen_envs[env] then
+            seen_envs[env] = true
             table.insert(unique_envs, env)
         end
     end
@@ -392,11 +403,15 @@ local function read_program_cs()
 
     local program_cs_path = code_root_dir .. "/Code2/Sql/my_sql/SqlExec/SqlExec/Program.cs"
 
-    -- Check if the file exists
     local file = io.open(program_cs_path, "r")
     if not file then
-        print("Program.cs file not found at: " .. program_cs_path)
-        return nil
+        program_cs_path = code_root_dir .. "/Code2/SQL/my_sql/SqlExec/SqlExec/Program.cs"
+        file = io.open(program_cs_path, "r")
+
+        if not file then
+            print("Program.cs file not found at either of the paths.")
+            return nil
+        end
     end
 
     -- Extract engine values
@@ -633,15 +648,25 @@ vim.api.nvim_create_autocmd("FileType", {
 local function extract_engine_env_from_buffer()
     local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     local engine, env = nil, nil
+    local suffixes = { "_local", "_dev", "_test", "_uat", "_stage", "_prod" }
 
     for _, line in ipairs(buffer_lines) do
         if not engine then
             engine = line:match("^%-%-engine:%s*([%w_]+)")
         end
         if not env then
-            -- env = line:match("^%-%-env:%s*([%w_]+)")
+            env = line:match("^%-%-env:%s*([%w_]+)")
             -- Only get value before '_'
-            env = line:match("^%-%-env:%s*([%w]+)")
+            -- env = line:match("^%-%-env:%s*([%w]+)")
+            -- Remove suffixes
+            if env then
+                for _, suffix in ipairs(suffixes) do
+                    if env:sub(-#suffix) == suffix then
+                        env = env:sub(1, -(#suffix + 1))
+                        break
+                    end
+                end
+            end
         end
         if engine and env then
             break
@@ -671,7 +696,8 @@ local function generate_select_statements(file, engine)
             goto continue
         end
 
-        if not line:match("^[%w_]+$") then
+        -- if not line:match("^[%w_]+$") then
+        if not line:match("^[%w_.]+$") then
             goto continue
         end
         local table_name = line:lower()
