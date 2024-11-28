@@ -313,7 +313,51 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 --     end
 -- })
 
--- Helper function to read the Program.cs file and extract engine and env values
+-- Read Program.cs and appsettings file and extract engine and env values
+local function read_envs_from_appsettings()
+    local code_root_dir = os.getenv("code_root_dir")
+    if not code_root_dir then
+        print("Environment variable 'code_root_dir' is not set.")
+        return nil
+    end
+
+    local appsettings_path = code_root_dir .. "/Code2/Sql/my_sql/SqlExec/SqlExec/appsettings.json"
+
+    local file = io.open(appsettings_path, "r")
+    if not file then
+        print("appsettings.json file not found at: " .. appsettings_path)
+        return nil
+    end
+
+    local envs = {}
+    local in_connection_strings = false
+
+    for line in file:lines() do
+        line = line:match("^%s*(.-)%s*$")
+
+        if line:match('"ConnectionStrings"%s*:%s*{') then
+            in_connection_strings = true
+        elseif in_connection_strings and line:match("}%s*,?") then
+            -- End of the "ConnectionStrings" block
+            break
+        elseif in_connection_strings then
+            -- Match environment keys in the ConnectionStrings block
+            local env = line:match('"%s*([%w_]+)%s*"%s*:') -- Extract keys
+            if env then
+                table.insert(envs, env:lower())
+            end
+        end
+    end
+
+    file:close()
+
+    -- Sort envs alphabetically for consistency
+    --table.sort(envs)
+
+    return envs
+end
+
+-- Helper function to read engines and envs
 local function read_program_cs()
     local code_root_dir = os.getenv("code_root_dir")
     if not code_root_dir then
@@ -330,11 +374,10 @@ local function read_program_cs()
         return nil
     end
 
-    -- Extract engine and env values
+    -- Extract engine values
     local engines = {}
-    table.insert(engines, "sql_server")
+    table.insert(engines, "sql_server") -- Add a default engine
     engines["sql_server"] = true
-    local envs = {}
     for line in file:lines() do
         -- Match engine values
         local engine = line:match('engine:%s*(%w+)')
@@ -342,17 +385,15 @@ local function read_program_cs()
             table.insert(engines, engine:lower())
             engines[engine] = true
         end
-
-        -- Match env values
-        --local env = line:match('env:%s*(%w+)')
-        local env = line:match('env:%s*([%w_]+)')
-        if env and not envs[env] then
-            table.insert(envs, env:lower())
-            envs[env] = true
-        end
     end
 
     file:close()
+
+    -- Extract envs from appsettings.json
+    local envs = read_envs_from_appsettings()
+    if not envs then
+        return table.concat(engines, ", "), nil
+    end
 
     -- Return comma-separated lists
     return table.concat(engines, ", "), table.concat(envs, ", ")
@@ -423,7 +464,12 @@ local function parse_db_files(path)
         for line in io.lines(file) do
             if not env then
                 -- First line is env
-                env = line:lower()
+                --env = line:lower()
+                -- Detect and remove BOM if present
+                if line:byte(1) == 0xEF and line:byte(2) == 0xBB and line:byte(3) == 0xBF then
+                    line = line:sub(4) -- Remove the BOM (first three bytes)
+                end
+                env = line:lower() -- Store the environment
             else
                 table.insert(tables, line:lower())
             end
