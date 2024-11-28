@@ -487,7 +487,7 @@ local function get_notes_path()
         print("Environment variable 'code_root_dir' is not set.")
         return nil
     end
-    return code_root_dir .. "/Code2/Sql/my_sql/config/dbs"
+    return code_root_dir .. "/Code2/SQL/my_sql/config/dbs"
 end
 
 local function parse_db_files(path)
