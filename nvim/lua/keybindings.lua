@@ -1211,8 +1211,22 @@ local function SqlExecCommand()
     local code_root_dir = os.getenv("code_root_dir") or "~/"
     code_root_dir = code_root_dir:gsub(" ", '" "') -- Handle spaces in the path
 
-    local executable_net8 = code_root_dir .. 'Code2/Sql/my_sql/SqlExec/SqlExec/bin/Debug/net8.0/SqlExec.exe'
-    local executable_net7 = code_root_dir .. 'Code2/Sql/my_sql/SqlExec/SqlExec/bin/Debug/net7.0/SqlExec.exe'
+    -- Add '/' at the end if it doesn't exist
+    --if not code_root_dir:match("/$") then
+    --    code_root_dir = code_root_dir .. "/"
+    --end
+
+    -- Remove '/' at the end if it exists (not necessary really)
+    code_root_dir = code_root_dir:gsub("/$", "")
+
+    local executable_net8 = code_root_dir .. '/Code2/SQL/my_sql/SqlExec/SqlExec/bin/Debug/net8.0/SqlExec.exe'
+    local executable_net7 = code_root_dir .. '/Code2/SQL/my_sql/SqlExec/SqlExec/bin/Debug/net7.0/SqlExec.exe'
+
+    if vim.fn.has('win32') == 0 then
+        executable_net8 = executable_net8:gsub("%.exe$", "")
+        executable_net7 = executable_net7:gsub("%.exe$", "")
+    end
+
     local function file_exists(path)
         local stat = vim.loop.fs_stat(path)
         return stat ~= nil
@@ -1258,7 +1272,7 @@ local function SqlExecCommand()
 end
 
 local function read_config(key, default_value)
-    local my_notes_path = os.getenv("MY_NOTES_PATH")
+    local my_notes_path = os.getenv("my_notes_path")
     local config_file_path = my_notes_path .. "/scripts/files/nvim_config.txt"
     local value = default_value
     local key_lower = key:lower()
@@ -1603,7 +1617,7 @@ vim.api.nvim_set_keymap('v', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { nore
 vim.api.nvim_set_keymap('i', '<M-c>', '<cmd>lua PythonExecCommand()<CR>', { noremap = true, silent = true })
 
 function CyclePythonExecCommand()
-    local my_notes_path = os.getenv("MY_NOTES_PATH")
+    local my_notes_path = os.getenv("my_notes_path")
     local config_file_path = my_notes_path .. "/scripts/files/nvim_config.txt"
     local possible_commands = { "read_file", "gpt", "claude", "gemini", "mistral" }
     local current_command = read_config("PythonExecCommand", "gpt")
@@ -1649,7 +1663,7 @@ function CyclePythonExecCommand()
 end
 
 function TogglePrioritizeBuildScript()
-    local my_notes_path = os.getenv("MY_NOTES_PATH")
+    local my_notes_path = os.getenv("my_notes_path")
     local config_file_path = my_notes_path .. "/scripts/files/nvim_config.txt"
 
     local lines = {}

@@ -153,10 +153,10 @@ vim.g['jedi#popup_on_dot'] = 1
 -- NERDCommenter
 vim.g.NERDCreateDefaultMappings = 0
 vim.g.NERDSpaceDelims = 1
+-- Add spaces after comment delimiters by default
+--vim.g.NERDSpaceDelims = 0
 -- Align line-wise comment delimiters flush left instead of following code indentation
 vim.g.NERDDefaultAlign = 'left'
--- Add spaces after comment delimiters by default
-vim.g.NERDSpaceDelims = 0
 
 -- Vimwiki Plugin Settings
 vim.g['vimwiki_key_mappings'] = { table_mappings = 0 }

@@ -341,7 +341,7 @@ local function read_envs_from_appsettings()
             -- End of the "ConnectionStrings" block
             break
         elseif in_connection_strings then
-            -- Match environment keys in the ConnectionStrings block
+            -- Match environment keys in ConnectionStrings block
             local env = line:match('"%s*([%w_]+)%s*"%s*:') -- Extract keys
             if env then
                 table.insert(envs, env:lower())
@@ -351,10 +351,35 @@ local function read_envs_from_appsettings()
 
     file:close()
 
+    local unique_envs = {}
+    local seen_envs = {}
+    local engine_prefixes = { "oracle_", "mysql_", "sql_server_", "sqlite_", "postgresql_" }
+
+    for _, env in ipairs(envs) do
+        -- Remove engine prefixes
+        for _, prefix in ipairs(engine_prefixes) do
+            if env:sub(1, #prefix) == prefix then
+                env = env:sub(#prefix + 1) -- Remove prefix
+                break
+            end
+        end
+
+        -- Extract part before '_'
+        local filtered_env = env:match("^[^_]+")
+
+        -- Avoid duplicates
+        if filtered_env and not seen_envs[filtered_env] then
+            seen_envs[filtered_env] = true
+            -- table.insert(unique_envs, filtered_env)
+            table.insert(unique_envs, env)
+        end
+    end
+
     -- Sort envs alphabetically for consistency
     --table.sort(envs)
+    -- return envs
 
-    return envs
+    return unique_envs
 end
 
 -- Helper function to read engines and envs
@@ -376,7 +401,7 @@ local function read_program_cs()
 
     -- Extract engine values
     local engines = {}
-    table.insert(engines, "sql_server") -- Add a default engine
+    table.insert(engines, "sql_server") -- Default engine
     engines["sql_server"] = true
     for line in file:lines() do
         -- Match engine values
@@ -542,7 +567,12 @@ local function determine_engine_env(matches, engine_env_map)
                 end
                 if not envs_set[details.env] then
                     envs_set[details.env] = true
-                    table.insert(envs_list, details.env)
+                    -- table.insert(envs_list, details.env)
+                    if details.env == "s1" then
+                        table.insert(envs_list, (details.env .. "_dev"))
+                    else
+                        table.insert(envs_list, (details.env .. "_local"))
+                    end
                 end
             end
         end
@@ -596,6 +626,124 @@ vim.api.nvim_create_autocmd("FileType", {
     callback = function()
         local bufnr = vim.api.nvim_get_current_buf()
         vim.api.nvim_buf_set_keymap(bufnr, "i", "cnf<Tab>", "<cmd>lua insert_engine_env_from_db()<CR>", { noremap = true, silent = true })
+    end,
+})
+
+-- cnfd
+local function extract_engine_env_from_buffer()
+    local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    local engine, env = nil, nil
+
+    for _, line in ipairs(buffer_lines) do
+        if not engine then
+            engine = line:match("^%-%-engine:%s*([%w_]+)")
+        end
+        if not env then
+            -- env = line:match("^%-%-env:%s*([%w_]+)")
+            -- Only get value before '_'
+            env = line:match("^%-%-env:%s*([%w]+)")
+        end
+        if engine and env then
+            break
+        end
+    end
+
+    return engine, env
+end
+
+local function find_file_for_env(env, db_data, engine_env_map)
+    for db_name, _ in pairs(engine_env_map) do
+        -- if engine_env_map[db_name].env:lower():find(env:lower(), 1, true) then
+        if engine_env_map[db_name].env:lower() == env:lower() then
+            return db_name
+        end
+    end
+    return nil
+end
+
+local function generate_select_statements(file, engine)
+    local statements = {}
+    local is_first_line = true -- Skip first line since it's the env...
+
+    for line in io.lines(file) do
+        if is_first_line then
+            is_first_line = false
+            goto continue
+        end
+
+        if not line:match("^[%w_]+$") then
+            goto continue
+        end
+        local table_name = line:lower()
+
+        -- Generate appropriate SQL statement
+        local select_statement
+        if engine == "mysql" or engine == "sqlite" or engine == "postgresql" then
+            select_statement = string.format("select * from %s limit 100;", table_name)
+        elseif engine == "sql_server" then
+            select_statement = string.format("select top 100 * from %s;", table_name)
+        elseif engine == "oracle" then
+            select_statement = string.format("select * from %s where rownum <= 100;", table_name)
+        else
+            print(string.format("Unsupported engine: %s", engine))
+            goto continue
+        end
+
+        if select_statement then
+            table.insert(statements, select_statement)
+        end
+        ::continue::
+    end
+
+    return statements
+end
+
+function insert_select_statements_from_db()
+    local db_path = get_notes_path()
+    if not db_path then
+        return
+    end
+
+    local db_data, engine_env_map = parse_db_files(db_path)
+
+    -- Extract engine and env from the buffer
+    local engine, env = extract_engine_env_from_buffer()
+    if not engine or not env then
+        print("Engine or environment not found in the current buffer.")
+        return
+    end
+
+    -- Find file corresponding to env
+    local db_name = find_file_for_env(env, db_data, engine_env_map)
+    -- print("db_name: " .. db_name)
+
+    if not db_name then
+        print("No matching database file found for the environment:", env)
+        return
+    end
+
+    local file_path = db_path .. "/" .. db_name .. ".txt"
+    -- print("file_path: " .. file_path)
+
+    -- Generate select statements
+    local statements = generate_select_statements(file_path, engine)
+    if #statements == 0 then
+        print("No table data found in the database file.")
+        return
+    end
+
+    -- Insert select statements into buffer
+    local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+    vim.api.nvim_win_set_cursor(0, { row, col + 1 })
+
+    vim.api.nvim_put(statements, "c", true, true)
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "sql",
+    callback = function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.api.nvim_buf_set_keymap(bufnr, "i", "cnfd<Tab>", "<cmd>lua insert_select_statements_from_db()<CR>", { noremap = true, silent = true })
     end,
 })
 
