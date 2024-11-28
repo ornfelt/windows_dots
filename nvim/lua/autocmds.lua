@@ -364,6 +364,7 @@ local function read_envs_from_appsettings()
 
     for _, env in ipairs(envs) do
         -- Remove engine prefixes
+        local original_env = env
         for _, prefix in ipairs(engine_prefixes) do
             if env:sub(1, #prefix) == prefix then
                 env = env:sub(#prefix + 1)
@@ -382,7 +383,7 @@ local function read_envs_from_appsettings()
         -- Avoid duplicates
         if env and not seen_envs[env] then
             seen_envs[env] = true
-            table.insert(unique_envs, env)
+            table.insert(unique_envs, original_env)
         end
     end
 
