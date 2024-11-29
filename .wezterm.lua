@@ -28,6 +28,35 @@ else
   config.font_size = 11.0
 end
 
+-- https://wezfurlong.org/wezterm/config/lua/config/max_fps.html
+config.max_fps = 240
+
+-- https://wezfurlong.org/wezterm/hyperlinks.html#implicit-hyperlinks
+config.hyperlink_rules = wezterm.default_hyperlink_rules()
+
+table.insert(config.hyperlink_rules, {
+  regex = [[\b[tt](\d+)\b]],
+  format = 'https://example.com/tasks/?t=$1',
+})
+
+table.insert(config.hyperlink_rules, {
+  regex = [[["]?([\w\d]{1}[-\w\d]+)(/){1}([-\w\d\.]+)["]?]],
+  format = 'https://www.github.com/$1/$3',
+})
+
+-- https://wezfurlong.org/wezterm/quickselect.html
+-- https://wezfurlong.org/wezterm/config/lua/keyassignment/QuickSelect.html
+-- config.quick_select_patterns = {
+--   -- match things that look like sha1 hashes
+--   -- (this is actually one of the default patterns)
+--   '[0-9a-f]{7,40}',
+-- }
+-- Filenames
+config.quick_select_patterns = {
+  -- Match filenames with an optional path (e.g., test.txt, /path/to/init.lua)
+  '[^\\s]+\\.[a-zA-Z0-9]+',
+}
+
 config.hide_tab_bar_if_only_one_tab = true
 config.mouse_bindings = {
     -- Open URLs with Ctrl+Click
@@ -370,6 +399,9 @@ config.keys = {
     resize_pane("u"),
     resize_pane("i"),
     resize_pane("o"),
+    -- QuickSelect
+    -- { key = ' ', mods = 'SHIFT|CTRL', action = wezterm.action.QuickSelect },
+    { key = ' ', mods = 'ALT|SHIFT', action = wezterm.action.QuickSelect },
 }
 
 -- Read dir path and start a split pane
