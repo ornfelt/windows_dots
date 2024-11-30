@@ -179,7 +179,7 @@ require("lazy").setup({
 
     {
         "preservim/nerdcommenter",
-        lazy = true,
+        lazy = false,
     },
 
     {
