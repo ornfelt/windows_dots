@@ -1,4 +1,20 @@
-require('plugins')
+local use_lazy = true
+
+-- If switching from packer -> lazy, do this:
+-- Move-Item -Path "$Env:LOCALAPPDATA\nvim-data\site" -Destination "$Env:LOCALAPPDATA\nvim-data\site_old" -Force
+-- Switching back
+-- Move-Item -Path "$Env:LOCALAPPDATA\nvim-data\site_old" -Destination "$Env:LOCALAPPDATA\nvim-data\site" -Force
+-- Or:
+-- mv -f "$XDG_DATA_HOME/nvim/site" "$XDG_DATA_HOME/nvim/site_old"
+-- Switching back
+-- mv -f "$XDG_DATA_HOME/nvim/site_old" "$XDG_DATA_HOME/nvim/site"
+if use_lazy then
+  require("config.lazy")
+  require("plugins")
+else
+  require("plugins_packer")
+end
+
 require('options')
 require('statusline')
 require('lsp')

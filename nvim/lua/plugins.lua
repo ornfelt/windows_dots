@@ -1,181 +1,270 @@
--- useINS
---
--- Only required if you have packer configured as `opt`
--- vim.cmd [[packadd packer.nvim]]
-return require('packer').startup(function()
-  -- Packer can manage itself
-  use 'wbthomason/packer.nvim'
+require("lazy").setup({
+    {
+        "nvim-lualine/lualine.nvim",
+        dependencies = { "kyazdani42/nvim-web-devicons" }
+    },
 
-  use {
-     'nvim-lualine/lualine.nvim',
-     requires = { 'kyazdani42/nvim-web-devicons', opt = true }
-  }
+    {
+        "stevearc/oil.nvim",
+        lazy = true,
+    },
+    -- "echasnovski/mini.files",
+    -- "vimwiki/vimwiki",
+    -- "tpope/vim-surround",
+    -- "junegunn/fzf",
+    {
+        "ibhagwan/fzf-lua",
+        lazy = true,
+    },
+    {
+        "tpope/vim-commentary",
+        lazy = true,
+    },
+    {
+        "junegunn/vim-emoji",
+        lazy = true,
+    },
+    {
+        "vim-python/python-syntax",
+        lazy = true,
+    },
+    {
+        "norcalli/nvim-colorizer.lua",
+        lazy = true,
+    },
+    {
+        "neovim/nvim-lspconfig",
+        lazy = true,
+    },
+    {
+        "hrsh7th/cmp-nvim-lsp",
+        lazy = true,
+    },
+    {
+        "hrsh7th/cmp-buffer",
+        lazy = true,
+    },
+    {
+        "hrsh7th/cmp-path",
+        lazy = true,
+    },
+    {
+        "hrsh7th/cmp-cmdline",
+        lazy = true,
+    },
+    {
+        "hrsh7th/nvim-cmp",
+        lazy = true,
+    },
+    {
+        "gruvbox-community/gruvbox",
+        lazy = true,
+    },
 
-  -- use 'preservim/nerdtree'
-  use 'stevearc/oil.nvim'
-  -- use 'echasnovski/mini.files'
+    {
+        "nvim-treesitter/nvim-treesitter",
+        build = ":TSUpdate",
+        event = "VeryLazy",
+    },
 
-  -- use 'vimwiki/vimwiki'
-  -- use 'tpope/vim-surround'
+    {
+        "nvim-treesitter/nvim-treesitter-textobjects",
+        dependencies = { "nvim-treesitter/nvim-treesitter" },
+        event = "VeryLazy",
+    },
 
-  -- use 'junegunn/fzf'
-  use 'ibhagwan/fzf-lua'
-  -- use { "ibhagwan/fzf-lua",
-   -- --requires = { "nvim-tree/nvim-web-devicons" } -- icon support
-   -- -- or if using mini.icons/mini.nvim
-   -- requires = { "echasnovski/mini.icons" }
-  -- }
+    {
+        "nvim-telescope/telescope.nvim",
+        dependencies = { "nvim-lua/plenary.nvim" },
+        event = "VeryLazy",
+    },
 
-  use 'tpope/vim-commentary'
-  use 'junegunn/vim-emoji'
-  use 'vim-python/python-syntax'
-  use 'norcalli/nvim-colorizer.lua'
-  use 'neovim/nvim-lspconfig'
-  use 'hrsh7th/cmp-nvim-lsp'
-  use 'hrsh7th/cmp-buffer'
-  use 'hrsh7th/cmp-path'
-  use 'hrsh7th/cmp-cmdline'
-  use 'hrsh7th/nvim-cmp'
-  use("gruvbox-community/gruvbox")
+    -- Commented out plugin example
+    -- {
+    --   "letieu/wezterm-move.nvim",
+    --   config = function()
+    --     local wezterm_move = require("wezterm-move")
+    --     vim.api.nvim_set_keymap('n', '<m-h>', '<cmd>lua wezterm_move.move("h")<CR>', { noremap = true, silent = true })
+    --     vim.api.nvim_set_keymap('n', '<m-j>', '<cmd>lua wezterm_move.move("j")<CR>', { noremap = true, silent = true })
+    --     vim.api.nvim_set_keymap('n', '<m-k>', '<cmd>lua wezterm_move.move("k")<CR>', { noremap = true, silent = true })
+    --     vim.api.nvim_set_keymap('n', '<m-l>', '<cmd>lua wezterm_move.move("l")<CR>', { noremap = true, silent = true })
+    --   end,
+    -- },
 
-  use {
-      'nvim-treesitter/nvim-treesitter',
-      build = ':TSUpdate'
-  }
+    {
+        "ornfelt/ChatGPT.nvim",
+        dependencies = {
+            "MunifTanjim/nui.nvim",
+            "folke/trouble.nvim",
+            "nvim-lua/plenary.nvim",
+            "nvim-telescope/telescope.nvim",
+        },
+        event = "VeryLazy",
+    },
 
-  --use({
-  --    "nvim-treesitter/nvim-treesitter-textobjects",
-  --    after = "nvim-treesitter",
-  --    requires = "nvim-treesitter/nvim-treesitter",
-  --})
-  use({
-      "nvim-treesitter/nvim-treesitter-textobjects",
-      requires = "nvim-treesitter/nvim-treesitter",
-  })
+    {
+        "robitx/gp.nvim",
+        lazy = true,
+    },
 
-  use {
-    'nvim-telescope/telescope.nvim',
-    requires = { {'nvim-lua/plenary.nvim'} }
-  }
+    --{
+    --    "github/copilot.vim",
+    --    lazy = true,
+    --},
 
-  --use {
-  --    'letieu/wezterm-move.nvim',
-  --    config = function()
-  --    local _ = require("wezterm-move")
-  --    vim.api.nvim_set_keymap('n', '<m-h>', '<cmd>lua require("wezterm-move").move("h")<CR>', { noremap = true, silent = true })
-  --    vim.api.nvim_set_keymap('n', '<m-j>', '<cmd>lua require("wezterm-move").move("j")<CR>', { noremap = true, silent = true })
-  --    vim.api.nvim_set_keymap('n', '<m-k>', '<cmd>lua require("wezterm-move").move("k")<CR>', { noremap = true, silent = true })
-  --    vim.api.nvim_set_keymap('n', '<m-l>', '<cmd>lua require("wezterm-move").move("l")<CR>', { noremap = true, silent = true })
-  --    end
-  --}
+    --{
+    --    "David-Kunz/gen.nvim",
+    --    lazy = true,
+    --},
 
-  -- AI
-  use({
-      "ornfelt/ChatGPT.nvim",
-      --config = function()
-      --    require("chatgpt").setup()
-      --end,
-      requires = {
-          "MunifTanjim/nui.nvim",
-          --"nvim-lua/plenary.nvim",
-          "folke/trouble.nvim",
-          --"nvim-telescope/telescope.nvim"
-      }
-  })
+    {
+        "gsuuon/model.nvim",
+        lazy = true,
+    },
 
-  use("robitx/gp.nvim")
-  --use({
-  --    "robitx/gp.nvim",
-  --    config = function()
-  --        require("gp").setup()
-  --        or setup with your own config (see Install > Configuration in Readme)
-  --        require("gp").setup(config)
-  --        shortcuts might be setup here (see Usage > Shortcuts in Readme)
-  --    end,
-  --})
+    -- avante (cursor-like)
+    --{
+    --  "stevearc/dressing.nvim",
+    --  lazy = true,
+    --},
 
-  -- use 'github/copilot.vim'
-  -- use 'David-Kunz/gen.nvim'
+    ---- Nui.nvim, for various UI plugins
+    --{
+    --  "MunifTanjim/nui.nvim",
+    --  lazy = true,
+    --},
+    ---- Optional dependencies
+    ---- {
+    ----   "nvim-tree/nvim-web-devicons",
+    ----   lazy = true,
+    ---- },
+    ---- {
+    ----   "echasnovski/mini.icons", -- Alternative to nvim-web-devicons
+    ----   lazy = true,
+    ---- },
+    ---- {
+    ----   "HakonHarnes/img-clip.nvim", -- Clipboard image plugin
+    ----   lazy = true,
+    ---- },
+    ---- {
+    ----   "zbirenbaum/copilot.lua",
+    ----   lazy = true,
+    ----   config = function()
+    ----     require("copilot").setup() -- Setup for Copilot
+    ----   end,
+    ---- },
 
-  use 'gsuuon/model.nvim'
+    --{
+    --  "yetone/avante.nvim",
+    --  branch = "main",
+    --  build = "make",
+    --  lazy = false, -- Load eagerly
+    --  config = function()
+    --  end,
+    --},
+    -- end avante
 
-  -- avante (cursor-like)
-  --use 'stevearc/dressing.nvim'
-  ---- use 'nvim-lua/plenary.nvim'
-  --use 'MunifTanjim/nui.nvim'
-  ---- Optional dependencies
-  ---- use 'nvim-tree/nvim-web-devicons' -- or 'echasnovski/mini.icons'
-  ---- use 'HakonHarnes/img-clip.nvim'
-  ---- use 'zbirenbaum/copilot.lua'
-  --use {
-  --  'yetone/avante.nvim',
-  --  branch = 'main',
-  --  run = 'make'
-  --}
-  -- end avante
+    {
+        "aznhe21/actions-preview.nvim",
+        config = function()
+            require("actions-preview").setup()
+        end,
+        lazy = true,
+    },
 
-  use {
-    "aznhe21/actions-preview.nvim",
-    config = function()
-      require("actions-preview").setup()
-    end,
-  }
-  use 'nanotee/sqls.nvim'
-  use 'preservim/nerdcommenter'
+    {
+        "nanotee/sqls.nvim",
+        lazy = true,
+    },
 
-  use 'tpope/vim-fugitive'
-  use 'sindrets/diffview.nvim'
-  use {
-      'ornfelt/gitgraph.nvim',
-      dependencies = { 'sindrets/diffview.nvim' },
-      opts = {
-          symbols = {
-              merge_commit = 'M',
-              commit = '*',
-          },
-          format = {
-              timestamp = '%H:%M:%S %d-%m-%Y',
-              fields = { 'hash', 'timestamp', 'author', 'branch_name', 'tag' },
-          },
-          hooks = {
-              on_select_commit = function(commit)
-                  vim.notify('DiffviewOpen ' .. commit.hash .. '^!')
-                  vim.cmd(':DiffviewOpen ' .. commit.hash .. '^!')
-              end,
-              on_select_range_commit = function(from, to)
-                  vim.notify('DiffviewOpen ' .. from.hash .. '~1..' .. to.hash)
-                  vim.cmd(':DiffviewOpen ' .. from.hash .. '~1..' .. to.hash)
-              end,
-          },
-      }
-  }
+    {
+        "preservim/nerdcommenter",
+        lazy = true,
+    },
 
-  -- use({
-      -- 'MeanderingProgrammer/render-markdown.nvim',
-      -- after = { 'nvim-treesitter' },
-      -- -- requires = { 'echasnovski/mini.nvim', opt = true }, -- if you use the mini.nvim suite
-      -- -- requires = { 'echasnovski/mini.icons', opt = true }, -- if you use standalone mini plugins
-      -- -- requires = { 'nvim-tree/nvim-web-devicons', opt = true }, -- if you prefer nvim-web-devicons
-      -- config = function()
-          -- require('render-markdown').setup({})
-      -- end,
-  -- })
-  use ({
-      "OXY2DEV/markview.nvim",
-      dependencies = {
-          "nvim-treesitter/nvim-treesitter",
-          "nvim-tree/nvim-web-devicons"
-      }
-  })
+    {
+        "tpope/vim-fugitive",
+        lazy = true,
+    },
 
-  -- use 'alexghergh/nvim-tmux-navigation'
-  -- use 'mhinz/vim-startify'
-  -- use 'mistweaverco/kulala.nvim'
-  -- use '3rd/diagram.nvim'
-  -- use 'lewis6991/gitsigns.nvim'
-  -- use 'mechatroner/rainbow_csv'
-  -- use("simrat39/rust-tools.nvim")
-  -- use 'vim-syntastic/syntastic'
-  -- use 'neoclide/coc.nvim'
+    {
+        "ornfelt/gitgraph.nvim",
+        dependencies = {
+            "sindrets/diffview.nvim",
+        },
+        config = function()
+            require("gitgraph").setup({
+                symbols = {
+                    merge_commit = "M",
+                    commit = "*",
+                },
+                format = {
+                    timestamp = "%H:%M:%S %d-%m-%Y",
+                    fields = { "hash", "timestamp", "author", "branch_name", "tag" },
+                },
+                hooks = {
+                    on_select_commit = function(commit)
+                        vim.notify("DiffviewOpen " .. commit.hash .. "^!")
+                        vim.cmd(":DiffviewOpen " .. commit.hash .. "^!")
+                    end,
+                    on_select_range_commit = function(from, to)
+                        vim.notify("DiffviewOpen " .. from.hash .. "~1.." .. to.hash)
+                        vim.cmd(":DiffviewOpen " .. from.hash .. "~1.." .. to.hash)
+                    end,
+                },
+            })
+        end,
+        lazy = true,
+    },
 
-end)
+    {
+        "OXY2DEV/markview.nvim",
+        dependencies = {
+            "nvim-treesitter/nvim-treesitter",
+            "nvim-tree/nvim-web-devicons",
+        },
+        lazy = false,
+    },
+    -- "alexghergh/nvim-tmux-navigation"
+    -- "mhinz/vim-startify"
+    -- "mistweaverco/kulala.nvim"
+    -- "3rd/diagram.nvim"
+    -- "lewis6991/gitsigns.nvim"
+    -- "mechatroner/rainbow_csv"
+    -- "simrat39/rust-tools.nvim"
+    -- "vim-syntastic/syntastic"
+    -- "neoclide/coc.nvim"
+    -- https://github.com/fladson/vim-kitty
+    -- https://github.com/kkharji/sqlite.lua
+    -- https://github.com/folke/persistence.nvim
+    -- https://github.com/numToStr/Comment.nvim
+}, {
+        install = {
+            missing = true,
+            colorscheme = { "gruvbox", "default" }, -- Fallback to default
+        },
+        checker = {
+            enabled = true,
+            notify = false,
+        },
+        change_detection = {
+            enabled = true,
+            notify = false,
+        },
+        ui = {
+            -- border = "rounded"
+        },
+        performance = {
+            rtp = {
+                disabled_plugins = {
+                    "gzip",
+                    "tarPlugin",
+                    "tohtml",
+                    "tutor",
+                    "zipPlugin",
+                },
+            },
+        },
+    }
+)
+

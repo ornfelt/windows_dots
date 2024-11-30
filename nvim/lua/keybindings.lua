@@ -1917,6 +1917,8 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "PackerUpdate", cmd = "PackerUpdate" },
         { label = "PackerLoad", cmd = "PackerLoad" },
         { label = "PackerSync", cmd = "PackerSync" },
+        -- Lazy
+        { label = "Lazy", cmd = "Lazy" },
         -- Custom
         { label = "Diffi", cmd = "Diffi" },
         { label = "DiffCp", cmd = "DiffCp" },
