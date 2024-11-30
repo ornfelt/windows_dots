@@ -34,27 +34,27 @@ require("lazy").setup({
     },
     {
         "neovim/nvim-lspconfig",
-        lazy = true,
+        lazy = false,
     },
     {
         "hrsh7th/cmp-nvim-lsp",
-        lazy = true,
+        lazy = false,
     },
     {
         "hrsh7th/cmp-buffer",
-        lazy = true,
+        lazy = false,
     },
     {
         "hrsh7th/cmp-path",
-        lazy = true,
+        lazy = false,
     },
     {
         "hrsh7th/cmp-cmdline",
-        lazy = true,
+        lazy = false,
     },
     {
         "hrsh7th/nvim-cmp",
-        lazy = true,
+        lazy = false,
     },
     {
         "gruvbox-community/gruvbox",
@@ -64,13 +64,15 @@ require("lazy").setup({
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
-        event = "VeryLazy",
+        lazy = false,
+        --event = "VeryLazy",
     },
 
     {
         "nvim-treesitter/nvim-treesitter-textobjects",
         dependencies = { "nvim-treesitter/nvim-treesitter" },
-        event = "VeryLazy",
+        lazy = false,
+        --event = "VeryLazy",
     },
 
     {

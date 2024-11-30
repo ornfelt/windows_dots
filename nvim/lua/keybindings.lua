@@ -1285,8 +1285,8 @@ end
 local function is_prioritized_filetype(filetype)
     local prioritized_filetypes = {
         'c', 'cpp', 'cs', 'css', 'go', 'h', 'hpp', 'html',
-        'java', 'js', 'jsx', 'lua', 'php', 'py', 'rs',
-        'ts', 'tsx', 'zig'
+        'java', 'js', 'jsx', 'lua', 'php', 'py', 'python',
+        'rs', 'ts', 'tsx', 'zig'
     }
 
     for _, ft in ipairs(prioritized_filetypes) do
