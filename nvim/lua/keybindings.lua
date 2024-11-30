@@ -2080,6 +2080,8 @@ vim.keymap.set('n', '<leader><leader>', function()
         { label = "Reload Configuration", cmd = "lua vim.cmd('source ' .. vim.env.MYVIMRC)" },
         { label = "Inspect Current Line", cmd = "lua print(vim.inspect(vim.api.nvim_get_current_line()))" },
         { label = "List Buffers", cmd = "lua print(vim.inspect(vim.api.nvim_list_bufs()))" },
+        { label = "Buffers", cmd = "buffers" },
+        { label = "undolist", cmd = "undolist" },
         { label = "Toggle Relative Numbers", cmd = "lua vim.o.relativenumber = not vim.o.relativenumber" },
         { label = "Neovim Log", cmd = "lua vim.cmd('tabedit ' .. vim.fn.stdpath('state') .. '/log')" },
         { label = "Check Health", cmd = "lua vim.cmd('checkhealth')" },

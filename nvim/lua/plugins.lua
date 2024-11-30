@@ -281,10 +281,11 @@ require("lazy").setup({
     -- "simrat39/rust-tools.nvim"
     -- "vim-syntastic/syntastic"
     -- "neoclide/coc.nvim"
-    -- https://github.com/fladson/vim-kitty
-    -- https://github.com/kkharji/sqlite.lua
-    -- https://github.com/folke/persistence.nvim
-    -- https://github.com/numToStr/Comment.nvim
+    -- "fladson/vim-kitty"
+    -- "kkharji/sqlite.lua"
+    -- "folke/persistence.nvim"
+    -- "denisenkom/go-mssqldb"
+    -- "folke/which-key.nvim"
 }, {
         install = {
             missing = true,
