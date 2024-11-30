@@ -87,7 +87,8 @@ if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple ==
         bottom = 10,
     }
 else
-    config.leader = { key = 'b', mods = 'CTRL', timeout_milliseconds = 1000 }
+    --config.leader = { key = 'b', mods = 'CTRL', timeout_milliseconds = 1000 }
+    config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1000 }
 
     config.window_padding = {
         left = 10,
