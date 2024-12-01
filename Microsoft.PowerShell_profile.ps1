@@ -41,11 +41,11 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
 
 # Alias
 $aliases = @(
-    ".cdn", ".cdc", ".cdp", ".ioq3", ".show-wifi", ".list_files", ".list_files_gui", 
+    ".cdn", ".cdc", ".cdp", ".ioq3", ".show_wifi", ".list_files", ".list_files_gui", 
     ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos", ".llama", ".update_nvim_from_linux", ".down", ".cdh", ".clean_shada",
-    ".acore-update", "tcore-update"
+    ".acore_update", "tcore_update"
 )
 
 foreach ($alias in $aliases) {
