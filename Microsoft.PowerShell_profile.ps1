@@ -45,7 +45,7 @@ $aliases = @(
     ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos", ".llama", ".update_nvim_from_linux", ".down", ".cdh", ".clean_shada",
-    ".acore_update", "tcore_update"
+    ".acore_update", ".tcore_update"
 )
 
 foreach ($alias in $aliases) {
