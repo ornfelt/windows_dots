@@ -984,7 +984,7 @@ function list_tabs_fzf()
 
 end
 
-vim.api.nvim_set_keymap("n", "<leader>t", ":lua list_tabs()<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<M-s>", ":lua list_tabs()<CR>", { noremap = true, silent = true })
 
 function ReplaceQuotes()
   vim.cmd([[
