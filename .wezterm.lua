@@ -147,7 +147,7 @@ local resize_keys = {
 }
 
 -- Log to a simple file
-local log_file = os.getenv("HOME") .. "/wez_test.txt"
+local log_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_test.txt"
 local function log_to_file(message)
   local file = io.open(log_file, "a") -- Open in append mode
   if file then
