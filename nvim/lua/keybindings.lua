@@ -447,8 +447,10 @@ end
 -- vim.api.nvim_set_keymap('n', '<M-b>', ':lua ToggleQuickfix()<CR>', { noremap = true, silent = true })
 
 -- Window management and movement
+--- lua print(vim.fn.getenv("TERM_PROGRAM"))
 local term_program_raw = vim.fn.getenv("TERM_PROGRAM") or ""
 local term_program = tostring(term_program_raw):lower()
+--if term_program == "wezterm" or term_program == "tmux" then
 if term_program == "wezterm" then
     vim.api.nvim_set_keymap('n', '<C-w>h', '<Plug>WinMoveLeft', { noremap = false, silent = true })
     vim.api.nvim_set_keymap('n', '<C-w>j', '<Plug>WinMoveDown', { noremap = false, silent = true })
@@ -828,7 +830,7 @@ end
 function ReplacePathBasedOnContext()
     local my_notes_path = os.getenv("my_notes_path")
     local code_root_dir = os.getenv("code_root_dir")
-    local ps_profile_path = os.getenv("ps_profile_path")
+    local ps_profile_path = tostring(os.getenv("ps_profile_path"))
 
     if not my_notes_path or not code_root_dir then
         print("Environment variables 'my_notes_path' or 'code_root_dir' are not set.")
@@ -1591,7 +1593,7 @@ function copy_current_file_path(replace_env)
         end
 
         -- Replace "ps_profile_path"
-        local ps_profile_path = vim.fn.getenv("ps_profile_path")
+        local ps_profile_path = tostring(vim.fn.getenv("ps_profile_path"))
         if ps_profile_path then
             ps_profile_path = normalize_slashes(ps_profile_path)
 
