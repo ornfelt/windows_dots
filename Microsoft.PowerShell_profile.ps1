@@ -1,3 +1,5 @@
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
 # Oh-My-Posh
 #oh-my-posh init pwsh | Invoke-Expression
 #$omp_config = Join-Path $PSScriptRoot ".\custom_cobalt.omp.json"
