@@ -828,6 +828,7 @@ end
 function ReplacePathBasedOnContext()
     local my_notes_path = os.getenv("my_notes_path")
     local code_root_dir = os.getenv("code_root_dir")
+    local ps_profile_path = os.getenv("ps_profile_path")
 
     if not my_notes_path or not code_root_dir then
         print("Environment variables 'my_notes_path' or 'code_root_dir' are not set.")
@@ -845,6 +846,15 @@ function ReplacePathBasedOnContext()
     else
         line = line:gsub(vim.pesc(my_notes_path), "{my_notes_path}/")
         line = line:gsub(vim.pesc(code_root_dir), "{code_root_dir}/")
+    end
+
+    if ps_profile_path then
+        ps_profile_path = normalize_path(ps_profile_path) .. "/"
+        if line:find("{ps_profile_path}/", 1, true) then
+            line = line:gsub("{ps_profile_path}/", vim.pesc(ps_profile_path))
+        else
+            line = line:gsub(vim.pesc(ps_profile_path), "{ps_profile_path}/")
+        end
     end
 
     line = normalize_path(line) -- Just to replace any concecutive slashes again...
@@ -886,8 +896,77 @@ function goto_last_tab()
     end
 end
 
-vim.api.nvim_set_keymap('n', '<leader>t', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('v', '<leader>t', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>tl', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('v', '<leader>tl', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
+
+local actions = require("telescope.actions")
+local action_state = require("telescope.actions.state")
+local pickers = require("telescope.pickers")
+local finders = require("telescope.finders")
+local conf = require("telescope.config").values
+
+function list_tabs()
+  local tabs = {}
+  for i = 1, vim.fn.tabpagenr("$") do
+    --local tabname = vim.fn.gettabvar(i, "tabname", "[No Name]")
+    local bufname = vim.fn.bufname(vim.fn.tabpagebuflist(i)[1]) or "[No Buffer]"
+    table.insert(tabs, string.format("%d: (%s)", i, bufname))
+  end
+
+  pickers.new({}, {
+    prompt_title = "Tabs",
+    finder = finders.new_table({
+      results = tabs,
+      entry_maker = function(entry)
+        return {
+          value = entry,
+          display = entry,
+          ordinal = entry,
+          index = tonumber(entry:match("Tab (%d+):")),
+        }
+      end,
+    }),
+    sorter = conf.generic_sorter({}),
+    attach_mappings = function(prompt_bufnr, map)
+      local function on_select()
+        local selected = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        if selected then
+          vim.cmd("tabnext " .. selected.index)
+        end
+      end
+
+      map("i", "<CR>", on_select)
+      map("n", "<CR>", on_select)
+
+      return true
+    end,
+  }):find()
+end
+
+-- Using fzf-lua
+local fzf = require("fzf-lua")
+function list_tabs_fzf()
+  local tabs = {}
+  for i = 1, vim.fn.tabpagenr("$") do
+    local bufname = vim.fn.bufname(vim.fn.tabpagebuflist(i)[1]) or "[No Buffer]"
+    table.insert(tabs, string.format("%d: (%s)", i, bufname))
+  end
+
+  fzf.fzf_exec(tabs, {
+    prompt = "Tabs> ",
+    actions = {
+      ["default"] = function(selected)
+        local index = tonumber(selected[1]:match("^(%d+):"))
+        if index then
+          vim.cmd("tabnext " .. index)
+        end
+      end,
+    },
+  })
+end
+
+vim.api.nvim_set_keymap("n", "<leader>t", ":lua list_tabs()<CR>", { noremap = true, silent = true })
 
 function ReplaceQuotes()
   vim.cmd([[
@@ -1480,12 +1559,12 @@ function copy_current_file_path(replace_env)
         return
     end
 
+    path = normalize_slashes(path)
     if replace_env then
         -- Replace "my_notes_path"
         local my_notes_path = vim.fn.getenv("my_notes_path")
         if my_notes_path then
             my_notes_path = normalize_slashes(my_notes_path)
-            path = normalize_slashes(path)
 
             if my_notes_path:sub(-1) == "/" then
                 my_notes_path = my_notes_path:sub(1, -2)
@@ -1493,6 +1572,19 @@ function copy_current_file_path(replace_env)
 
             local pattern = "^" .. vim.pesc(my_notes_path)
             path = path:gsub(pattern, "{my_notes_path}")
+        end
+
+        -- Replace "ps_profile_path"
+        local ps_profile_path = vim.fn.getenv("ps_profile_path")
+        if ps_profile_path then
+            ps_profile_path = normalize_slashes(ps_profile_path)
+
+            if ps_profile_path:sub(-1) == "/" then
+                ps_profile_path = ps_profile_path:sub(1, -2)
+            end
+
+            local pattern = "^" .. vim.pesc(ps_profile_path)
+            path = path:gsub(pattern, "{ps_profile_path}")
         end
 
         -- Replace "code_root_dir"
