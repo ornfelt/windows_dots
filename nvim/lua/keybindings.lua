@@ -899,6 +899,7 @@ end
 vim.api.nvim_set_keymap('n', '<leader>tl', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('v', '<leader>tl', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
 
+-- List tabs with telescope
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 local pickers = require("telescope.pickers")
@@ -944,8 +945,9 @@ function list_tabs()
   }):find()
 end
 
--- Using fzf-lua
+-- Using fzf/fzf-lua
 local fzf = require("fzf-lua")
+
 function list_tabs_fzf()
   local tabs = {}
   for i = 1, vim.fn.tabpagenr("$") do
@@ -953,6 +955,7 @@ function list_tabs_fzf()
     table.insert(tabs, string.format("%d: (%s)", i, bufname))
   end
 
+  -- fzf-lua
   fzf.fzf_exec(tabs, {
     prompt = "Tabs> ",
     actions = {
@@ -964,6 +967,19 @@ function list_tabs_fzf()
       end,
     },
   })
+
+  -- fzf
+  --vim.fn["fzf#run"]({
+  --  source = tabs,
+  --  sink = function(selected)
+  --    local index = tonumber(selected:match("^(%d+):"))
+  --    if index then
+  --      vim.cmd("tabnext " .. index)
+  --    end
+  --  end,
+  --  options = "--prompt 'Tabs> ' --reverse",
+  --})
+
 end
 
 vim.api.nvim_set_keymap("n", "<leader>t", ":lua list_tabs()<CR>", { noremap = true, silent = true })
