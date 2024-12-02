@@ -124,6 +124,7 @@ config.unix_domains = {
   },
 }
 
+-- https://wezfurlong.org/wezterm/config/default-keys.html
 -- config.disable_default_key_bindings = true,
 
 -- Session manager
@@ -475,8 +476,7 @@ local function split_to_directory_with_delay(win, pane)
     wezterm.sleep_ms(500)
 
     -- Open the saved dir in wezterm pane
-    --local userprofile = os.getenv("USERPROFILE")
-    local userprofile = os.getenv("HOME")
+    local userprofile = os.getenv("HOME") or os.getenv("USERPROFILE")
     local file_path = userprofile .. "/new_wez_dir.txt"
 
     -- print("file_path:" .. file_path)
