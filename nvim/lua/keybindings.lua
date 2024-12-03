@@ -129,10 +129,6 @@ function toggle_filetree()
 end
 map('n', '<M-e>', ':lua toggle_filetree()<CR>')
 
--- NERDCommenter
--- map('n', '<C-k>', ':call nerdcommenter#Comment(0, "toggle")<CR>')
--- map('v', '<C-k>', '<Plug>NERDCommenterToggle')
-
 ---- fzf
 local fzf_vim_installed = pcall(function() return vim.fn['fzf#run'] end)
 --if fzf_vim_installed then
