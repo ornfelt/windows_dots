@@ -494,6 +494,9 @@ map('t', '<M-l>', [[<C-\><C-n><C-w>l]])
 map('t', '<M-q>', [[<C-\><C-n>:q<CR>]])
 map('t', '<Esc>', [[<C-\><C-n>]])
 
+vim.api.nvim_set_keymap('n', '<C-Tab>', '', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-S-Tab>', '', { noremap = true, silent = true })
+
 -- Moving text
 map('x', 'J', ":move '>+1<CR>gv=gv")
 map('x', 'K', ":move '<-2<CR>gv=gv")
