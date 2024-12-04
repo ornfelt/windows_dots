@@ -67,6 +67,8 @@ config.mouse_bindings = {
     action = act.OpenLinkAtMouseCursor,
   }
 }
+
+config.unzoom_on_switch_pane = true
 config.pane_focus_follows_mouse = false
 config.scrollback_lines = 5000 -- Default is 3500
 config.use_dead_keys = false
@@ -201,9 +203,20 @@ local function split_nav(key)
 
       local opposite_dir = dir == "Left" and "Right" or dir == "Right" and "Left" or dir == "Up" and "Down" or "Up"
 
-      if tab:get_pane_direction(dir) then
+      -- Use nvim pane switching if pane is zoomed
+      -- https://wezfurlong.org/wezterm/config/lua/MuxTab/panes_with_info.html
+      --local is_zoomed = pane.is_zoomed
+      local is_zoomed = false
+      for _, pane_info in ipairs(tab:panes_with_info()) do
+        if pane_info.is_zoomed then
+          is_zoomed = true
+          break
+        end
+      end
+
+      if tab:get_pane_direction(dir) and not is_zoomed then
         win:perform_action({ ActivatePaneDirection = dir }, pane)
-      elseif tab:get_pane_direction(opposite_dir) then
+      elseif tab:get_pane_direction(opposite_dir) and not is_zoomed then
         win:perform_action({ ActivatePaneDirection = opposite_dir }, pane)
       else
         -- Send the key sequence to process, e.g., vim
