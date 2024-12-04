@@ -31,19 +31,6 @@ create_mappings("vtxt,vimwiki,wiki,text,md,markdown", {
   ["date<Tab>"] = '<-- <C-R>=strftime("%Y-%m-%d %a")<CR><Esc>A -->'
 })
 
--- SQL
---create_mappings("sql", {
---  ["sout<Tab>"] = 'SET @x = 42;<Enter>SET @s = "Hello";<Enter>SELECT @x AS x, @s AS s;<Enter>', -- Basic print
---  ["souti<Tab>"] = 'SET @intVar = 100;<Enter>SELECT @intVar AS intVar;<Enter>', -- Print integer
---  ["souts<Tab>"] = 'SET @strVar = "World";<Enter>SELECT @strVar AS strVar;<Enter>', -- Print string
---  ["soutb<Tab>"] = 'SET @boolVar = TRUE;<Enter>SELECT @boolVar AS boolVar;<Enter>', -- Print boolean
---  ["soutf<Tab>"] = 'SET @floatVar = 3.14;<Enter>SELECT @floatVar AS floatVar;<Enter>', -- Print float
---  ["soutd<Tab>"] = 'SET @doubleVar = 3.14159265359;<Enter>SELECT @doubleVar AS doubleVar;<Enter>', -- Print double
---  ["fun<Tab>"] = 'delimiter //<Enter>create function x ()<Enter>returns int<Enter>no sql<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN',
---  ["pro<Tab>"] = 'delimiter //<Enter>create procedure x ()<Enter>begin<Enter><Enter><Enter>end //<Enter>delimiter ;<Esc>/x<Enter>GN',
---  ["vie<Tab>"] = 'create view x as<Enter>select <Esc>/x<Enter>GN'
---})
-
 -- HTML
 create_mappings("html", {
   ["<i<Tab>"] = '<em></em> <Space><++><Esc>/<<Enter>GNi',
@@ -473,7 +460,7 @@ local function parse_db_files(path)
     local db_name = file:match("([^/\\]+)%.txt$"):lower()
     local engine = db_name:match("^(%w+)_")
     if engine == "sqlserver" then
-      engine = "sql_server" -- Convert sqlserver to sql_server
+      engine = "sql_server"
     end
 
     -- Map engine and environment to file name
@@ -737,7 +724,7 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- Query autocmd's for SQL
+-- Simple sql queries
 local function get_engine()
   local default_engine = "mysql" -- Default to MySQL
   local lines = vim.api.nvim_buf_get_lines(0, 0, 3, false) -- Read first 3 lines
