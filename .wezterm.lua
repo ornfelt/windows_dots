@@ -196,6 +196,7 @@ local function split_nav(key)
       -- Check if there are multiple panes to navigate
       local dir = direction_keys[key]
       local tab = pane:tab()
+
       if is_tmux(pane) then
         win:perform_action({ SendKey = { key = key, mods = "ALT" } }, pane)
         return
@@ -248,9 +249,17 @@ local function resize_pane(key)
         return
       end
 
+      local is_zoomed = false
+      for _, pane_info in ipairs(tab:panes_with_info()) do
+        if pane_info.is_zoomed then
+          is_zoomed = true
+          break
+        end
+      end
+
       -- Check if there's a pane in either primary dir or opposite
       local opposite_dir = dir == "Left" and "Right" or dir == "Right" and "Left" or dir == "Up" and "Down" or "Up"
-      if tab:get_pane_direction(dir) or tab:get_pane_direction(opposite_dir) then
+      if (tab:get_pane_direction(dir) or tab:get_pane_direction(opposite_dir)) and not is_zoomed then
         win:perform_action(act.AdjustPaneSize { dir, 5 }, pane)
       else
         -- Send ALT + SHIFT + key to Vim for resizing inside Vim
