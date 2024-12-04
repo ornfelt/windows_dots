@@ -87,7 +87,8 @@ if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple ==
     top = 20,
     bottom = 10,
   }
-  config.use_fancy_tab_bar = true
+  --config.use_fancy_tab_bar = true
+  config.use_fancy_tab_bar = false
 else
   config.leader = { key = 'b', mods = 'CTRL', timeout_milliseconds = 1000 }
   --config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1000 }
@@ -105,6 +106,7 @@ end
 
 -- Tab bar
 config.tab_bar_at_bottom = true
+config.show_new_tab_button_in_tab_bar = false
 config.switch_to_last_active_tab_when_closing_tab = true
 config.tab_max_width = 15
 config.colors = {
