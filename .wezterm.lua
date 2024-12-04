@@ -87,8 +87,8 @@ if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple ==
     top = 20,
     bottom = 10,
   }
-  --config.use_fancy_tab_bar = true
-  config.use_fancy_tab_bar = false
+  config.use_fancy_tab_bar = true
+  --config.use_fancy_tab_bar = false
 else
   config.leader = { key = 'b', mods = 'CTRL', timeout_milliseconds = 1000 }
   --config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1000 }

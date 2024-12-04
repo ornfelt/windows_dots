@@ -161,6 +161,8 @@ vim.g.python3_host_prog = os.getenv("PYTHON_PATH")
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
+vim.env.LANG = "en_US.UTF-8"
+
 --vim.opt.showtabline = 1
 --vim.opt.tabline = "%!v:lua.TabLine()"
 
