@@ -817,7 +817,7 @@ end
 
 function sout_mapping()
   local engine = get_engine()
-  print("Detected Engine:", engine)
+  --print("Detected Engine:", engine)
 
   if engine == "sqlite" then
     return { "PRAGMA x = 42;", "PRAGMA s = 'Hello';", "SELECT x, s;" }

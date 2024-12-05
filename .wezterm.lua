@@ -89,8 +89,8 @@ if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple ==
     top = 20,
     bottom = 10,
   }
-  config.use_fancy_tab_bar = true
-  --config.use_fancy_tab_bar = false
+  --config.use_fancy_tab_bar = true
+  config.use_fancy_tab_bar = false
 else
   config.leader = { key = 'b', mods = 'CTRL', timeout_milliseconds = 1000 }
   --config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1000 }
@@ -645,9 +645,11 @@ end
 
 wezterm.on("format-tab-title", function(tab)
   local new_title = tostring(tab.active_pane.current_working_dir):gsub("^file:///", "")
-  local max_title_len = 20
+  --local max_title_len = 20 -- If use_fancy_tab_bar
+  local max_title_len = 15
   if #new_title > max_title_len then
-    new_title = "..." .. new_title:sub(-(max_title_len-3))
+    --new_title = ".." .. new_title:sub(-(max_title_len-3)) -- If use_fancy_tab_bar
+    new_title = ".." .. new_title:sub(-(max_title_len-3)) .. " "
   end
   return {
     { Text = new_title }
