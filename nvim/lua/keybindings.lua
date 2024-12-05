@@ -2198,7 +2198,6 @@ vim.keymap.set('n', '<leader><leader>', function()
     -- General
     { label = "messages", cmd = "messages" },
     { label = "Reload Configuration", cmd = "lua vim.cmd('source ' .. vim.env.MYVIMRC)" },
-    { label = "Inspect Current Line", cmd = "lua print(vim.inspect(vim.api.nvim_get_current_line()))" },
     { label = "List Buffers", cmd = "lua print(vim.inspect(vim.api.nvim_list_bufs()))" },
     { label = "Buffers", cmd = "buffers" },
     { label = "undolist", cmd = "undolist" },
