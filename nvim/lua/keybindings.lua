@@ -1653,6 +1653,8 @@ function copy_current_file_path(replace_env)
   end
 
   path = normalize_slashes(path)
+  path = path:gsub("oil:", "")
+
   if replace_env then
     -- Replace "my_notes_path"
     local my_notes_path = vim.fn.getenv("my_notes_path")
