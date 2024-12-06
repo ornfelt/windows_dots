@@ -1524,8 +1524,25 @@ function compile_run()
   elseif filetype == 'typescript' or filetype == 'tsx' then
     local ts_file = vim.fn.expand('%:p')
     local js_file = ts_file:gsub('%.ts$', '.js')
+
     --vim.cmd(is_windows and '!tsc %; node ' .. js_file or '!tsc % && time node ' .. js_file)
-    vim.cmd(is_windows and '!tsc; node ' .. js_file or '!tsc && time node ' .. js_file)
+    --vim.cmd(is_windows and '!tsc; node ' .. js_file or '!tsc && time node ' .. js_file)
+
+    local package_json_exists = vim.fn.filereadable('./package.json') == 1
+
+    if package_json_exists then
+      vim.cmd(is_windows and '!npm start' or '!time npm start')
+    else
+      local js_file_in_dist = "dist/" .. vim.fn.fnamemodify(js_file, ":t")
+
+      if is_windows then
+        vim.cmd('!tsc')
+        vim.cmd('!node ' .. js_file_in_dist)
+      else
+        vim.cmd('!tsc && time node ' .. js_file_in_dist)
+      end
+    end
+
   elseif filetype == 'go' then
     vim.cmd('!go build %<')
     vim.cmd(is_windows and '!go run %' or '!time go run %')
