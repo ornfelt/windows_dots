@@ -31,4 +31,5 @@ foreach ($subdir in Get-ChildItem -Path $modulesPath -Directory) {
 
 cd $basePath
 Write-Output "`nCompleted git pull in all directories."
+Write-Output "`n***If you need to specify branch for eluna, do: git pull https://github.com/azerothcore/mod-eluna master"
 
