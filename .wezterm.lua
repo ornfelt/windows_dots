@@ -569,6 +569,7 @@ local function open_github_repo(win, pane)
   end
 
   local cwd = cwd_uri:gsub("file:///", "")
+  cwd = cwd_uri:gsub("file://ornf", "")
 
   -- Debug
   --log_to_file(cwd)
@@ -586,8 +587,8 @@ local function open_github_repo(win, pane)
     git_remote_cmd = string.format('cd /d %s & git remote get-url origin', cwd)
     git_branch_cmd = string.format('cd /d %s & git rev-parse --abbrev-ref HEAD', cwd)
   else
-    git_remote_cmd = 'git remote get-url origin 2>/dev/null'
-    git_branch_cmd = 'git rev-parse --abbrev-ref HEAD 2>/dev/null'
+    git_remote_cmd = string.format('cd %s && git remote get-url origin 2>/dev/null', cwd)
+    git_branch_cmd = string.format('cd %s && git rev-parse --abbrev-ref HEAD 2>/dev/null', cwd)
   end
 
   -- Debug
