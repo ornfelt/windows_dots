@@ -769,7 +769,7 @@ wezterm.on("update-right-status", function(window, pane)
     local git_cmd
     if is_windows then
       git_cmd = string.format(
-        'powershell -NoProfile -Command "cd \'%s\'; git rev-parse --abbrev-ref HEAD 2>$null"',
+        'cd "%s"; git rev-parse --abbrev-ref HEAD 2>$null',
         cwd:gsub("\\", "/")
       )
     else
