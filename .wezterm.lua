@@ -568,8 +568,9 @@ local function open_github_repo(win, pane)
     return
   end
 
-  local cwd = cwd_uri:gsub("file:///", "")
-  cwd = cwd_uri:gsub("file://ornf", "")
+  local cwd = cwd_uri:gsub("file://ornf", "")
+  cwd = cwd:gsub("file://", "")
+  cwd = cwd:gsub("^/([A-Za-z]:)", "%1")
 
   -- Debug
   --log_to_file(cwd)
