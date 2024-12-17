@@ -100,6 +100,19 @@ startup_mode =  "Maximized"
 #x = 13
 #y = 13
 
+# Enable undercurl and true color (when using alacritty)
+#if -F "#{==:$TERM,alacritty}" {
+#  set -g default-terminal "alacritty"
+#  set -ga terminal-features ",alacritty:RGB:usstyle"
+#}
+#
+## Enable statusbar only, if there are multiple tabs (https://redd.it/6lwb07)
+#if -F "#{==:#{session_windows},1}" "set -g status off" "set -g status on"
+#set-hook -g window-linked 'if -F "#{==:#{session_windows},1}" \
+#  "set -g status off" "set -g status on"'
+#set-hook -g window-unlinked 'if -F "#{==:#{session_windows},1}" \
+#  "set -g status off" "set -g status on"'
+
 # https://github.com/Piotr1215/dotfiles/blob/master/.config/alacritty/alacritty.toml
 #[[hints.enabled]]
 #command = "xdg-open"
@@ -109,18 +122,13 @@ startup_mode =  "Maximized"
 #mouse.enabled = true
 #binding = { key = "Space", mods = "Control|Shift" }
 #regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩`]+"
-
-# https://github.com/alacritty/alacritty/issues/4063
-[[hints.enabled]]
-regex = '[^ ]+(?:\s*)$' 
+#
+#[[hints.enabled]]
+#regex = '[^ ]+(?:\s*)$' 
 #command = { program = "/usr/bin/tmux", args = ["split-window", "-h", "-c", "#{pane_current_path}", "sh", "-c", "nvim \"$0\""] }
-#command= sh -c 'printf "%s" "{}"'
-#command = { program = "cmd", args = [ "/c", "echo \"test\"|clip" ] }
-#action="Select"
-#action="Copy"
-action="Paste"
-binding = { key = "Space", mods = "Control|Shift" }
+#binding = { key = "Space", mods = "Alt|Shift" }
 
+# Testing
 #[[hints.enabled]]
 #command = "vim" # On Linux/BSD
 # command = "open" # On macOS
@@ -134,9 +142,21 @@ binding = { key = "Space", mods = "Control|Shift" }
 
 [[hints.enabled]]
 regex = "https?://[^\"]+"
-#command = { program = "cmd", args = ["/c", "start", "firefox", "{}"] }
 command = { program = "cmd", args = ["/c", "start", "firefox", "--new-tab", "{}"] }
 #command = { program = "xdg-open", args = ["{}"] }
+#command = "xdg-open"
 #command = "Open"
 #command = "start"
+#binding = { key = "Space", mods = "Control|Shift" }
+binding = { key = "o", mods = "Alt|Shift" }
+
+# https://github.com/alacritty/alacritty/issues/4063
+[[hints.enabled]]
+regex = '[^ ]+(?:\s*)$' 
+#command= sh -c 'printf "%s" "{}"'
+#command = { program = "cmd", args = [ "/c", "echo \"test\"|clip" ] }
+#action="Select"
+#action="Copy"
+action="Paste"
 binding = { key = "Space", mods = "Alt|Shift" }
+
