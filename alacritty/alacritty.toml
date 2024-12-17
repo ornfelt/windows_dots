@@ -101,17 +101,35 @@ startup_mode =  "Maximized"
 #y = 13
 
 # https://github.com/Piotr1215/dotfiles/blob/master/.config/alacritty/alacritty.toml
-[[hints.enabled]]
-command = "xdg-open"
-hyperlinks = true
-post_processing = true
-persist = false
-mouse.enabled = true
-binding = { key = "Space", mods = "Control|Shift" }
-regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩`]+"
+#[[hints.enabled]]
+#command = "xdg-open"
+#hyperlinks = true
+#post_processing = true
+#persist = false
+#mouse.enabled = true
+#binding = { key = "Space", mods = "Control|Shift" }
+#regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\u0000-\u001F\u007F-\u009F<>\"\\s{-}\\^⟨⟩`]+"
 
+# https://github.com/alacritty/alacritty/issues/4063
 [[hints.enabled]]
 regex = '[^ ]+(?:\s*)$' 
-command = { program = "/usr/bin/tmux", args = ["split-window", "-h", "-c", "#{pane_current_path}", "sh", "-c", "nvim \"$0\""] }
-binding = { key = "Space", mods = "Alt|Shift" }
+#command = { program = "/usr/bin/tmux", args = ["split-window", "-h", "-c", "#{pane_current_path}", "sh", "-c", "nvim \"$0\""] }
+#command= sh -c 'printf "%s" "{}"'
+#command = { program = "cmd", args = [ "/c", "echo \"test\"|clip" ] }
+#action="Select"
+#action="Copy"
+action="Paste"
+binding = { key = "Space", mods = "Control|Shift" }
 
+#[[hints.enabled]]
+#command = "vim" # On Linux/BSD
+# command = "open" # On macOS
+# command = { program = "cmd", args = [ "/c", "start", "" ] } # On Windows
+#hyperlinks = false
+#post_processing = true
+#persist = false
+#mouse.enabled = true
+#binding = { key = "F", mods = "Control|Shift" }
+#regex = '(\n|.)*/\.[^/]*[^~]'
+
+# TODO: Alt|Shift for opening in firefox...
