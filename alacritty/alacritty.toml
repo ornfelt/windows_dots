@@ -132,4 +132,11 @@ binding = { key = "Space", mods = "Control|Shift" }
 #binding = { key = "F", mods = "Control|Shift" }
 #regex = '(\n|.)*/\.[^/]*[^~]'
 
-# TODO: Alt|Shift for opening in firefox...
+[[hints.enabled]]
+regex = "https?://[^\"]+"
+#command = { program = "cmd", args = ["/c", "start", "firefox", "{}"] }
+command = { program = "cmd", args = ["/c", "start", "firefox", "--new-tab", "{}"] }
+#command = { program = "xdg-open", args = ["{}"] }
+#command = "Open"
+#command = "start"
+binding = { key = "Space", mods = "Alt|Shift" }
