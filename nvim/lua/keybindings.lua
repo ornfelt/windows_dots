@@ -915,13 +915,12 @@ vim.api.nvim_set_keymap('n', '<leader>m', ':lua save_tabs_and_splits()<CR>', { n
 -- Open new tabs
 map('n', '<M-m>', ':tabe ~/.config/nvim/init.lua<CR>')
 map('n', '<M-,>', ':tabe ~/.zshrc<CR>')
-map('n', '<M-.>', ':tabe ~/Documents/my_notes/vimtutor.txt<CR>')
+map('n', '<M-.>', '<cmd>tabe ' .. my_notes_path .. '/vimtutor.txt<CR>')
 
 -- Windows
 if vim.fn.has('win32') == 1 then
   vim.api.nvim_set_keymap('n', '<M-m>', '<cmd>tabe ' .. vim.fn.expand('$LOCALAPPDATA') .. '/nvim/init.lua<CR>', { noremap = true, silent = true })
   vim.api.nvim_set_keymap('n', '<M-,>', '<cmd>tabe ' .. ps_profile_path .. '/Microsoft.PowerShell_profile.ps1<CR>', { noremap = true, silent = true })
-  vim.api.nvim_set_keymap('n', '<M-.>', '<cmd>tabe ' .. my_notes_path .. '/vimtutor.txt<CR>', { noremap = true, silent = true })
 end
 
 -- map('n', '<C-c>', 'y')
@@ -1754,10 +1753,6 @@ function copy_current_file_path(replace_env)
   print("Copied to clipboard: " .. path)
 end
 
--- Keybindings
-vim.api.nvim_set_keymap('n', '<leader>-', ':lua copy_current_file_path(true)<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('v', '<leader>-', ':lua copy_current_file_path(false)<CR>', { noremap = true, silent = true })
-
 vim.api.nvim_set_keymap('n', '<leader>-', ':lua copy_current_file_path(true)<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('v', '<leader>-', ':lua copy_current_file_path(false)<CR>', { noremap = true, silent = true })
 
@@ -1983,8 +1978,8 @@ vim.api.nvim_set_keymap('n', 'gx', ':lua open_in_firefox()<CR>', { noremap = tru
 
 local function diff_copy()
   local current_buf = vim.api.nvim_get_current_buf()
-
   local windows = vim.api.nvim_list_wins()
+
   local other_buf
   for _, win in ipairs(windows) do
     if vim.api.nvim_win_get_buf(win) ~= current_buf then
@@ -2270,6 +2265,8 @@ vim.keymap.set('n', '<leader><leader>', function()
     { label = "PackerSync", cmd = "PackerSync" },
     -- Lazy
     { label = "Lazy", cmd = "Lazy" },
+    -- Markview
+    { label = "Markview", cmd = "Markview" },
     -- Custom
     { label = "Diffi", cmd = "Diffi" },
     { label = "Diffg", cmd = "Diffg" },
@@ -2736,22 +2733,22 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 local function replace_env_paths(file_path)
-    if file_path:find("{my_notes_path}/", 1, true) or file_path:find("{code_root_dir}/", 1, true) or file_path:find("{ps_profile_path}/", 1, true) then
-        file_path = file_path:gsub("{my_notes_path}/", vim.pesc(my_notes_path))
-        file_path = file_path:gsub("{code_root_dir}/", vim.pesc(code_root_dir))
-        file_path = file_path:gsub("{ps_profile_path}/", vim.pesc(ps_profile_path))
-        file_path = normalize_path(file_path)
-    end
-    return file_path
+  if file_path:find("{my_notes_path}/", 1, true) or file_path:find("{code_root_dir}/", 1, true) or file_path:find("{ps_profile_path}/", 1, true) then
+    file_path = file_path:gsub("{my_notes_path}/", vim.pesc(my_notes_path))
+    file_path = file_path:gsub("{code_root_dir}/", vim.pesc(code_root_dir))
+    file_path = file_path:gsub("{ps_profile_path}/", vim.pesc(ps_profile_path))
+    file_path = normalize_path(file_path)
+  end
+  return file_path
 end
 
 local function clean_selected_path(cwd, selected_path)
-    selected_path = selected_path:match("[A-Za-z].*$") or selected_path
-    if not selected_path:match("^/") and not selected_path:match("^%a:") then
-        selected_path = vim.fn.fnamemodify(cwd .. "/" .. selected_path, ":p")
-    end
+  selected_path = selected_path:match("[A-Za-z].*$") or selected_path
+  if not selected_path:match("^/") and not selected_path:match("^%a:") then
+    selected_path = vim.fn.fnamemodify(cwd .. "/" .. selected_path, ":p")
+  end
 
-    return normalize_path(selected_path)
+  return normalize_path(selected_path)
 end
 
 function diff_buffers_or_file()
