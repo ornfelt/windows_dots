@@ -478,7 +478,7 @@ end
 
 -- Key mappings
 vim.keymap.set({ 'n', 'v' }, '<M-f>', function()
-  setup_vimgrep_command(true)  -- Use word under cursor or selection
+  setup_vimgrep_command(true) -- Use word under cursor or selection
 end, { noremap = true, silent = true })
 
 vim.keymap.set('n', '<M-C-f>', function()
@@ -510,7 +510,6 @@ map('n', '<M-P>', ':clast<CR>')
 map('n', '<M-b>', ':copen<CR>')
 map('n', '<M-B>', ':cclose<CR>')
 
--- Function to toggle quickfix list
 function ToggleQuickfix()
   local is_open = false
 
@@ -582,16 +581,17 @@ if term_program ~= "wezterm" then
   map('n', '<M-y>', ':vertical resize -2<CR>')
 end
 
-map('n', '<C-d>', '<C-d>zz')
-map('n', '<C-u>', '<C-u>zz')
-map('n', '<leader>l', ':Tabmerge right<CR>')
--- Navigate between splits from terminal
+-- Navigate splits in terminal
 map('t', '<M-h>', [[<C-\><C-n><C-w>h]])
 map('t', '<M-j>', [[<C-\><C-n><C-w>j]])
 map('t', '<M-k>', [[<C-\><C-n><C-w>k]])
 map('t', '<M-l>', [[<C-\><C-n><C-w>l]])
 map('t', '<M-q>', [[<C-\><C-n>:q<CR>]])
 map('t', '<Esc>', [[<C-\><C-n>]])
+
+map('n', '<C-d>', '<C-d>zz')
+map('n', '<C-u>', '<C-u>zz')
+map('n', '<leader>l', ':Tabmerge right<CR>')
 
 vim.api.nvim_set_keymap('n', '<C-Tab>', '', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<C-S-Tab>', '', { noremap = true, silent = true })
@@ -601,6 +601,7 @@ map('x', 'J', ":move '>+1<CR>gv=gv")
 map('x', 'K', ":move '<-2<CR>gv=gv")
 map('n', '<leader>j', ':join<CR>')
 map('n', '<leader>J', ':join!<CR>')
+
 --map('n', '<leader>z', '<Plug>Zoom')
 vim.keymap.set('n', '<leader>z', function()
     local zoomed = vim.w.zoomed
@@ -2756,7 +2757,7 @@ end
 function diff_buffers_or_file()
   local tabpage = vim.api.nvim_get_current_tabpage()
   local windows = vim.api.nvim_tabpage_list_wins(tabpage)
-  local use_fzf_for_diff = true
+  local use_fzf_for_diff = false
   local use_fzf_lua_for_diff = false
 
   if #windows == 2 then
