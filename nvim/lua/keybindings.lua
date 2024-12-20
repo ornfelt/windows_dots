@@ -287,6 +287,7 @@ local function read_lines_from_file(file)
   for line in io.lines(file) do
     line = replace_placeholders(line)
     line = normalize_path(line)
+    line = line:gsub("\r", "") -- Remove carriage return (^M)
     table.insert(lines, line)
   end
   return lines
