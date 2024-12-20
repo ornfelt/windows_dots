@@ -243,6 +243,7 @@ function StartFinder(env_var, additional_path)
   if additional_path then
     path = path .. "/" .. additional_path
   end
+  path = normalize_path(path)
 
   if use_fzf then
     -- Search using fzf.vim
@@ -285,6 +286,7 @@ local function read_lines_from_file(file)
   local lines = {}
   for line in io.lines(file) do
     line = replace_placeholders(line)
+    line = normalize_path(line)
     table.insert(lines, line)
   end
   return lines
@@ -624,7 +626,7 @@ map('v', '>', '>gv')
 
 -- Tab keybinds
 map('n', '<M-t>', ':tabe<CR>')
-map('n', '<M-s>', ':split<CR>')
+--map('n', '<M-s>', ':split<CR>')
 map('n', '<M-Enter>', ':vsp | terminal ' .. (vim.loop.os_uname().sysname == "Windows_NT" and "powershell" or "") .. '<CR>')
 map('n', '<M-<>', ':split | terminal ' .. (vim.loop.os_uname().sysname == "Windows_NT" and "powershell" or "") .. '<CR>')
 --if vim.fn.has('win32') == 1 and vim.fn.exists('g:GuiLoaded') == 1 then
