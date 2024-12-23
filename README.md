@@ -1,29 +1,8 @@
 # Dotfiles for Windows
 
-## Current theme
+## Current setup
 
-![custom_cobalt2](Screenshots/custom_cobalt2.jpg?raw=true "current")
+I mainly use wezterm as terminal for both linux and windows. Sometimes I switch alacritty / suckless terminal (st) for fun :)
 
-Git changed:
-![custom_cobalt2](Screenshots/custom_cobalt2_git_changed.jpg?raw=true "current")
+![screenshot](Screenshots/windows_dots.png?raw=true "screenshot")
 
-Git changed_2:
-![custom_cobalt2](Screenshots/custom_cobalt2_git_changed_2.jpg?raw=true "current")
-
-## Other themes
-
-custom_1_shell:
-![custom_1_shell](Screenshots/custom_1_shell.jpg?raw=true "custom_1_shell")
-
-custom_tokyonight_storm:
-![custom_tokyonight_storm](Screenshots/custom_tokyonight_storm.jpg?raw=true "custom_tokyonight_storm")
-
-powerline:
-![powerline](Screenshots/powerline.jpg?raw=true "powerline")
-
-
-# Script sources
-
-https://github.com/fleschutz/PowerShell
-
-https://github.com/amidaware/community-scripts
