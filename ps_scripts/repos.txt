@@ -1,0 +1,2 @@
+https://github.com/amidaware/community-scripts
+https://github.com/fleschutz/PowerShell
