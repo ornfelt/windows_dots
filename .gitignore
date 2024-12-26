@@ -105,3 +105,4 @@ logfile/*
 env.ps1
 
 Modules/
+log.txt
