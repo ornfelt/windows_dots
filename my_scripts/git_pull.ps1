@@ -29,6 +29,12 @@ switch ($repoOwner) {
     }
 }
 
+$cleanedRepoName = $repoName -replace '\.git$', ''
+
+if ($cleanedRepoName -eq 'my_notes') {
+    $tokenEnvVarName = "GITHUB_TOKEN" 
+}
+
 $tokenValue = [System.Environment]::GetEnvironmentVariable($tokenEnvVarName)
 if (-not $tokenValue) {
     Write-Error "No token found for repository owner: $repoOwner"

@@ -41,13 +41,14 @@ function Add-UpstreamIfMissing {
     }
 }
 
-if ($repoOwner -eq "ornfelt") {
+$cleanedRepoName = $repoName -replace '\.git$', ''
 
-    switch ($repoName) {
+if ($repoOwner -eq "ornfelt") {
+    switch ($cleanedRepoName) {
 
         "dwm" {
             Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/dwm"
-            $commands.Add('git fetch upstream')
+            $commands.Add('git fetch --all')
             $commands.Add('git diff upstream/master...master > diff_upstream.diff')
             $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_bkp.diff')
             $commands.Add('git diff origin/new -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_new.diff')
@@ -57,7 +58,7 @@ if ($repoOwner -eq "ornfelt") {
 
         "dmenu" {
             Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/dmenu"
-            $commands.Add('git fetch upstream')
+            $commands.Add('git fetch --all')
             $commands.Add('git diff upstream/master...master > diff_upstream.diff')
             $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_bkp.diff')
             $commands.Add('git add -A')
@@ -66,7 +67,7 @@ if ($repoOwner -eq "ornfelt") {
 
         "awsm" {
             Add-UpstreamIfMissing -UpstreamUrl "https://github.com/lcpz/awesome-copycats"
-            $commands.Add('git fetch upstream')
+            $commands.Add('git fetch --all')
             $commands.Add('git diff upstream/master...master > diff_upstream.diff')
             $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_bkp.diff')
             $commands.Add('git diff origin/tarneaux -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_tarneaux.diff')
@@ -76,7 +77,7 @@ if ($repoOwner -eq "ornfelt") {
 
         "st" {
             Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/st"
-            $commands.Add('git fetch upstream')
+            $commands.Add('git fetch --all')
             $commands.Add('git diff upstream/master...master > diff_upstream.diff')
             $commands.Add('git diff bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_bkp.diff')
             $commands.Add('git add -A')
@@ -85,7 +86,7 @@ if ($repoOwner -eq "ornfelt") {
     }
 }
 
-if ($repoName -eq 'AzerothCore-wotlk-with-NPCBots') {
+if ($cleanedRepoName -eq 'AzerothCore-wotlk-with-NPCBots') {
     Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/AzerothCore-wotlk-with-NPCBots"
     $commands.Add('git fetch upstream')
 
@@ -98,7 +99,7 @@ if ($repoName -eq 'AzerothCore-wotlk-with-NPCBots') {
     $commands.Add('git commit -m "update diff files"')
 }
 
-if ($repoName -eq 'TrinityCore-3.3.5-with-NPCBots') {
+if ($cleanedRepoName -eq 'TrinityCore-3.3.5-with-NPCBots') {
     Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/TrinityCore-3.3.5-with-NPCBots"
     $commands.Add('git fetch upstream')
     $commands.Add('git diff upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 .\tcore.diffx')
@@ -127,6 +128,10 @@ switch ($repoOwner) {
         Write-Error "Unsupported repository owner: $repoOwner"
         exit 1
     }
+}
+
+if ($cleanedRepoName -eq 'my_notes') {
+    $tokenEnvVarName = "GITHUB_TOKEN" 
 }
 
 #$tokenValue = $env:$tokenEnvVarName
