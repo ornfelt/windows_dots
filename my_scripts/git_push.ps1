@@ -46,7 +46,6 @@ if (-not $tokenValue) {
 $pushCommandActual  = "git push https://${tokenValue}@github.com/$repoOwner/$repoName $currentBranch"
 $pushCommandDisplay = "git push https://`$env:$($tokenEnvVarName)@github.com/$repoOwner/$repoName $currentBranch"
 
-# 6) Either show the masked command or execute the real push
 if ($OutputOnly) {
     Write-Output $pushCommandDisplay
 } else {
