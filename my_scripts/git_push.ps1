@@ -35,6 +35,9 @@ function Add-UpstreamIfMissing {
     $existingUpstream = git remote get-url upstream 2>$null
     if (-not $existingUpstream) {
         $commands.Add("git remote add upstream $UpstreamUrl")
+        Write-Output "upstream url did NOT exist... Added: $UpstreamUrl"
+    } else {
+        #Write-Output "upstream url already added: $UpstreamUrl"
     }
 }
 
@@ -86,22 +89,25 @@ if ($repoName -eq 'AzerothCore-wotlk-with-NPCBots') {
     Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/AzerothCore-wotlk-with-NPCBots"
     $commands.Add('git fetch upstream')
 
-    if ($currentBranch -eq 'linux') {
+    if ($currentBranch -eq "linux") {
         $commands.Add('git diff upstream/npcbots_3.3.5...linux -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 .\acore.diffx')
-    }
-    else {
+    } else {
         $commands.Add('git diff upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 .\acore.diffx')
     }
+    $commands.Add('git add -A')
+    $commands.Add('git commit -m "update diff files"')
 }
 
 if ($repoName -eq 'TrinityCore-3.3.5-with-NPCBots') {
     Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/TrinityCore-3.3.5-with-NPCBots"
     $commands.Add('git fetch upstream')
     $commands.Add('git diff upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 .\tcore.diffx')
+    $commands.Add('git add -A')
+    $commands.Add('git commit -m "update diff files"')
 }
 
 if ($OutputOnly) {
-    foreach ($cmd in $commands[0..($commands.Count - 2)]) {
+    foreach ($cmd in $commands[0..($commands.Count - 1)]) {
         Write-Output $cmd
     }
 }
