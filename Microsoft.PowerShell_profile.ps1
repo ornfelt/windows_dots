@@ -41,13 +41,13 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
     Invoke-FuzzyKillProcess
 }
 
-# Alias
 $aliases = @(
     ".cdn", ".cdc", ".cdp", ".ioq3", ".show_wifi", ".list_files", ".list_files_gui", 
     ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos", ".llama", ".update_nvim_from_linux", ".down", ".cdh", ".clean_shada",
-    ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull"
+    ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
+    ".cava"
 )
 
 foreach ($alias in $aliases) {
