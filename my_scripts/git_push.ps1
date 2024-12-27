@@ -45,7 +45,6 @@ $cleanedRepoName = $repoName -replace '\.git$', ''
 
 if ($repoOwner -eq "ornfelt") {
     switch ($cleanedRepoName) {
-
         "dwm" {
             Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/dwm"
             $commands.Add('git fetch --all')
@@ -55,7 +54,6 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git add -A')
             $commands.Add('git commit -m "update diff files"')
         }
-
         "dmenu" {
             Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/dmenu"
             $commands.Add('git fetch --all')
@@ -64,22 +62,27 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git add -A')
             $commands.Add('git commit -m "update diff files"')
         }
-
+        "st" {
+            Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/st"
+            $commands.Add('git fetch --all')
+            $commands.Add('git diff upstream/master...master > diff_upstream.diff')
+            $commands.Add('git diff bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_bkp.diff')
+            $commands.Add('git add -A')
+            $commands.Add('git commit -m "update diff files"')
+        }
+        "dwmblocks" {
+            Add-UpstreamIfMissing -UpstreamUrl "https://github.com/torrinfail/dwmblocks"
+            $commands.Add('git fetch --all')
+            $commands.Add('git diff upstream/master...master > diff_upstream.diff')
+            $commands.Add('git add -A')
+            $commands.Add('git commit -m "update diff files"')
+        }
         "awsm" {
             Add-UpstreamIfMissing -UpstreamUrl "https://github.com/lcpz/awesome-copycats"
             $commands.Add('git fetch --all')
             $commands.Add('git diff upstream/master...master > diff_upstream.diff')
             $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_bkp.diff')
             $commands.Add('git diff origin/tarneaux -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_tarneaux.diff')
-            $commands.Add('git add -A')
-            $commands.Add('git commit -m "update diff files"')
-        }
-
-        "st" {
-            Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/st"
-            $commands.Add('git fetch --all')
-            $commands.Add('git diff upstream/master...master > diff_upstream.diff')
-            $commands.Add('git diff bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" > diff_bkp.diff')
             $commands.Add('git add -A')
             $commands.Add('git commit -m "update diff files"')
         }
