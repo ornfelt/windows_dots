@@ -451,18 +451,18 @@ config.keys = {
   --},
 
   ---- Attach to muxer
-  {
-    key = 'a',
-    mods = 'LEADER',
-    action = act.AttachDomain 'unix',
-  },
+  --{
+  --  key = 'a',
+  --  mods = 'LEADER',
+  --  action = act.AttachDomain 'unix',
+  --},
 
   -- Detach from muxer
-  {
-    key = 'd',
-    mods = 'LEADER',
-    action = act.DetachDomain { DomainName = 'unix' },
-  },
+  --{
+  --  key = 'd',
+  --  mods = 'LEADER',
+  --  action = act.DetachDomain { DomainName = 'unix' },
+  --},
 
   -- Show list of workspaces
   {
