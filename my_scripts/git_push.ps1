@@ -86,6 +86,14 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git add -A')
             $commands.Add('git commit -m "update diff files"')
         }
+        "stk-code" {
+            Add-UpstreamIfMissing -UpstreamUrl "https://github.com/supertuxkart/stk-code"
+            $commands.Add('git fetch upstream')
+            $commands.Add('git diff upstream/master...HEAD > diff_upstream.diffx')
+            $commands.Add('git diff 3f125f6^! > changes.diffx')
+            $commands.Add('git add -A')
+            $commands.Add('git commit -m "update diff files"')
+        }
     }
 }
 
