@@ -106,3 +106,4 @@ env.ps1
 
 Modules/
 log.txt
+nvim/lazy-lock.json
