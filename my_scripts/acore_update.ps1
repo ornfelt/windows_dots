@@ -24,12 +24,20 @@ foreach ($subdir in Get-ChildItem -Path $modulesPath -Directory) {
 
     # Navigate into subdir and do git pull
     cd $subdirPath
+
     #Write-Output ""
-    Write-Output "`nPerforming git pull in $subdirPath"
-    git pull
+    #Write-Output "`nPerforming git pull in $subdirPath"
+    #git pull
+    if ($subdirPath -match "mod-eluna") {
+        Write-Output "`nPerforming specific git pull for mod-eluna in $subdirPath"
+        git pull https://github.com/azerothcore/mod-eluna master
+    } else {
+        Write-Output "`nPerforming git pull in $subdirPath"
+        git pull
+    }
 }
 
 cd $basePath
 Write-Output "`nCompleted git pull in all directories."
-Write-Output "`n***If you need to specify branch for eluna, do: git pull https://github.com/azerothcore/mod-eluna master"
+#Write-Output "`n***If you need to specify branch for eluna, do: git pull https://github.com/azerothcore/mod-eluna master"
 
