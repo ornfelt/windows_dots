@@ -1,21 +1,7 @@
-# lf settings
-
-# Note on Image Previews
-# For those wanting image previews, like this system, there are four steps to
-# set it up. These are done automatically for LARBS users, but I will state
-# them here for others doing it manually.
-#
-# 1. ueberzug must be installed.
-# 2. The scope file (~/.config/lf/scope for me), must have a command similar to
-#    mine to generate ueberzug images.
-# 3. A `set cleaner` line as below is a cleaner script.
-# 4. lf should be started through a wrapper script (~/.local/bin/lfub for me)
-#    that creates the environment for ueberzug. This command can be be aliased
-#    in your shellrc (`alias lf="lfub") or if set to a binding, should be
-#    called directly instead of normal lf.
+#lf -log lf_log.txt
 
 # Basic vars
-set shellopts '-eu'
+set shellopts ''
 set ifs "\n"
 set scrolloff 10
 set icons
@@ -26,144 +12,43 @@ set previewer '~/.config/lf/scope'
 set autoquit on
 set hidden
 
-cmd open $%EDITOR% %f%
-
 # cmds/functions
-#cmd open ${{
-#    case $(file --mime-type "$(readlink -f $f)" -b) in
-#	application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) localc $fx ;;
-#	image/vnd.djvu|application/pdf|application/postscript) setsid -f zathura $fx >/dev/null 2>&1 ;;
-#        text/*|application/json|inode/x-empty|application/x-subrip) $EDITOR $fx;;
-#	image/x-xcf) setsid -f gimp $f >/dev/null 2>&1 ;;
-#	image/svg+xml) display -- $f ;;
-#	image/*) rotdir $f | grep -i "\.\(png\|jpg\|jpeg\|gif\|webp\|avif\|tif\|ico\)\(_large\)*$" |
-#		setsid -f nsxiv -aio 2>/dev/null | while read -r file; do
-#			[ -z "$file" ] && continue
-#			lf -remote "send select \"$file\""
-#			lf -remote "send toggle"
-#		done &
-#		;;
-#	audio/*|video/x-ms-asf) mpv --audio-display=no $f ;;
-#	video/*) setsid -f mpv $f -quiet >/dev/null 2>&1 ;;
-#	application/pdf|application/vnd.djvu|application/epub*) setsid -f zathura $fx >/dev/null 2>&1 ;;
-#	application/pgp-encrypted) $EDITOR $fx ;;
-#	application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.oasis.opendocument.text|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.oasis.opendocument.spreadsheet|application/vnd.oasis.opendocument.spreadsheet-template|application/vnd.openxmlformats-officedocument.presentationml.presentation|application/vnd.oasis.opendocument.presentation-template|application/vnd.oasis.opendocument.presentation|application/vnd.ms-powerpoint|application/vnd.oasis.opendocument.graphics|application/vnd.oasis.opendocument.graphics-template|application/vnd.oasis.opendocument.formula|application/vnd.oasis.opendocument.database) setsid -f libreoffice $fx >/dev/null 2>&1 ;;
-#        application/octet-stream) case ${f##*.} in
-#			doc|docx|xls|xlsx|odt|ppt|pptx) setsid -f libreoffice $fx >/dev/null 2>&1 ;;
-#			ghw) setsid -f gtkwave $f >/dev/null 2>&1 ;;
-#			ts) setsid -f mpv $f -quiet >/dev/null 2>&1 ;;
-#			*) setsid -f zathura $fx >/dev/null 2>&1 ;;
-#	   	esac ;;
-#	*) for f in $fx; do setsid -f $OPENER $f >/dev/null 2>&1; done;;
-#    esac
-#}}
-
-cmd extract ${{
-	clear; tput cup $(($(tput lines)/3)); tput bold
-	set -f
-	printf "%s\n\t" "$fx"
-	printf "extract?[y/N]"
-	read ans
-	[ $ans = "y" ] && {
-		case $fx in
-			*.tar.bz2)   tar xjf $fx     ;;
-			*.tar.gz)    tar xzf $fx     ;;
-			*.bz2)       bunzip2 $fx     ;;
-			*.rar)       unrar e $fx     ;;
-			*.gz)        gunzip $fx      ;;
-			*.tar)       tar xf $fx      ;;
-			*.tbz2)      tar xjf $fx     ;;
-			*.tgz)       tar xzf $fx     ;;
-			*.zip)       unzip $fx       ;;
-			*.Z)         uncompress $fx  ;;
-			*.7z)        7z x $fx        ;;
-			*.tar.xz)    tar xf $fx      ;;
-		esac
-	}
+cmd mkdir ${{
+    $path = "$args"
+    if (-not (Test-Path -Path $path)) {
+        New-Item -ItemType Directory -Path $path -Force | Out-Null
+        Write-Output "Directory created: $path"
+    } else {
+        Write-Output "Directory already exists: $path"
+    }
 }}
 
-cmd delete ${{
-	clear; tput cup $(($(tput lines)/3)); tput bold
-	set -f
-	printf "%s\n\t" "$fx"
-	printf "delete?[y/N]"
-	read ans
-	[ $ans = "y" ] && rm -rf -- $fx
+#set shell cmd
+set shell powershell
+
+#cmd open $%EDITOR% %f%
+cmd open ${{
+    $editor = $env:EDITOR
+    if (-not $editor) { $editor = "notepad" }
+    & $editor "$env:f"
 }}
-
-cmd moveto ${{
-	set -f
-	dest=$(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' "${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs" | fzf --prompt 'Move to where? ' | sed 's|~|$HOME|')
-	[ -z "$dest" ] && exit
-	destpath=$(eval printf '%s' \"$dest\")
-	clear; tput cup $(($(tput lines)/3)); tput bold
-	echo "From:"
-	echo "$fx" | sed 's/^/   /'
-	printf "To:\n   %s\n\n\tmove?[y/N]" "$destpath"
-	read -r ans
-	[ "$ans" != "y" ] && exit
-	for x in $fx; do
-		mv -iv "$x" "$destpath"
-	done &&
-	notify-send "🚚 File(s) moved." "File(s) moved to $destpath."
-}}
-
-cmd copyto ${{
-	set -f
-	dest=$(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' "${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs" | fzf --prompt 'Copy to where? ' | sed 's|~|$HOME|')
-	[ -z "$dest" ] && exit
-	destpath=$(eval printf '%s' \"$dest\")
-	clear; tput cup $(($(tput lines)/3)); tput bold
-	echo "From:"
-	echo "$fx" | sed 's/^/   /'
-	printf "To:\n   %s\n\n\tcopy?[y/N]" "$destpath"
-	read -r ans
-	[ "$ans" != "y" ] && exit
-	for x in $fx; do
-		cp -ivr "$x" "$destpath"
-	done &&
-	notify-send "📋 File(s) copied." "File(s) copied to $destpath."
-}}
-
-cmd bulkrename ${{
-    tmpfile_old="$(mktemp)"
-    tmpfile_new="$(mktemp)"
-
-    [ -n "$fs" ] && fs=$(basename -a $fs) || fs=$(ls)
-
-    echo "$fs" > "$tmpfile_old"
-    echo "$fs" > "$tmpfile_new"
-    $EDITOR "$tmpfile_new"
-
-    [ "$(wc -l < "$tmpfile_old")" -eq "$(wc -l < "$tmpfile_new")" ] || { rm -f "$tmpfile_old" "$tmpfile_new"; exit 1; }
-
-    paste "$tmpfile_old" "$tmpfile_new" | while IFS="$(printf '\t')" read -r src dst
-    do
-        [ "$src" = "$dst" ] || [ -e "$dst" ] || mv -- "$src" "$dst"
-    done
-
-    rm -f "$tmpfile_old" "$tmpfile_new"
-    lf -remote "send $id unselect"
-}}
-
-cmd mkdir $mkdir -p "$(echo $* | tr ' ' '\ ')"
 
 # Keys
 # Defaults:
 # https://github.com/gokcehan/lf/blob/master/doc.md
 map <c-r> reload
-map \: shell
+map \: shell -Command
 
 #map <enter> &mimeopen "$f"
 #map o &mimeopen "$f"
 #map O $mimeopen --ask "$f"
-map <enter> open "$f"
-map o shell
+map <enter> open
+map o shell -Command
 
 map v invert-below
 
 cmd spawn_shell ${{
-    cd "$PWD" && $SHELL
+    powershell
 }}
 
 map S spawn_shell
@@ -193,28 +78,36 @@ map . set hidden!
 
 # g-binds
 map gg top
-map ge cd /etc
-map gh cd /home/jonas
-map gu cd /usr
-map gL cd -r %f
-map gM cd /mnt
-map gr cd /
-map g? cd /usr/share/doc/lf
-map gd cd ~/Documents
-map gw cd ~/Pictures/Wallpapers
-map gc cd ~/Documents/Code
-map gm cd /media/data/Movies
-map g. cd ~/.config
+map gC cd C:/
+map ge cd C:/Windows/System32
+map gu cd C:/users
+map gh cd ~/
+map gl cd ~/AppData/Local
+map gL cd ~/AppData/Roaming
+#map gM cd /mnt
 map ga cd ~/Downloads
+map gd cd ~/Documents
+map gw cd ~/OneDrive/Pictures
+map gc cd ~/Code2
+map gm cd ~/OneDrive/Videos
+map g. cd ~/.wezterm
+map g? cd ~/AppData/Local/lf
+
+#lf -remote 'send echo hello world'
+cmd cd_git_root ${{
+    powershell -Command 'lf -remote \"send cd $(git rev-parse --show-toplevel)"'
+}}
+
+map gr cd_git_root
 
 cmd term_vim ${{
-    ~/.local/bin/my_scripts/term_vim.sh wezterm "$fx"
+    wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command vim "$env:f"
 }}
 
 map gf term_vim
 
 cmd firefox_open ${{
-    firefox "$fx"
+    firefox "$env:fx"
 }}
 
 map gx firefox_open
@@ -241,62 +134,23 @@ map <space>s :toggle; down
 map V push :!nvim<space>
 map <c-n> push :mkdir<space>
 
-# Image commands
-cmd convert_rotate ${{
-	convert -rotate 90 $fx $fx
+# Open explorer
+#powershell -Command "Start-Process explorer.exe -ArgumentList '.'"
+cmd open_explorer ${{
+    Start-Process explorer.exe -ArgumentList '.'
 }}
 
-cmd set_bg ${{
-	feh --bg-fill $fx
-}}
-
-map bg set_bg
-map bc convert_rotate
+map bg open_explorer
 
 # Copy path
 cmd copy_path ${{
-    #/home/jonas/.local/bin/my_scripts/copy_path.sh "$fx"
-    #echo "$fx" | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh "{}"
-    echo "$fx" | tr '\n' ' ' | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh {}
+    powershell -Command "& 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '$env:fx'"
 }}
 
 cmd copy_path_arg ${{
-    #/home/jonas/.local/bin/my_scripts/copy_path.sh "$fx" 1
-    #echo "$fx" | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh "{}" 1
-    echo "$fx" | tr '\n' ' ' | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh {} 1
+    powershell -Command "& 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '$env:fx' 1"
 }}
 
 map <space>- copy_path
 map <space>_ copy_path_arg
-
-# Manage file
-cmd manage_file ${{
-    #/home/jonas/.local/bin/my_scripts/manage_file.sh "$fx"
-    #/home/jonas/.local/bin/my_scripts/manage_file.sh "$fx" 1 # Rofi
-
-    echo "$fx" | tr '\n' ' ' | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/manage_file.sh {}
-    #echo "$fx" | tr '\n' ' ' | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/manage_file.sh {} 1 # Rofi
-}}
-
-map <space><space> manage_file
-
-# Old (kept for reference)
-
-# Use space-space instead of these
-#map X !tar -zxvf %f
-#map Z !tar -cvzf %f.tar.gz %f
-#map x $$f
-#map X !$f
-
-#map e $$EDITOR "$f"
-#map i $$PAGER "$f"
-#map w $$SHELL
-
-#map gl cd -r .
-#map gv cd /var
-#map gR eval fm.cd(ranger.RANGERDIR)
-
-#map J $lf -remote "send $id cd $(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' ${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs | fzf)"
-#map W $setsid -f $TERMINAL >/dev/null 2>&1
-#map Y $printf "%s" "$fx" | xclip -selection clipboard
 

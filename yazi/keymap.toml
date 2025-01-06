@@ -66,40 +66,46 @@ desc = "Enter directory or open file"
 # ...
 
 # g-binds
+
+[[manager.prepend_keymap]]
+on = ["g", "C"]
+run = [ '''cd C:/''' ]
+desc = "cd to C:/"
+
 [[manager.prepend_keymap]]
 on = ["g", "e"]
-run = [ '''cd /etc''' ]
-desc = "cd to /etc"
+run = [ '''cd C:/Windows/System32''' ]
+desc = "cd to System32"
+
+[[manager.prepend_keymap]]
+on = ["g", "u"]
+run = [ '''cd C:/users''' ]
+desc = "cd to C:/users"
 
 [[manager.prepend_keymap]]
 on = ["g", "h"]
 run = [ '''cd ~''' ]
-desc = "cd to /home/jonas"
+desc = "no place like ~"
 
 [[manager.prepend_keymap]]
-on = ["g", "u"]
-run = [ '''cd $env:USERPROFILE''' ]
-desc = "cd to /usr"
+on = ["g", "l"]
+run = [ '''cd ~/AppData/local''' ]
+desc = "cd to localappdata"
 
 [[manager.prepend_keymap]]
 on = ["g", "L"]
-run = [ '''cd -r {{f}}''' ]
-desc = "cd to selected file's directory"
-
-[[manager.prepend_keymap]]
-on = ["g", "M"]
-run = [ '''cd /mnt''' ]
-desc = "cd to /mnt"
+run = [ '''cd ~/AppData/Roaming''' ]
+desc = "cd to appdata"
 
 #[[manager.prepend_keymap]]
-#on = ["g", "r"]
-#run = [ '''cd /''' ]
-#desc = "cd to root"
+#on = ["g", "M"]
+#run = [ '''cd /mnt''' ]
+#desc = "cd to /mnt"
 
 [[manager.prepend_keymap]]
-on = ["g", "?"]
-run = [ '''cd /usr/share/doc/ranger''' ]
-desc = "cd to ranger docs"
+on = ["g", "a"]
+run = [ '''cd ~/Downloads''' ]
+desc = "cd to ~/Downloads"
 
 [[manager.prepend_keymap]]
 on = ["g", "d"]
@@ -108,34 +114,32 @@ desc = "cd to ~/Documents"
 
 [[manager.prepend_keymap]]
 on = ["g", "w"]
-run = [ '''cd ~/Pictures/Wallpapers''' ]
-desc = "cd to Wallpapers"
+run = [ '''cd ~/OneDrive/Pictures''' ]
+desc = "cd to pics"
 
 [[manager.prepend_keymap]]
 on = ["g", "c"]
-run = [ '''cd ~/Code''' ]
-desc = "cd to ~/Code"
+run = [ '''cd ~/Code2''' ]
+desc = "cd to code"
 
 [[manager.prepend_keymap]]
 on = ["g", "m"]
-run = [ '''cd /media/data/Movies''' ]
+run = [ '''cd ~/OneDrive/Movies''' ]
 desc = "cd to Movies"
 
 [[manager.prepend_keymap]]
 on = ["g", "."]
-run = [ '''cd ~/.config''' ]
+run = [ '''cd ~/.wezterm''' ]
 desc = "cd to ~/.config"
 
 [[manager.prepend_keymap]]
-on = ["g", "a"]
-run = [ '''cd ~/Downloads''' ]
-desc = "cd to ~/Downloads"
+on = ["g", "?"]
+run = [ '''cd ~/AppData/Roaming/yazi/config''' ]
+desc = "cd to yazi dir"
 
 [[manager.prepend_keymap]]
 on = [ "g", "r" ]
-run = '''
-	shell 'ya emit cd "$(git rev-parse --show-toplevel)"'
-'''
+run = [ '''shell --confirm "powershell -Command ya emit-to 0 cd (git rev-parse --show-toplevel)"''' ]
 desc = "cd to git root dir"
 
 [[manager.prepend_keymap]]
