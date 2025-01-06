@@ -1,1 +1,0 @@
-C:\Windows\System32\find.exe . -maxdepth 1 | fzf --reverse

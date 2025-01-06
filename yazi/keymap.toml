@@ -1,0 +1,359 @@
+# See:
+# https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/keymap-default.toml
+# https://github.com/sxyazi/yazi/blob/shipped/yazi-config/preset/keymap-default.toml
+# https://yazi-rs.github.io/features/
+# https://yazi-rs.github.io/docs/tips/
+# https://yazi-rs.github.io/docs/configuration/keymap/#manager.shell
+
+#[manager]
+#prepend_keymap = [
+#    { on = [ "g", "e" ], run = "cd /etc", desc = "cd to /etc" },
+#]
+
+[[manager.prepend_keymap]]
+on   = "S"
+run  = 'shell "$SHELL" --block --confirm'
+desc = "Open shell here"
+
+[[manager.prepend_keymap]]
+on = "S"
+run = [ '''shell "$SHELL" --block --confirm''' ]
+desc = "Open shell here"
+
+[[manager.prepend_keymap]]
+on = "<C-n>"
+#run = [ '''shell --block --interactive''' ]
+run = [ '''create --dir''' ]
+desc = "Create new dir"
+
+[[manager.prepend_keymap]]
+on = "D"
+run = [ '''delete''' ]
+desc = "Delete file or directory"
+
+# oil-like
+[[manager.prepend_keymap]]
+on = "o"
+run = [ '''create''' ]
+desc = "Create"
+
+# ranger/lf-like
+[[manager.prepend_keymap]]
+on = "l"
+run = '''
+    shell --confirm 'if [ -d "$@" ]; then ya emit enter; elif [ -f "$@" ]; then ya emit open; else echo "Unknown item"; fi'
+'''
+desc = "Enter directory or open file"
+
+# Sorting
+# ...
+
+# Settings
+# ...
+
+# g-binds
+[[manager.prepend_keymap]]
+on = ["g", "e"]
+run = [ '''cd /etc''' ]
+desc = "cd to /etc"
+
+[[manager.prepend_keymap]]
+on = ["g", "h"]
+run = [ '''cd /home/jonas''' ]
+desc = "cd to /home/jonas"
+
+[[manager.prepend_keymap]]
+on = ["g", "u"]
+run = [ '''cd /usr''' ]
+desc = "cd to /usr"
+
+[[manager.prepend_keymap]]
+on = ["g", "L"]
+run = [ '''cd -r {{f}}''' ]
+desc = "cd to selected file's directory"
+
+[[manager.prepend_keymap]]
+on = ["g", "M"]
+run = [ '''cd /mnt''' ]
+desc = "cd to /mnt"
+
+#[[manager.prepend_keymap]]
+#on = ["g", "r"]
+#run = [ '''cd /''' ]
+#desc = "cd to root"
+
+[[manager.prepend_keymap]]
+on = ["g", "?"]
+run = [ '''cd /usr/share/doc/ranger''' ]
+desc = "cd to ranger docs"
+
+[[manager.prepend_keymap]]
+on = ["g", "d"]
+run = [ '''cd ~/Documents''' ]
+desc = "cd to ~/Documents"
+
+[[manager.prepend_keymap]]
+on = ["g", "w"]
+run = [ '''cd ~/Pictures/Wallpapers''' ]
+desc = "cd to Wallpapers"
+
+[[manager.prepend_keymap]]
+on = ["g", "c"]
+run = [ '''cd ~/Code''' ]
+desc = "cd to ~/Code"
+
+[[manager.prepend_keymap]]
+on = ["g", "m"]
+run = [ '''cd /media/data/Movies''' ]
+desc = "cd to Movies"
+
+[[manager.prepend_keymap]]
+on = ["g", "."]
+run = [ '''cd ~/.config''' ]
+desc = "cd to ~/.config"
+
+[[manager.prepend_keymap]]
+on = ["g", "a"]
+run = [ '''cd ~/Downloads''' ]
+desc = "cd to ~/Downloads"
+
+[[manager.prepend_keymap]]
+on = [ "g", "r" ]
+run = '''
+	shell 'ya emit cd "$(git rev-parse --show-toplevel)"'
+'''
+desc = "cd to git root dir"
+
+[[manager.prepend_keymap]]
+on = ["g", "f"]
+run = [
+'''
+    shell '~/.local/bin/my_scripts/term_vim.sh wezterm "$0"' --confirm 
+'''
+]
+desc = "Open file in vim inside a new wezterm window"
+
+[[manager.prepend_keymap]]
+on = ["g", "x"]
+run = [
+'''
+    shell 'firefox "$0"' --confirm 
+'''
+]
+desc = "Open file in firefox"
+
+# Fuzzy search
+#[[manager.prepend_keymap]]
+#on = "Ctrl-f"
+#run = [ '''fzf_search''' ]
+#desc = "Search files"
+#
+#[[manager.prepend_keymap]]
+#on = "Ctrl-g"
+#run = [ '''fzf_search_dirs''' ]
+#desc = "Search directories"
+
+# Default Z key can also be used instead of this
+[[manager.prepend_keymap]]
+on = "<C-f>"
+run = [ '''plugin fzf''' ]
+desc = "Jump to a file/directory via fzf"
+
+# Rename
+[[manager.prepend_keymap]]
+on = ["c", "w"]
+run = [ '''rename''' ]
+desc = "Rename"
+
+# Tagging / marking
+#[[manager.prepend_keymap]]
+#on = ["m", "c"]
+#run = [
+#    '''
+#    shell 'echo "$PWD" > /tmp/yazi_marked_dir' --confirm
+#    '''
+#]
+#desc = "Mark current dir"
+#
+## Try in shell:
+## marked_dir=$(cat /tmp/yazi_marked_dir 2>/dev/null) && [ -d "$marked_dir" ] && cd "$marked_dir" || echo "No valid marked directory"
+## This also works (maybe redundant though):
+##shell 'marked_dir=$(cat /tmp/yazi_marked_dir 2>/dev/null) && [ -d "$marked_dir" ] && ya emit cd "$marked_dir" || echo "No valid marked directory"' --confirm
+#[[manager.prepend_keymap]]
+#on = ["'", "c"]
+#run = '''
+#    shell 'ya emit cd "$(cat /tmp/yazi_marked_dir 2>/dev/null)"' --confirm
+#'''
+#desc = "Go back to marked dir"
+
+# Use bookmark plugin instead of above:
+# https://github.com/dedukun/bookmarks.yazi
+# Add the plugin
+#ya pack -a dedukun/bookmarks
+# Install the plugin
+#ya pack -i
+# Upgrade the plugin
+#ya pack -u
+[[manager.prepend_keymap]]
+on = [ "m" ]
+run = "plugin bookmarks --args=save"
+desc = "Save current position as a bookmark"
+
+[[manager.prepend_keymap]]
+on = [ "'" ]
+run = "plugin bookmarks --args=jump"
+desc = "Jump to a bookmark"
+
+[[manager.prepend_keymap]]
+on = [ "b", "d" ]
+run = "plugin bookmarks --args=delete"
+desc = "Delete a bookmark"
+
+[[manager.prepend_keymap]]
+on = [ "b", "D" ]
+run = "plugin bookmarks --args=delete_all"
+desc = "Delete all bookmarks"
+
+# Custom
+# ...
+
+# Image commands
+[[manager.prepend_keymap]]
+on = ["b", "g"]
+run = [
+'''
+    shell 'feh --bg-scale "$0"' --confirm 
+'''
+]
+desc = "Set current image as background"
+
+[[manager.prepend_keymap]]
+on = ["b", "c"]
+run = [
+'''
+    shell 'killall w3mimgdisplay && convert -rotate 90 "$0" "$0"' --confirm 
+'''
+]
+desc = "Rotate image"
+
+[[manager.prepend_keymap]]
+on = ["b", "i"]
+run = [
+'''
+    shell 'killall convert "$0" -resize 1440x1080\> "bl_$0"' --confirm 
+'''
+]
+desc = "Resize image"
+
+[[manager.prepend_keymap]]
+on = ["b", "t"]
+run = [
+'''
+    shell 'convert "$0" -transparent white "$0"' --confirm 
+'''
+]
+desc = "Resize image"
+
+# Copy path
+[[manager.prepend_keymap]]
+on = [" ", "-"]
+run = [
+	#shell '/home/jonas/.local/bin/my_scripts/copy_path.sh "$@"' --confirm
+ '''
+    shell 'echo "$@" | sed "s/ /,/g" | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh "{}"' --confirm
+'''
+]
+desc = "Copy selection to clipboard"
+
+[[manager.prepend_keymap]]
+on = [" ", "_"]
+run = [
+	#shell '/home/jonas/.local/bin/my_scripts/copy_path.sh "$@" 1' --confirm
+ '''
+    shell 'echo "$@" | sed "s/ /,/g" | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh "{}" 1' --confirm
+'''
+]
+desc = "Copy selection to clipboard"
+
+# Manage file
+[[manager.prepend_keymap]]
+on = [" ", " "]
+run = [
+    #shell '/home/jonas/.local/bin/my_scripts/manage_file.sh "$@"' --confirm
+	#shell '/home/jonas/.local/bin/my_scripts/manage_file.sh "$@" 1' --confirm
+    #shell 'echo "$@" | sed "s/ /,/g" | xargs -I {} /home/jonas/.local/bin/my_scripts/manage_file.sh "{}" 1' --confirm
+ '''
+    shell 'echo "$@" | sed "s/ /,/g" | xargs -I {} /home/jonas/.local/bin/my_scripts/manage_file.sh "{}"' --confirm
+'''
+]
+desc = "Copy selection to clipboard"
+
+###
+# https://github.com/lpnh/fg.yazi
+# Add the plugin
+#ya pack -a lpnh/fg
+# Install the plugin
+#ya pack -i
+# Upgrade the plugin
+#ya pack -u
+
+[[manager.prepend_keymap]]
+on   = [ "f", "g" ]
+run  = "plugin fg"
+desc = "find file by content (fuzzy match)"
+
+[[manager.prepend_keymap]]
+on   = [ "f", "G" ]
+run  = "plugin fg --args='rg'"
+desc = "find file by content (ripgrep match)"
+
+[[manager.prepend_keymap]]
+on   = [ "f", "a" ]
+run  = "plugin fg --args='rga'"
+desc = "find file by content (ripgrep-all)"
+
+[[manager.prepend_keymap]]
+on   = [ "f", "f" ]
+run  = "plugin fg --args='fzf'"
+desc = "find file by filename"
+###
+
+# Old (kept for reference)
+
+#[[manager.prepend_keymap]]
+#on = "y"
+##run = [
+##  '''
+##  shell 'echo "$@" > ~/.config/yazi/test.txt' --confirm
+##  '''
+##]
+#run = [
+# '''
+#	shell 'echo "$@" | xclip -i -selection clipboard' --confirm
+#''', "yank" 
+#]
+#desc = "Copy selection to clipboard"
+
+# Wayland copy to clipboard and yank:
+#[[manager.prepend_keymap]]
+#on  = "y"
+#run = [ '''
+#	shell 'for path in "$@"; do echo "file://$path"; done | wl-copy -t text/uri-list'
+#''', "yank" ]
+
+# Use space-space instead of these. These aren't tested...
+#[[manager.prepend_keymap]]
+#on = ["x", "-"]
+#run = [ '''shell chmod -x "$0"''' ]
+#desc = "Remove execute permissions"
+#
+#[[manager.prepend_keymap]]
+#on = ["x", "+"]
+#run = [ '''shell chmod +x {{s}}''' ]
+#desc = "Add execute permissions"
+
+#[[manager.prepend_keymap]]
+#on = "X"
+#run = [ '''shell tar -zxvf {{f}}''' ]
+#desc = "Extract tar.gz"
+

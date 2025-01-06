@@ -22,8 +22,7 @@ set icons
 set period 1
 set hiddenfiles ".*:*.aux:*.log:*.bbl:*.bcf:*.blg:*.run.xml"
 set cleaner '~/.config/lf/cleaner'
-# custom file preview
-set previewer "C:\Users\jonas\AppData\Local\lf\preview.bat"
+set previewer '~/.config/lf/scope'
 set autoquit on
 set hidden
 
@@ -31,12 +30,12 @@ set hidden
 cmd open ${{
     case $(file --mime-type "$(readlink -f $f)" -b) in
 	application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) localc $fx ;;
-	image/vnd.djvu|application/pdf|application/octet-stream|application/postscript) setsid -f zathura $fx >/dev/null 2>&1 ;;
+	image/vnd.djvu|application/pdf|application/postscript) setsid -f zathura $fx >/dev/null 2>&1 ;;
         text/*|application/json|inode/x-empty|application/x-subrip) $EDITOR $fx;;
 	image/x-xcf) setsid -f gimp $f >/dev/null 2>&1 ;;
 	image/svg+xml) display -- $f ;;
-	image/*) rotdir $f | grep -i "\.\(png\|jpg\|jpeg\|gif\|webp\|tif\|ico\)\(_large\)*$" |
-		setsid -f sxiv -aio 2>/dev/null | while read -r file; do
+	image/*) rotdir $f | grep -i "\.\(png\|jpg\|jpeg\|gif\|webp\|avif\|tif\|ico\)\(_large\)*$" |
+		setsid -f nsxiv -aio 2>/dev/null | while read -r file; do
 			[ -z "$file" ] && continue
 			lf -remote "send select \"$file\""
 			lf -remote "send toggle"
@@ -46,17 +45,16 @@ cmd open ${{
 	video/*) setsid -f mpv $f -quiet >/dev/null 2>&1 ;;
 	application/pdf|application/vnd.djvu|application/epub*) setsid -f zathura $fx >/dev/null 2>&1 ;;
 	application/pgp-encrypted) $EDITOR $fx ;;
-	application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.oasis.opendocument.text) setsid -f lowriter $fx >/dev/null 2>&1 ;;
-	application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/octet-stream|application/vnd.oasis.opendocument.spreadsheet|application/vnd.oasis.opendocument.spreadsheet-template) setsid -f localc $fx >/dev/null 2>&1 ;;
-	application/vnd.openxmlformats-officedocument.presentationml.presentation|application/vnd.oasis.opendocument.presentation-template|application/vnd.oasis.opendocument.presentation|application/vnd.ms-powerpoint) setsid -f loimpress $fx >/dev/null 2>&1 ;;
-	application/vnd.oasis.opendocument.graphics|application/vnd.oasis.opendocument.graphics-template) setsid -f lodraw $fx >/dev/null 2>&1 ;;
-	application/vnd.oasis.opendocument.formula) setsid -f lomath $fx >/dev/null 2>&1 ;;
-	application/vnd.oasis.opendocument.database) setsid -f lobase $fx >/dev/null 2>&1 ;;
-        *) for f in $fx; do setsid -f $OPENER $f >/dev/null 2>&1; done;;
+	application/vnd.openxmlformats-officedocument.wordprocessingml.document|application/vnd.oasis.opendocument.text|application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|application/vnd.oasis.opendocument.spreadsheet|application/vnd.oasis.opendocument.spreadsheet-template|application/vnd.openxmlformats-officedocument.presentationml.presentation|application/vnd.oasis.opendocument.presentation-template|application/vnd.oasis.opendocument.presentation|application/vnd.ms-powerpoint|application/vnd.oasis.opendocument.graphics|application/vnd.oasis.opendocument.graphics-template|application/vnd.oasis.opendocument.formula|application/vnd.oasis.opendocument.database) setsid -f libreoffice $fx >/dev/null 2>&1 ;;
+        application/octet-stream) case ${f##*.} in
+			doc|docx|xls|xlsx|odt|ppt|pptx) setsid -f libreoffice $fx >/dev/null 2>&1 ;;
+			ghw) setsid -f gtkwave $f >/dev/null 2>&1 ;;
+			ts) setsid -f mpv $f -quiet >/dev/null 2>&1 ;;
+			*) setsid -f zathura $fx >/dev/null 2>&1 ;;
+	   	esac ;;
+	*) for f in $fx; do setsid -f $OPENER $f >/dev/null 2>&1; done;;
     esac
 }}
-
-cmd mkdir $mkdir -p "$(echo $* | tr ' ' '\ ')"
 
 cmd extract ${{
 	clear; tput cup $(($(tput lines)/3)); tput bold
@@ -64,7 +62,22 @@ cmd extract ${{
 	printf "%s\n\t" "$fx"
 	printf "extract?[y/N]"
 	read ans
-	[ $ans = "y" ] && aunpack $fx
+	[ $ans = "y" ] && {
+		case $fx in
+			*.tar.bz2)   tar xjf $fx     ;;
+			*.tar.gz)    tar xzf $fx     ;;
+			*.bz2)       bunzip2 $fx     ;;
+			*.rar)       unrar e $fx     ;;
+			*.gz)        gunzip $fx      ;;
+			*.tar)       tar xf $fx      ;;
+			*.tbz2)      tar xjf $fx     ;;
+			*.tgz)       tar xzf $fx     ;;
+			*.zip)       unzip $fx       ;;
+			*.Z)         uncompress $fx  ;;
+			*.7z)        7z x $fx        ;;
+			*.tar.xz)    tar xf $fx      ;;
+		esac
+	}
 }}
 
 cmd delete ${{
@@ -77,145 +90,211 @@ cmd delete ${{
 }}
 
 cmd moveto ${{
-	clear; tput cup $(($(tput lines)/3)); tput bold
 	set -f
-	clear; echo "Move to where?"
-	dest="$(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' ${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs | fzf | sed 's|~|$HOME|')" &&
+	dest=$(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' "${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs" | fzf --prompt 'Move to where? ' | sed 's|~|$HOME|')
+	[ -z "$dest" ] && exit
+	destpath=$(eval printf '%s' \"$dest\")
+	clear; tput cup $(($(tput lines)/3)); tput bold
+	echo "From:"
+	echo "$fx" | sed 's/^/   /'
+	printf "To:\n   %s\n\n\tmove?[y/N]" "$destpath"
+	read -r ans
+	[ "$ans" != "y" ] && exit
 	for x in $fx; do
-		eval mv -iv \"$x\" \"$dest\"
+		mv -iv "$x" "$destpath"
 	done &&
-	notify-send "🚚 File(s) moved." "File(s) moved to $dest."
+	notify-send "🚚 File(s) moved." "File(s) moved to $destpath."
 }}
 
 cmd copyto ${{
-	clear; tput cup $(($(tput lines)/3)); tput bold
 	set -f
-	clear; echo "Copy to where?"
-	dest="$(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' ${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs | fzf | sed 's|~|$HOME|')" &&
+	dest=$(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' "${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs" | fzf --prompt 'Copy to where? ' | sed 's|~|$HOME|')
+	[ -z "$dest" ] && exit
+	destpath=$(eval printf '%s' \"$dest\")
+	clear; tput cup $(($(tput lines)/3)); tput bold
+	echo "From:"
+	echo "$fx" | sed 's/^/   /'
+	printf "To:\n   %s\n\n\tcopy?[y/N]" "$destpath"
+	read -r ans
+	[ "$ans" != "y" ] && exit
 	for x in $fx; do
-		eval cp -ivr \"$x\" \"$dest\"
+		cp -ivr "$x" "$destpath"
 	done &&
-	notify-send "📋 File(s) copied." "File(s) copies to $dest."
+	notify-send "📋 File(s) copied." "File(s) copied to $destpath."
 }}
 
-cmd bulk-rename ${{
-	index=$(mktemp /tmp/lf-bulk-rename-index.XXXXXXXXXX)
-	if [ -n "${fs}" ]; then
-		echo "$fs" > $index
-	else
-		echo "$(ls "$(dirname $f)" | tr ' ' "\n")" > $index
-	fi
-	index_edit=$(mktemp /tmp/lf-bulk-rename.XXXXXXXXXX)
-	cat $index > $index_edit
-	$EDITOR $index_edit
-	if [ $(cat $index | wc -l) -eq $(cat $index_edit | wc -l) ]; then
-		max=$(($(cat $index | wc -l)+1))
-		counter=1
-		while [ $counter -le $max ]; do
-			a="$(cat $index | sed "${counter}q;d")"
-			b="$(cat $index_edit | sed "${counter}q;d")"
-			counter=$(($counter+1))
-			
-			[ "$a" = "$b" ] && continue
-			[ -e "$b" ] && echo "File exists: $b" && continue
-			mv "$a" "$b"
-		done
-	else
-		echo "Number of lines must stay the same"
-	fi
-	rm $index $index_edit
+cmd bulkrename ${{
+    tmpfile_old="$(mktemp)"
+    tmpfile_new="$(mktemp)"
+
+    [ -n "$fs" ] && fs=$(basename -a $fs) || fs=$(ls)
+
+    echo "$fs" > "$tmpfile_old"
+    echo "$fs" > "$tmpfile_new"
+    $EDITOR "$tmpfile_new"
+
+    [ "$(wc -l < "$tmpfile_old")" -eq "$(wc -l < "$tmpfile_new")" ] || { rm -f "$tmpfile_old" "$tmpfile_new"; exit 1; }
+
+    paste "$tmpfile_old" "$tmpfile_new" | while IFS="$(printf '\t')" read -r src dst
+    do
+        [ "$src" = "$dst" ] || [ -e "$dst" ] || mv -- "$src" "$dst"
+    done
+
+    rm -f "$tmpfile_old" "$tmpfile_new"
+    lf -remote "send $id unselect"
 }}
 
+cmd mkdir $mkdir -p "$(echo $* | tr ' ' '\ ')"
+
+# Keys
+# Defaults:
+# https://github.com/gokcehan/lf/blob/master/doc.md
+map <c-r> reload
+map \: shell
+
+#map <enter> &mimeopen "$f"
+#map o &mimeopen "$f"
+#map O $mimeopen --ask "$f"
+map <enter> open "$f"
+map o shell
+
+map v invert-below
+
+cmd spawn_shell ${{
+    cd "$PWD" && $SHELL
+}}
+
+map S spawn_shell
+
+map D delete
+#map E extract
+#map C copyto
+#map M moveto
+
+# Sorting
+map ,n :set sortby natural; set info
+map ,s :set sortby size; set info size
+map ,t :set sortby time; set info time
+map ,a :set sortby atime; set info atime
+map ,c :set sortby ctime; set info ctime
+map ,e :set sortby ext; set info
+
+# Settings
+map zh set hidden!
+map zr set reverse!
+map zn set info
+map zs set info size
+map zt set info time
+map za set info size:time
+map <c-h> set hidden!
+map . set hidden!
+
+# g-binds
+map gg top
+map ge cd /etc
+map gh cd /home/jonas
+map gu cd /usr
+map gL cd -r %f
+map gM cd /mnt
+map gr cd /
+map g? cd /usr/share/doc/lf
+map gd cd ~/Documents
+map gw cd ~/Pictures/Wallpapers
+map gc cd ~/Documents/Code
+map gm cd /media/data/Movies
+map g. cd ~/.config
+map ga cd ~/Downloads
+
+cmd term_vim ${{
+    ~/.local/bin/my_scripts/term_vim.sh wezterm "$fx"
+}}
+
+map gf term_vim
+
+cmd firefox_open ${{
+    firefox "$fx"
+}}
+
+map gx firefox_open
+
+# Fuzzy search
+map <c-f> $lf -remote "send $id select \"$(fzf)\""
+
+# Rename
+#map c push A<c-u> # new rename
+map c
+map cw push A<c-u> # new rename
+map a push A<a-b> # after extension
+map A rename # at the very end
+map I push A<c-a> # at the very beginning
+map i push A<a-b><a-b><a-f> # before extension
+map cW bulkrename
+
+# Tagging / marking
+map <space>
+#map <space> :toggle; down
+map <space>s :toggle; down
+
+# Custom
+map V push :!nvim<space>
+map <c-n> push :mkdir<space>
+
+# Image commands
 cmd convert_rotate ${{
-	# From ranger:
-	#map C shell killall w3mimgdisplay && convert -rotate 90 %s %s
 	convert -rotate 90 $fx $fx
 }}
 
 cmd set_bg ${{
-	# From ranger:
-	#map bg shell cp %f ~/.config/wall.png && feh --bg-scale %f && rm -rf ~/.cache/wal/schemes && wal -i ~/.config/wall.png
 	feh --bg-fill $fx
 }}
 
-#cmd setbg "$1"
-#cmd bulkrename $vidir
+map bg set_bg
+map bc convert_rotate
 
-# Default mappings:
-# https://pkg.go.dev/github.com/gokcehan/lf#section-readme
-#map e $$EDITOR "$f"
-#map i $$PAGER "$f"
-#map w $$SHELL
-#map zh set hidden!
-#map zr set reverse!
-#map zn set info
-#map zs set info size
-#map zt set info time
-#map za set info size:time
-#map sn :set sortby natural; set info
-#map ss :set sortby size; set info size
-#map st :set sortby time; set info time
-#map sa :set sortby atime; set info atime
-#map sc :set sortby ctime; set info ctime
-#map se :set sortby ext; set info
-#map gh cd ~
-#map <space> :toggle; down
+# Copy path
+cmd copy_path ${{
+    #/home/jonas/.local/bin/my_scripts/copy_path.sh "$fx"
+    #echo "$fx" | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh "{}"
+    echo "$fx" | tr '\n' ' ' | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh {}
+}}
 
-# Bindings
-# use c-f to fuzzy search
-cmd fzf_jump push $python<space>C:\Users\jonas\AppData\Local\lf\fzfpy.py<space>%id%<enter>
-map <c-f> :fzf_jump
-map <c-n> push :mkdir<space>
-map <c-r> reload
-map <c-s> set hidden!
-map <c-e> down
-map <c-y> up
-#map J $lf -remote "send $id cd $(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' ${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs | fzf)"
-map D delete
-map E extract
-map C copyto
-map M moveto
-map <enter> shell
-map S shell
+cmd copy_path_arg ${{
+    #/home/jonas/.local/bin/my_scripts/copy_path.sh "$fx" 1
+    #echo "$fx" | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh "{}" 1
+    echo "$fx" | tr '\n' ' ' | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/copy_path.sh {} 1
+}}
+
+map <space>- copy_path
+map <space>_ copy_path_arg
+
+# Manage file
+cmd manage_file ${{
+    #/home/jonas/.local/bin/my_scripts/manage_file.sh "$fx"
+    #/home/jonas/.local/bin/my_scripts/manage_file.sh "$fx" 1 # Rofi
+
+    echo "$fx" | tr '\n' ' ' | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/manage_file.sh {}
+    #echo "$fx" | tr '\n' ' ' | sed 's/ /,/g' | xargs -I {} /home/jonas/.local/bin/my_scripts/manage_file.sh {} 1 # Rofi
+}}
+
+map <space><space> manage_file
+
+# Old (kept for reference)
+
+# Use space-space instead of these
 #map X !tar -zxvf %f
 #map Z !tar -cvzf %f.tar.gz %f
 #map x $$f
 #map X !$f
-map o &mimeopen "$f"
-map O $mimeopen --ask "$f"
 
-map A rename # at the very end
-#map c push A<c-u> # new rename
-map c
-map cw push A<c-u> # new rename
-#map W bulkrename
-map cW bulk-rename
-map I push A<c-a> # at the very beginning
-map i push A<a-b><a-b><a-f> # before extension
-map a push A<a-b> # after extension
-map bg set_bg
-map bc convert_rotate
-map V push :!nvim<space>
+#map e $$EDITOR "$f"
+#map i $$PAGER "$f"
+#map w $$SHELL
 
-#map W $setsid -f $TERMINAL >/dev/null 2>&1
-map Y $printf "%s" "$fx" | xclip -selection clipboard
-
-# Shortcuts
-map gg top
-map ge cd /etc
-map gh cd ~
-map gu cd /usr
 #map gl cd -r .
-map gL cd -r %f
 #map gv cd /var
-map gM cd /mnt
-map gr cd /
 #map gR eval fm.cd(ranger.RANGERDIR)
-map g? cd /usr/share/doc/lf
-map gd cd ~/Documents
-map gw cd ~/Onedrive/Pictures/
-map gc cd ~/Code2
-map gm cd /media/data/Movies
-map gf cd /media/data/Files
-map g. cd ~/.config
-map ga cd ~/Downloads
+
+#map J $lf -remote "send $id cd $(sed -e 's/\s*#.*//' -e '/^$/d' -e 's/^\S*\s*//' ${XDG_CONFIG_HOME:-$HOME/.config}/shell/bm-dirs | fzf)"
+#map W $setsid -f $TERMINAL >/dev/null 2>&1
+#map Y $printf "%s" "$fx" | xclip -selection clipboard
+

@@ -177,3 +177,40 @@ if (Test-Path $autohotkeyPath) {
     Write-Output "`nAutoHotkey is not installed."
 }
 
+# ------------------------------------------------------------
+# Copy lf config files
+
+# Ensure lf config dir exists
+$lfPath = Join-Path $env:localappdata "lf"
+if (-not (Test-Path -Path $lfPath)) {
+    Write-Host "`nCreating directory: $lfPath"
+    New-Item -ItemType Directory -Path $lfPath -Force
+}
+
+$sourceLfPath = Join-Path $currentDir "lf"
+if (Test-Path -Path $sourceLfPath) {
+    Write-Host "`nCopying files from $sourceLfPath to $lfPath"
+    Copy-Item -Path "$sourceLfPath\*" -Destination $lfPath -Recurse -Force
+} else {
+    Write-Warning "`nSource directory $sourceLfPath does not exist. Skipping copy for lf."
+}
+
+# ------------------------------------------------------------
+# Copy yazi config files
+
+# Ensure yazi config dir exists
+$yaziConfigPath = Join-Path $env:appdata "yazi\config"
+if (-not (Test-Path -Path $yaziConfigPath)) {
+    Write-Host "`nCreating directory: $yaziConfigPath"
+    New-Item -ItemType Directory -Path $yaziConfigPath -Force
+}
+
+$currentDir = Get-Location
+$sourceYaziPath = Join-Path $currentDir "yazi"
+if (Test-Path -Path $sourceYaziPath) {
+    Write-Host "`nCopying files from $sourceYaziPath to $yaziConfigPath"
+    Copy-Item -Path "$sourceYaziPath\*" -Destination $yaziConfigPath -Recurse -Force
+} else {
+    Write-Warning "`nSource directory $sourceYaziPath does not exist. Skipping copy for yazi."
+}
+
