@@ -61,9 +61,9 @@ Write-Host "`nFiles copied successfully to '$weztermDir'"
 # ------------------------------------------------------------
 # Copy vscode files
 
-$currentDirectory = Get-Location
-$keybindingsFile = Join-Path -Path $currentDirectory -ChildPath "Code\keybindings.json"
-$settingsFile = Join-Path -Path $currentDirectory -ChildPath "Code\settings.json"
+$currentDir = Get-Location
+$keybindingsFile = Join-Path -Path $currentDir -ChildPath "Code\keybindings.json"
+$settingsFile = Join-Path -Path $currentDir -ChildPath "Code\settings.json"
 
 $destinationDirectory = [System.IO.Path]::Combine($env:APPDATA, "Code\User")
 
@@ -205,7 +205,6 @@ if (-not (Test-Path -Path $yaziConfigPath)) {
     New-Item -ItemType Directory -Path $yaziConfigPath -Force
 }
 
-$currentDir = Get-Location
 $sourceYaziPath = Join-Path $currentDir "yazi"
 if (Test-Path -Path $sourceYaziPath) {
     Write-Host "`nCopying files from $sourceYaziPath to $yaziConfigPath"
