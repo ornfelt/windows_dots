@@ -100,5 +100,8 @@ function prompt {
 #    { . $_.FullName }
 
 # Source env vars
+$Env:EDITOR = "nvim"
+$Env:YAZI_FILE_ONE = "C:\Program Files\Git\usr\bin\file.exe"
+
 . "$PSScriptRoot\env.ps1"
 
