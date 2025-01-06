@@ -106,3 +106,8 @@ env.ps1
 
 Modules/
 log.txt
+
+lf/marks
+lf/history
+lf/files
+lf_log.txt
