@@ -89,7 +89,7 @@ desc = "no place like ~"
 
 [[manager.prepend_keymap]]
 on = ["g", "l"]
-run = [ '''cd ~/AppData/local''' ]
+run = [ '''cd ~/AppData/Local''' ]
 desc = "cd to localappdata"
 
 [[manager.prepend_keymap]]
@@ -232,16 +232,12 @@ desc = "Delete all bookmarks"
 # Custom
 # ...
 
-# TODO?
 # Image commands
-#[[manager.prepend_keymap]]
-#on = ["b", "g"]
-#run = [
-#'''
-#    shell 'feh --bg-scale "$0"' --confirm 
-#'''
-#]
-#desc = "Set current image as background"
+[[manager.prepend_keymap]]
+on = ["b", "g"]
+#run = [ ''' shell --confirm powershell -Command 'explorer.exe -ArgumentList "$env:PWD"' ''' ]
+run = [ '''shell --confirm "powershell -Command ii ."''' ]
+desc = "Open explorer"
 
 # Copy path
 [[manager.prepend_keymap]]
