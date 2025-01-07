@@ -88,14 +88,19 @@ map gL cd ~/AppData/Roaming
 map ga cd ~/Downloads
 map gd cd ~/Documents
 map gw cd ~/OneDrive/Pictures
-map gc cd ~/Code2
 map gm cd ~/OneDrive/Videos
 map g. cd ~/.wezterm
 map g? cd ~/AppData/Local/lf
 
+cmd cd_code_root_dir ${{
+    powershell -Command 'lf -remote \"send cd $env:code_root_dir/Code2"'
+}}
+
+map gc cd_code_root_dir
+
 #lf -remote 'send echo hello world'
 cmd cd_git_root ${{
-    powershell -Command 'lf -remote \"send cd $(git rev-parse --show-toplevel)"'
+    powershell -NoProfile -Command 'lf -remote \"send cd $(git rev-parse --show-toplevel)"'
 }}
 
 map gr cd_git_root
@@ -135,7 +140,7 @@ map V push :!nvim<space>
 map <c-n> push :mkdir<space>
 
 # Open explorer
-#powershell -Command "Start-Process explorer.exe -ArgumentList '.'"
+#powershell -NoProfile -Command "Start-Process explorer.exe -ArgumentList '.'"
 cmd open_explorer ${{
     Start-Process explorer.exe -ArgumentList '.'
 }}
@@ -144,11 +149,11 @@ map bg open_explorer
 
 # Copy path
 cmd copy_path ${{
-    powershell -Command "& 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '$env:fx'"
+    powershell -Command "& '$env:ps_profile_path/my_scripts/copy_path.ps1' '$env:fx'"
 }}
 
 cmd copy_path_arg ${{
-    powershell -Command "& 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '$env:fx' 1"
+    powershell -Command "& '$env:ps_profile_path/my_scripts/copy_path.ps1' '$env:fx' 1"
 }}
 
 map <space>- copy_path

@@ -50,14 +50,19 @@ desc = "Create"
 # ya emit-to 0 enter
 # Also see:
 # https://yazi-rs.github.io/docs/configuration/yazi/#opener
+#[[manager.prepend_keymap]]
+#on = "l"
+##run = [ '''shell --confirm "powershell -Command ya emit-to 0 enter"''' ]
+##run = [ '''shell --confirm "cmd /c ya emit-to 0 enter"''' ]
+## Both of these work but cmd is faster BUT doesn't work if there is a space in the path...
+#run = [ '''shell --confirm "powershell -NoProfile -Command if (Test-Path -PathType Leaf '%*') { ya emit-to 0 open } else { ya emit-to 0 enter }"''' ]
+##run = [ '''shell --confirm "cmd /c \"if exist %0 ( if exist %0\\nul (ya emit-to 0 enter \"%0\") else (ya emit-to 0 open \"%0\") ) else (echo Unknown item: %0)\""''' ]
+#desc = "Enter directory or open file"
+# Use plugin instead
 [[manager.prepend_keymap]]
-on = "l"
-#run = [ '''shell --confirm "powershell -Command ya emit-to 0 enter"''' ]
-#run = [ '''shell --confirm "cmd /c ya emit-to 0 enter"''' ]
-# Both of these work but cmd is faster...
-#run = [ '''shell --confirm "powershell -Command if (Test-Path -PathType Leaf %*) { ya emit-to 0 open } else { ya emit-to 0 enter }"''' ]
-run = [ '''shell --confirm "cmd /c \"if exist %0 ( if exist %0\\nul (ya emit-to 0 enter \"%0\") else (ya emit-to 0 open \"%0\") ) else (echo Unknown item: %0)\""''' ]
-desc = "Enter directory or open file"
+on   = "l"
+run  = "plugin smart-enter"
+desc = "Enter the child directory, or open the file"
 
 # Sorting
 # ...
@@ -119,7 +124,8 @@ desc = "cd to pics"
 
 [[manager.prepend_keymap]]
 on = ["g", "c"]
-run = [ '''cd ~/Code2''' ]
+#run = [ '''cd ~/Code2''' ]
+run = [ ''' shell --confirm "powershell -NoProfile -Command \"& '~/AppData/Roaming/yazi/config/cd_code_root_dir.ps1'\"" ''' ]
 desc = "cd to code"
 
 [[manager.prepend_keymap]]
@@ -139,13 +145,13 @@ desc = "cd to yazi dir"
 
 [[manager.prepend_keymap]]
 on = [ "g", "r" ]
-run = [ '''shell --confirm "powershell -Command ya emit-to 0 cd (git rev-parse --show-toplevel)"''' ]
+run = [ '''shell --confirm "powershell -NoProfile -Command ya emit-to 0 cd (git rev-parse --show-toplevel)"''' ]
 desc = "cd to git root dir"
 
 [[manager.prepend_keymap]]
 on = ["g", "f"]
 #run = [ '''shell 'wezterm cli split-pane --right --percent 50 -- powershell -Command vim %*' --confirm''' ]
-run = [ ''' shell 'wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command "vim %*"' --confirm ''' ]
+run = [ ''' shell 'wezterm cli split-pane --right --percent 50 -- powershell -NoProfile -NoExit -Command "vim %*"' --confirm ''' ]
 desc = "Open file in vim inside a new wezterm split"
 
 [[manager.prepend_keymap]]
@@ -236,21 +242,19 @@ desc = "Delete all bookmarks"
 [[manager.prepend_keymap]]
 on = ["b", "g"]
 #run = [ ''' shell --confirm powershell -Command 'explorer.exe -ArgumentList "$env:PWD"' ''' ]
-run = [ '''shell --confirm "powershell -Command ii ."''' ]
+run = [ '''shell --confirm "powershell -NoProfile -Command ii ."''' ]
 desc = "Open explorer"
 
 # Copy path
 [[manager.prepend_keymap]]
 on = [" ", "-"]
-run = [ '''
-    shell --confirm "powershell -Command \"& 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '%*'\""
-''' ]
+run = [ ''' shell --confirm "powershell -Command \"& '~/AppData/Roaming/yazi/config/copy_path.ps1' '%*'\"" ''' ]
+#run = [ ''' shell --confirm "powershell -Command \"if (Test-Path '\\\\***REMOVED***/My Documents/WindowsPowerShell/my_scripts/copy_path.ps1') { & '\\\\***REMOVED***/My Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '%*' } else { & 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '%*' }\" \"" ''' ]
 desc = "Copy selection to clipboard"
 
 [[manager.prepend_keymap]]
 on = [" ", "_"]
-run = [ '''
-    shell --confirm "powershell -Command \"& 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '%*' 1\""
-''' ]
+run = [ ''' shell --confirm "powershell -Command \"& '~/AppData/Roaming/yazi/config/copy_path.ps1' '%*' 1\"" ''' ]
+#run = [ ''' shell --confirm "powershell -Command \"if (Test-Path '\\\\***REMOVED***/My Documents/WindowsPowerShell/my_scripts/copy_path.ps1') { & '\\\\***REMOVED***/My Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '%*' 1} else { & 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '%*' 1 }\" \"" ''' ]
 desc = "Copy selection to clipboard"
 
