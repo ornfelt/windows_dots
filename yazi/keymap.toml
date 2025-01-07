@@ -59,6 +59,7 @@ desc = "Create"
 ##run = [ '''shell --confirm "cmd /c \"if exist %0 ( if exist %0\\nul (ya emit-to 0 enter \"%0\") else (ya emit-to 0 open \"%0\") ) else (echo Unknown item: %0)\""''' ]
 #desc = "Enter directory or open file"
 # Use plugin instead
+# https://github.com/yazi-rs/plugins/tree/main/smart-enter.yazi
 [[manager.prepend_keymap]]
 on   = "l"
 run  = "plugin smart-enter"
