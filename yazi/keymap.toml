@@ -124,25 +124,34 @@ run = [ '''cd ~/OneDrive/Pictures''' ]
 desc = "cd to pics"
 
 [[manager.prepend_keymap]]
-on = ["g", "c"]
-#run = [ '''cd ~/Code2''' ]
-run = [ ''' shell --confirm "powershell -NoProfile -Command \"& '~/AppData/Roaming/yazi/config/cd_code_root_dir.ps1'\"" ''' ]
-desc = "cd to code"
-
-[[manager.prepend_keymap]]
 on = ["g", "m"]
 run = [ '''cd ~/OneDrive/Movies''' ]
 desc = "cd to Movies"
 
 [[manager.prepend_keymap]]
 on = ["g", "."]
-run = [ '''cd ~/.wezterm''' ]
+run = [ '''cd ~/.config''' ]
 desc = "cd to ~/.config"
 
 [[manager.prepend_keymap]]
 on = ["g", "?"]
 run = [ '''cd ~/AppData/Roaming/yazi/config''' ]
 desc = "cd to yazi dir"
+
+[[manager.prepend_keymap]]
+on = ["g", "c"]
+run = [ ''' shell --confirm "powershell -NoProfile -Command \"& '~/AppData/Roaming/yazi/config/cd_code_root_dir.ps1'\"" ''' ]
+desc = "cd to code"
+
+[[manager.prepend_keymap]]
+on = ["g", "n"]
+run = [ ''' shell --confirm "powershell -NoProfile -Command \"& '~/AppData/Roaming/yazi/config/cd_my_notes_path.ps1'\"" ''' ]
+desc = "cd to my_notes"
+
+[[manager.prepend_keymap]]
+on = ["g", "p"]
+run = [ ''' shell --confirm "powershell -NoProfile -Command \"& '~/AppData/Roaming/yazi/config/cd_ps_profile_path.ps1'\"" ''' ]
+desc = "cd to ps_profile_path"
 
 [[manager.prepend_keymap]]
 on = [ "g", "r" ]

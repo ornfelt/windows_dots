@@ -89,36 +89,44 @@ map ga cd ~/Downloads
 map gd cd ~/Documents
 map gw cd ~/OneDrive/Pictures
 map gm cd ~/OneDrive/Videos
-map g. cd ~/.wezterm
+map g. cd ~/.config
 map g? cd ~/AppData/Local/lf
 
+#powershell -Command 'lf -remote \"send cd $env:code_root_dir/Code2"'
 cmd cd_code_root_dir ${{
-    powershell -Command 'lf -remote \"send cd $env:code_root_dir/Code2"'
+    powershell -Command "& '$env:ps_profile_path/my_scripts/cd_code_root_dir.ps1' 1"
 }}
 
-map gc cd_code_root_dir
+cmd cd_my_notes_path ${{
+    powershell -Command "& '$env:ps_profile_path/my_scripts/cd_my_notes_path.ps1' 1"
+}}
+
+cmd cd_ps_profile_path ${{
+    powershell -Command "& '$env:ps_profile_path/my_scripts/cd_ps_profile_path.ps1' 1"
+}}
 
 #lf -remote 'send echo hello world'
 cmd cd_git_root ${{
     powershell -NoProfile -Command 'lf -remote \"send cd $(git rev-parse --show-toplevel)"'
 }}
 
-map gr cd_git_root
-
 cmd term_vim ${{
     wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command vim "$env:f"
 }}
-
-map gf term_vim
 
 cmd firefox_open ${{
     firefox "$env:fx"
 }}
 
+map gc cd_code_root_dir
+map gn cd_my_notes_path 
+map gp cd_ps_profile_path 
+map gr cd_git_root
+map gf term_vim
 map gx firefox_open
 
 # Fuzzy search
-map <c-f> $lf -remote "send $id select \"$(fzf)\""
+map <c-f> $lf -remote "send select '$(fzf)'"
 
 # Rename
 #map c push A<c-u> # new rename
