@@ -12,8 +12,8 @@ param (
 # .\copy_path.ps1 "{code_root_dir}/Code/yaml/PetStore/postgres_db_script"
 # .\copy_path.ps1 "{code_root_dir}/Code/yaml/PetStore/postgres_db_script" 1
 
-#$DebugPrints = $false
-$DebugPrints = $true
+$DebugPrints = $false
+#$DebugPrints = $true
 
 function NormalizePath {
     param (
