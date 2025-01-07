@@ -213,3 +213,19 @@ if (Test-Path -Path $sourceYaziPath) {
     Write-Warning "`nSource directory $sourceYaziPath does not exist. Skipping copy for yazi."
 }
 
+$scriptFiles = @(
+    "my_scripts/cd_code_root_dir.ps1",
+    "my_scripts/cd_my_notes_path.ps1",
+    "my_scripts/cd_ps_profile_path.ps1"
+)
+
+foreach ($script in $scriptFiles) {
+    $sourceScriptPath = Join-Path $currentDir $script
+    if (Test-Path -Path $sourceScriptPath) {
+        Write-Host "`nCopying $sourceScriptPath to $yaziConfigPath"
+        Copy-Item -Path $sourceScriptPath -Destination $yaziConfigPath -Force
+    } else {
+        Write-Warning "`nScript file $sourceScriptPath does not exist. Skipping."
+    }
+}
+
