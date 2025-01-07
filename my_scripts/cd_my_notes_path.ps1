@@ -1,7 +1,6 @@
-$codeRootDir = $env:code_root_dir
-$path1 = Join-Path $codeRootDir "Code2"
-$path2 = Join-Path $HOME "Code2"
-$path3 = "C:/Code2"
+$path1 = $env:my_notes_path
+$path2 = Join-Path $HOME "OneDrive/Documents/my_notes"
+$path3 = "C:/ornfelt/my_notes"
 
 function IsValidPath($path) {
     return (Test-Path $path -PathType Container)

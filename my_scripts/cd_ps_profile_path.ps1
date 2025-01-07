@@ -1,7 +1,6 @@
-$codeRootDir = $env:code_root_dir
-$path1 = Join-Path $codeRootDir "Code2"
-$path2 = Join-Path $HOME "Code2"
-$path3 = "C:/Code2"
+$path1 = $env:ps_profile_path
+$path2 = Join-Path $HOME "OneDrive/Documents/WindowsPowerShell"
+$path3 = "\\***REMOVED***/My Documents/WindowsPowerShell"
 
 function IsValidPath($path) {
     return (Test-Path $path -PathType Container)
@@ -13,7 +12,7 @@ if ($args.Count -gt 0) {
     } elseif (IsValidPath "$path2") {
         lf -remote "send cd '$(($path2 -replace '\\', '/'))'"
     } elseif (IsValidPath "$path3") {
-        lf -remote "send cd '$(($path3 -replace '\\', '/'))'"
+        lf -remote "send cd '$path3'"
     } else {
         Write-Host "No valid path found for Code2."
     }
