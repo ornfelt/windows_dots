@@ -199,7 +199,7 @@ if (Test-Path -Path $sourceLfPath) {
 # Copy yazi config files
 
 # Ensure yazi config dir exists
-$yaziConfigPath = Join-Path $env:appdata "yazi\config"
+$yaziConfigPath = Join-Path $env:appdata "yazi/config"
 if (-not (Test-Path -Path $yaziConfigPath)) {
     Write-Host "`nCreating directory: $yaziConfigPath"
     New-Item -ItemType Directory -Path $yaziConfigPath -Force
