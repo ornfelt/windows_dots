@@ -6,8 +6,11 @@
 [manager]
 show_hidden = true
 #sort_by = "modified"
-sort_reverse = true
+#sort_reverse = true
 linemode = "mtime"
+
+[general]
+sort_by = "name"
 
 [opener]
 edit = [

@@ -107,11 +107,12 @@ cmd cd_ps_profile_path ${{
 
 #lf -remote 'send echo hello world'
 cmd cd_git_root ${{
-    powershell -NoProfile -Command 'lf -remote \"send cd $(git rev-parse --show-toplevel)"'
+    powershell -NoProfile -Command "lf -remote 'send cd ''$(git rev-parse --show-toplevel)'''"
 }}
 
+#wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command vim "$env:f"
 cmd term_vim ${{
-    wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command vim "$env:f"
+    wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command vim '$env:f'
 }}
 
 cmd firefox_open ${{
