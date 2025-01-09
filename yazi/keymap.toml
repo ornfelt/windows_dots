@@ -72,7 +72,6 @@ desc = "Enter the child directory, or open the file"
 # ...
 
 # g-binds
-
 [[manager.prepend_keymap]]
 on = ["g", "C"]
 run = [ '''cd C:/''' ]
