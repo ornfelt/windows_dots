@@ -155,13 +155,15 @@ desc = "cd to ps_profile_path"
 
 [[manager.prepend_keymap]]
 on = [ "g", "r" ]
-run = [ '''shell --confirm "powershell -NoProfile -Command ya emit-to 0 cd (git rev-parse --show-toplevel)"''' ]
+#run = [ '''shell --confirm "powershell -NoProfile -Command ya emit-to 0 cd (git rev-parse --show-toplevel)"''' ]
+run = [ '''shell --confirm "powershell -NoProfile -Command ya emit-to 0 cd ''$(git rev-parse --show-toplevel)''"''' ]
 desc = "cd to git root dir"
 
 [[manager.prepend_keymap]]
 on = ["g", "f"]
 #run = [ '''shell 'wezterm cli split-pane --right --percent 50 -- powershell -Command vim %*' --confirm''' ]
-run = [ ''' shell 'wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command "vim %*"' --confirm ''' ]
+#run = [ ''' shell 'wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command "vim %*"' --confirm ''' ]
+run = [ ''' shell "wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command vim '%*'" --confirm ''' ]
 desc = "Open file in vim inside a new wezterm split"
 
 [[manager.prepend_keymap]]
