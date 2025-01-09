@@ -10,12 +10,9 @@ if (Test-Path $basePath) {
         $path = "C:\Users\jonas\Code2\C#\wcell_\Run\Debug"
     } elseif (Test-Path "D:\My files\svea_laptop\code_hdd\WCell_\Run\Debug") {
         $path = "D:\My files\svea_laptop\code_hdd\WCell_\Run\Debug"
-    } elseif (Test-Path "x") {
-        $path = "x"
     } else {
-        #$path = "~/"
         Write-Host "Couldn't find wcell build path. Is it compiled?"
-            exit 1
+        exit 1
     }
 }
 
