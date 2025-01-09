@@ -217,6 +217,7 @@ $scriptFiles = @(
     "my_scripts/cd_code_root_dir.ps1",
     "my_scripts/cd_my_notes_path.ps1",
     "my_scripts/cd_ps_profile_path.ps1"
+    "my_scripts/copy_path.ps1"
 )
 
 foreach ($script in $scriptFiles) {
