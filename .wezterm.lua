@@ -563,10 +563,10 @@ config.keys = {
     mods = 'ALT|SHIFT',
     action = wezterm.action.QuickSelectArgs {
       label = 'quickselect paths',
-      patterns = {
-        [[(?:[-._~/a-zA-Z0-9])*/(?:[-._~/a-zA-Z0-9]*)]],
-        [[[a-zA-Z]:\\(?:[-._a-zA-Z0-9\\ ]+)]],
-      },
+      --patterns = {
+      --  [[(?:[-._~/a-zA-Z0-9])*/(?:[-._~/a-zA-Z0-9]*)]],
+      --  [[[a-zA-Z]:\\(?:[-._a-zA-Z0-9\\ ]+)]],
+      --},
       -- Only match 1 space:
       --patterns = {
       --  [[(?:[-._~/a-zA-Z0-9])*/(?:[-._~/a-zA-Z0-9]*)]],
@@ -577,6 +577,12 @@ config.keys = {
       -- [-._a-zA-Z0-9\\ ]*: Matches any valid characters in the path, including spaces.
       -- [^ ] : Ensures a single space is followed by other valid characters.
       -- (?!.* ): Prevents matching paths with more than one consecutive space.
+      patterns = {
+        -- Unix-style paths (including #)
+        [[(?:[-._~#/a-zA-Z0-9])*/(?:[-._~#/a-zA-Z0-9]*)]],
+        -- Windows-style paths (including # and spaces)
+        [[[a-zA-Z]:\\(?:[-._#a-zA-Z0-9\\ ]+)]],
+      },
     },
   },
 
