@@ -178,7 +178,8 @@ binding = { key = "W", mods = "Alt|Shift" }
 [[hints.enabled]]
 #regex = "(?:[-._~/a-zA-Z0-9])*/(?:[-._~/a-zA-Z0-9]*)|[a-zA-Z]:\\\\(?:[-._a-zA-Z0-9\\\\ ]+)"
 # Only one space
-regex = "(?:[-._~/a-zA-Z0-9])*/(?:[-._~/a-zA-Z0-9]*)|[a-zA-Z]:\\\\(?:[-._a-zA-Z0-9\\\\]+(?: [^ ]+)?\\\\*)"
+#regex = "(?:[-._~/a-zA-Z0-9])*/(?:[-._~/a-zA-Z0-9]*)|[a-zA-Z]:\\\\(?:[-._a-zA-Z0-9\\\\]+(?: [^ ]+)?\\\\*)"
+regex = "(?:[-._~#/a-zA-Z0-9])*/(?:[-._~#/a-zA-Z0-9]*)|[a-zA-Z]:\\\\(?:[-._#a-zA-Z0-9\\\\]+(?: [^ ]+)?\\\\*)"
 action="Paste"
 binding = { key = "E", mods = "Alt|Shift" }
 
