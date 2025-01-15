@@ -310,6 +310,8 @@ wezterm.on('trigger-vim-with-scrollback', function(window, pane)
   f:flush()
   f:close()
 
+  pane:paste("vim " .. name)
+
   --window:perform_action(
   --  act.SpawnCommandInNewTab {
   --    --act.SpawnCommandInNewWindow {
