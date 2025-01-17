@@ -570,13 +570,13 @@ config.keys = {
       --  [[[a-zA-Z]:\\(?:[-._a-zA-Z0-9\\ ]+)]],
       --},
       patterns = {
-        -- Unix-style paths (including #, $ and spaces)
-        [[(?:[-._~#/a-zA-Z0-9$])*/(?:[-._~#/a-zA-Z0-9$]*)]],
-        -- Windows-style paths (including #, $ and spaces)
-        [[[a-zA-Z]:[/\\]+(?:[-._#$:~a-zA-Z0-9/\\ ]+)]],
-        [[\\\\seusers\.ia\.***REMOVED***\.com[/\\](?:[-._#$:~a-zA-Z0-9/\\ ]+)]],
-        [[\\\\seusers\.ia\.***REMOVED***\.com[/\\]+(?:[-._#$:~a-zA-Z0-9/\\ ]+)]],
-        [[\$env:[a-zA-Z_][a-zA-Z0-9_]*[\\/]+(?:[-._~#/a-zA-Z0-9$]*)]],
+        -- Unix-style paths (including #, $, + and spaces)
+        [[(?:[-._~#+/a-zA-Z0-9$])*/(?:[-._~#+/a-zA-Z0-9$]*)]],
+        -- Windows-style paths (including #, $, + and spaces)
+        [[[a-zA-Z]:[/\\]+(?:[-._#$:+~a-zA-Z0-9/\\ ]+)]],
+        [[\\\\seusers\.ia\.***REMOVED***\.com[/\\](?:[-._#$:+~a-zA-Z0-9/\\ ]+)]],
+        [[\\\\seusers\.ia\.***REMOVED***\.com[/\\]+(?:[-._#$:+~a-zA-Z0-9/\\ ]+)]],
+        [[\$env:[a-zA-Z_][a-zA-Z0-9_]*[\\/]+(?:[-._~#+/a-zA-Z0-9$]*)]],
       },
     },
   },
