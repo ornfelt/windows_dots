@@ -303,8 +303,8 @@ wezterm.on('trigger-vim-with-scrollback', function(window, pane)
   local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
 
   --local name = os.tmpname()
-  local name = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text.txt"
-  -- vim $env:USERPROFILE/wez_text.txt
+  local name = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text_debug.txt"
+  -- vim $env:USERPROFILE/wez_text_debug.txt
   local f = io.open(name, 'w+')
   f:write(text)
   f:flush()
@@ -345,23 +345,23 @@ wezterm.on('trigger-vim-with-scrollback-copy-latest', function(window, pane)
     end
   end
 
-  local scrollback_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text.txt"
+  local scrollback_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text_debug.txt"
   local scrollback_f = io.open(scrollback_file, 'w+')
   scrollback_f:write(text)
   scrollback_f:flush()
   scrollback_f:close()
 
-  local debug_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text_debug.txt"
-  local debug_f = io.open(debug_file, 'w+')
+  local wez_text_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text.txt"
+  local wez_text_f = io.open(wez_text_file, 'w+')
   for _, entry in ipairs(inputs_outputs) do
-    debug_f:write("Input:\n" .. entry.input .. "\n")
+    wez_text_f:write("Input:\n" .. entry.input .. "\n")
     if entry.output then
-      debug_f:write("Output:\n" .. entry.output .. "\n")
+      wez_text_f:write("Output:\n" .. entry.output .. "\n")
     end
-    debug_f:write("\n")
+    wez_text_f:write("\n")
   end
-  debug_f:flush()
-  debug_f:close()
+  wez_text_f:flush()
+  wez_text_f:close()
 
   local latest_entry = inputs_outputs[#inputs_outputs - 1]
   if latest_entry then
