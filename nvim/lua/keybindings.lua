@@ -2132,6 +2132,7 @@ local function diff_current_lines()
   for i, file_path in ipairs(file_paths) do
     local trimmed_fp = file_path:match("([a-zA-Z]:.*)")
     if trimmed_fp ~= nil then
+      trimmed_fp = trimmed_fp:gsub("#", "\\#")
       file_paths[i] = trimmed_fp
     end
   end
@@ -2220,7 +2221,7 @@ local function diffg_command()
 
   local checkout_command = string.format("git show %s:%s > %s", branch_name, relative_path, target_file2)
   checkout_command = checkout_command:gsub("\\", "/"):gsub("//+", "/")
-  print(checkout_command)
+  --print(checkout_command)
   vim.fn.system(checkout_command)
   if vim.v.shell_error ~= 0 then
     print("Failed to checkout file from branch: " .. branch_name)
