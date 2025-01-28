@@ -1983,7 +1983,8 @@ function open_file_with_env()
   -- print("cword: " .. cword)
 
   if cword:match("^a/") or cword:match("^b/") then
-    local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
+    --local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
+    local git_root = vim.fn.system('git -C "' .. vim.fn.getcwd() .. '" rev-parse --show-toplevel')
     if git_root == "" then
       print("Current file is not in a Git repository.")
       return
@@ -2171,13 +2172,21 @@ local function diffg_command()
     return
   end
 
-  local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
+  --local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
+  local git_root = vim.fn.system('git -C "' .. vim.fn.getcwd() .. '" rev-parse --show-toplevel')
   if git_root == "" then
     print("Current file is not in a Git repository.")
     return
   end
+  --print(git_root)
 
-  local relative_path = current_file:sub(#git_root + 2) -- Remove git_root and the trailing '/'
+  -- Remove git_root and the trailing '/' 
+  -- (this worked with commented git_root code above on linux)
+  --local relative_path = current_file:sub(#git_root + 2) 
+
+  local relative_path = current_file:sub(#git_root)
+  relative_path = relative_path:gsub("^[/\\]+", "") -- Remove leading slashes
+  --print(relative_path)
 
   --local default_branch = "upstream/npcbots_3.3.5"
   local default_branch = get_default_branch()
@@ -2211,7 +2220,7 @@ local function diffg_command()
 
   local checkout_command = string.format("git show %s:%s > %s", branch_name, relative_path, target_file2)
   checkout_command = checkout_command:gsub("\\", "/"):gsub("//+", "/")
-  --print(checkout_command)
+  print(checkout_command)
   vim.fn.system(checkout_command)
   if vim.v.shell_error ~= 0 then
     print("Failed to checkout file from branch: " .. branch_name)
@@ -2311,12 +2320,6 @@ vim.keymap.set('v', '<leader>r', function()
 end, { noremap = true, silent = true })
 
 -- Pick a comand to run via telescope
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
-local conf = require("telescope.config").values
-
 vim.keymap.set('n', '<leader><leader>', function()
   local commands = {
     -- Packer
