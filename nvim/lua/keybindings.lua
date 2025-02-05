@@ -441,7 +441,7 @@ function enter_vimgrep_command(pattern, use_current_word)
     if is_git_repo then
       cmd = string.format(':vimgrep /%s/g `git ls-files`', input)
       -- This won't jump to first match due to 'j'
-      -- cmd = string.format(':vimgrep /%s/gj `git ls-files`', input) 
+      -- cmd = string.format(':vimgrep /%s/gj `git ls-files`', input)
     else
       cmd = string.format(':vimgrep /%s/g %s/%s', input, directory, pattern)
     end
@@ -953,7 +953,7 @@ map('n', '<leader>ws', "/\\s\\+$/<CR>") -- Show extra whitespace
 map('n', '<leader>wr', ':%s/\\s\\+$<CR>') -- Remove all extra whitespace
 map('n', '<leader>wu', ':%s/\\%u200b//g<CR>') -- Remove all extra unicode chars
 map('n', '<leader>wb', ':%s/[[:cntrl:]]//g<CR>') -- Remove all hidden characters
-map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatting, go back and center screen
+--map('n', '<leader>wf', 'gqG<C-o>zz') -- Format rest of the text with vim formatting, go back and center screen
 -- map('n', '<leader>wp', ':s,\\\\,/,g<CR>') -- Normalize path
 function NormalizePath()
   vim.cmd('normal! 0')
@@ -1832,7 +1832,7 @@ function PythonExecCommand()
   --local script_path = code_root_dir .. "Code2/Python/my_py/scripts/gemini/gemini.py"
   --local script_path = code_root_dir .. "Code2/Python/my_py/scripts/mistral/mistral.py"
   local command = read_config("PythonExecCommand", "gpt")
-  local script_path = code_root_dir .. "Code2/Python/my_py/scripts/" .. command .. ".py"
+  local script_path = code_root_dir .. "/Code2/Python/my_py/scripts/" .. command .. ".py"
   --print(script_path)
 
   local print_to_current_buffer = false
@@ -2182,9 +2182,9 @@ local function diffg_command()
   end
   --print(git_root)
 
-  -- Remove git_root and the trailing '/' 
+  -- Remove git_root and the trailing '/'
   -- (this worked with commented git_root code above on linux)
-  --local relative_path = current_file:sub(#git_root + 2) 
+  --local relative_path = current_file:sub(#git_root + 2)
 
   local relative_path = current_file:sub(#git_root)
   relative_path = relative_path:gsub("^[/\\]+", "") -- Remove leading slashes
