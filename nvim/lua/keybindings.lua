@@ -190,6 +190,7 @@ end
 function toggle_filetree()
   --local filepath = (vim.fn.expand('%:p') == '' and '~/' or vim.fn.expand('%:p'))
   local filepath = vim.fn.expand('%:p') == '' and '~/' or './' -- or vim.fn.expand('%:p:h') -- dir
+  --print(filepath)
   if has_oil then
     -- vim.cmd('leftabove vsplit | vertical resize 40 | Oil ' .. filepath)
     -- vim.cmd('Oil ' .. filepath)
@@ -1078,7 +1079,7 @@ function list_tabs()
   for i = 1, vim.fn.tabpagenr("$") do
     --local tabname = vim.fn.gettabvar(i, "tabname", "[No Name]")
     local bufname = vim.fn.bufname(vim.fn.tabpagebuflist(i)[1]) or "[No Buffer]"
-    table.insert(tabs, string.format("%d: (%s)", i, bufname))
+    table.insert(tabs, string.format("%d: (%s)", i, normalize_path(bufname)))
   end
 
   if use_fzf then
