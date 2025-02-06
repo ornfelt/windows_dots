@@ -24,7 +24,8 @@ npx @mermaid-js/mermaid-cli@latest -i "$InputFile" -o "$outputFile"
 
 if ((Test-Path $outputFile) -or (Test-Path $outputFileAlt)) {
     Write-Host "Mermaid diagram generated: $outputFile or $outputFileAlt" -ForegroundColor Green
-} else {
-    Write-Host "Error: Failed to generate Mermaid diagram." -ForegroundColor Red
 }
+#else {
+#    Write-Host "Error: Failed to generate Mermaid diagram." -ForegroundColor Red
+#}
 
