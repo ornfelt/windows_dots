@@ -408,13 +408,13 @@ local function get_git_root()
 end
 
 function enter_vimgrep_command(pattern, use_current_word)
-  -- local current_word = use_current_word and vim.fn.expand("<cword>") or ""
+  --local current_word = use_current_word and vim.fn.expand("<cword>") or ""
 
   -- Support visual selection
   local current_word = ""
   if use_current_word then
     if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
-      -- current_word = vim.fn.getreg('"') -- Last yanked text
+      --current_word = vim.fn.getreg('"') -- Last yanked text
       local start_pos = vim.fn.getpos("v")
       local end_pos = vim.fn.getpos(".")
       if start_pos[2] > end_pos[2] or (start_pos[2] == end_pos[2] and start_pos[3] > end_pos[3]) then
@@ -428,7 +428,7 @@ function enter_vimgrep_command(pattern, use_current_word)
         current_word = lines[1]:sub(start_pos[3], end_pos[3])
       else
         -- Multi-line selection, use only the last line
-        -- current_word = lines[#lines]:sub(1, end_pos[3])
+        --current_word = lines[#lines]:sub(1, end_pos[3])
         -- Just take current word to simplify this
         current_word = vim.fn.expand("<cword>")
       end
@@ -437,10 +437,10 @@ function enter_vimgrep_command(pattern, use_current_word)
     end
   end
 
-  -- vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
+  --vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ' }, function(input)
   vim.ui.input({ prompt = 'vimgrep ' .. pattern .. ': ', default = current_word }, function(input)
     if not input or input == '' then
-      -- vim.notify('No search keyword provided.', vim.log.levels.WARN)
+      --vim.notify('No search keyword provided.', vim.log.levels.WARN)
       return
     end
 
@@ -452,21 +452,21 @@ function enter_vimgrep_command(pattern, use_current_word)
     if is_git_repo then
       cmd = string.format(':vimgrep /%s/g `git ls-files`', input)
       -- This won't jump to first match due to 'j'
-      -- cmd = string.format(':vimgrep /%s/gj `git ls-files`', input)
+      --cmd = string.format(':vimgrep /%s/gj `git ls-files`', input)
     else
       cmd = string.format(':vimgrep /%s/g %s/%s', input, directory, pattern)
     end
 
-    -- print(cmd)
+    print(cmd)
     vim.cmd(cmd)
-    -- vim.cmd('copen') -- Open quickfix window
-    -- vim.notify(string.format('vimgrep search executed for keyword: "%s"', input), vim.log.levels.INFO)
+    --vim.cmd('copen') -- Open quickfix window
+    --vim.notify(string.format('vimgrep search executed for keyword: "%s"', input), vim.log.levels.INFO)
   end)
 end
 
 local function get_current_buffer_extension()
   if vim.bo.filetype == '' and vim.fn.expand('%') == '' then
-    -- vim.notify("Current buffer is not associated with a file.", vim.log.levels.WARN)
+    --vim.notify("Current buffer is not associated with a file.", vim.log.levels.WARN)
     return nil
   end
 
