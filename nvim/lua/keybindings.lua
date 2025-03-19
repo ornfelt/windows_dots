@@ -2036,7 +2036,7 @@ function open_file_with_env()
   end
 
   -- Remove some characters: ', ", parenthesis and brackets
-  cword = cword:gsub("[\'\"()%[%]]", "")
+  cword = cword:gsub("[\'\"(),%[%] ]", "")
 
   if cword:match("^a/") or cword:match("^b/") then
     --local git_root = vim.fn.system("git rev-parse --show-toplevel 2>/dev/null"):gsub("\n", "")
