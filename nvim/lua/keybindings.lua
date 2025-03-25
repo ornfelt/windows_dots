@@ -2071,6 +2071,40 @@ function open_file_with_env()
 
     -- vim.cmd("edit " .. new_cword)
     vim.cmd("tabe " .. new_cword)
+
+  elseif cword:match(":[^/]+/") then
+    -- Strip everything before colon
+    local colon_index = cword:find(":[^/]+/")
+    if not colon_index then
+      print("Could not find env-style path after colon.")
+      return
+    end
+
+    -- Trim everything before colon
+    local trimmed = cword:sub(colon_index)
+
+    -- Extract env var and path tail
+    local varname, path_after = trimmed:match(":([^/]+)/(.*)")
+    if not varname or not path_after then
+      print("Invalid env-style path format.")
+      return
+    end
+
+    local env_value = os.getenv(varname)
+    if not env_value then
+      print("Environment variable " .. varname .. " not found.")
+      return
+    end
+
+    local new_cword = env_value .. "/" .. path_after
+    new_cword = normalize_path(new_cword)
+
+    if use_debug_print then
+      print("new_cword (from :var): " .. new_cword)
+    end
+
+    vim.cmd("tabe " .. new_cword)
+
   else
     -- vim.cmd("edit " .. cword)
     vim.cmd("tabe " .. cword)
