@@ -498,6 +498,7 @@ function enter_vimgrep_command(pattern, use_current_word)
 
     local cmd
     if is_git_repo then
+      vim.cmd("lcd " .. directory)
       cmd = string.format(':vimgrep /%s/g `git ls-files`', input)
       -- This won't jump to first match due to 'j'
       --cmd = string.format(':vimgrep /%s/gj `git ls-files`', input)
