@@ -1795,7 +1795,7 @@ local function remove_file_name(path)
   end
 end
 
-function copy_current_file_path(replace_env)
+function copy_current_file_path_old(replace_env)
   local path = get_current_file_path()
   if path == "" then
     print("No file in current buffer")
@@ -1836,6 +1836,59 @@ function copy_current_file_path(replace_env)
       --path = path:gsub(pattern, "{code_root_dir}")
       local pattern = "^" .. vim.pesc(code_root_dir .. "/Code")
       path = path:gsub(pattern, "{code_root_dir}/Code")
+    end
+  else
+    path = remove_file_name(path)
+  end
+
+  vim.fn.setreg('+', path)
+  print("Copied to clipboard: " .. path)
+end
+
+local function replace_env(path, env, placeholder)
+  if env then
+    -- Remove trailing slash, if any.
+    if env:sub(-1) == "/" then
+      env = env:sub(1, -2)
+    end
+
+    -- Convert both strings to lowercase for a case-insensitive comparison.
+    local lower_path = path:lower()
+    local lower_env = env:lower()
+
+    -- Create the pattern for matching from the start.
+    local env_pattern = "^" .. vim.pesc(lower_env)
+
+    -- If a match is found, replace the matched portion with the placeholder.
+    if lower_path:find(env_pattern) then
+      local env_len = #env  -- length remains the same since case doesn't affect length.
+      return placeholder .. path:sub(env_len + 1)
+    end
+  end
+  return path
+end
+
+function copy_current_file_path(replace_env_vars)
+  local path = get_current_file_path()
+  if path == "" then
+    print("No file in current buffer")
+    return
+  end
+
+  path = normalize_path(path)
+  path = path:gsub("oil:", "")
+
+  if replace_env_vars then
+    path = replace_env(path, my_notes_path, "{my_notes_path}")
+    path = replace_env(path, ps_profile_path, "{ps_profile_path}")
+
+    if code_root_dir then
+      local code_env = code_root_dir
+      if code_env:sub(-1) == "/" then
+        code_env = code_env:sub(1, -2)
+      end
+      local code_prefix = code_env .. "/Code"
+      path = replace_env(path, code_prefix, "{code_root_dir}/Code")
     end
   else
     path = remove_file_name(path)
