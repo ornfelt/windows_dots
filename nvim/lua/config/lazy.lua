@@ -34,4 +34,3 @@ vim.g.maplocalleader = "\\"
 --   -- automatically check for plugin updates
 --   checker = { enabled = true },
 -- })
-
