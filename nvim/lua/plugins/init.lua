@@ -20,16 +20,16 @@ return {
   require("plugins.nvim-treesitter-textobjects"),
 
   -- Nice to have
-  require("plugins.trouble"),
   require("plugins.nvim-colorizer"),
   require("plugins.gitgraph"),
-  require("plugins.python-syntax"),
-  require("plugins.sqls"),
+  require("plugins.trouble"),
   require("plugins.actions-preview"),
   require("plugins.Comment"),
-  require("plugins.vim-commentary"),
   require("plugins.vim-emoji"),
   require("plugins.markview"),
+  require("plugins.sqls"),
+  --require("plugins.python-syntax"),
+  --require("plugins.vim-commentary"),
   --require("plugins.vim-fugitive"),
   --require("plugins.image_preview"),
 
