@@ -20,6 +20,7 @@ return {
   -- Treesitter
   require("plugins.nvim-treesitter"),
   require("plugins.nvim-treesitter-textobjects"),
+  require("plugins.treewalker"),
 
   -- Nice to have
   require("plugins.nvim-colorizer"),
