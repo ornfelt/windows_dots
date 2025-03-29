@@ -15,6 +15,8 @@ return {
   require("plugins.cmp-nvim-lsp"),
   require("plugins.cmp-path"),
 
+  --require("plugins.blink"),
+
   -- Treesitter
   require("plugins.nvim-treesitter"),
   require("plugins.nvim-treesitter-textobjects"),

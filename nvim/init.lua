@@ -5,4 +5,3 @@ require('lsp')
 --require('lsp_new')
 require('keybindings')
 require('autocmds')
-
