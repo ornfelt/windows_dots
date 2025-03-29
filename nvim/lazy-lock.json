@@ -28,6 +28,7 @@
   "plenary.nvim": { "branch": "master", "commit": "857c5ac632080dba10aae49dba902ce3abf91b35" },
   "sqls.nvim": { "branch": "main", "commit": "d1bc5421ef3e8edc5101e37edbb7de6639207a09" },
   "telescope.nvim": { "branch": "master", "commit": "a4ed82509cecc56df1c7138920a1aeaf246c0ac5" },
+  "treewalker.nvim": { "branch": "main", "commit": "43d3250007d2c5a2ed693c1edebf66d66af33407" },
   "trouble.nvim": { "branch": "main", "commit": "85bedb7eb7fa331a2ccbecb9202d8abba64d37b3" },
   "vim-emoji": { "branch": "master", "commit": "9ed6515401a6e20a9781ba508db7d67a5e4e231f" }
 }
