@@ -194,3 +194,5 @@ vim.diagnostic.config({ virtual_text = true })
 --  virtual_lines = false,
 --})
 
+--opt.messagesopt = 'wait:1000,history:500'
+
