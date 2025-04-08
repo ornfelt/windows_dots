@@ -106,7 +106,6 @@ myconfig.map('n', '<F4>', '<Esc>:set cursorline!<CR>')
 myconfig.map('n', '<F5>', '<Esc>:setlocal spell! spelllang=en_us<CR>')
 myconfig.map('n', '<F6>', '<Esc>:setlocal spell! spelllang=sv<CR>')
 
--- Plugin binds (TODO: move these elsewhere)
 --local actions_preview = require("actions-preview")
 -- pcall for checking requirement safely
 local actions_preview = pcall(require, "actions-preview") and require("actions-preview")
@@ -114,8 +113,14 @@ if actions_preview then
   vim.keymap.set({ "v", "n" }, "<leader>ca", require("actions-preview").code_actions)
 end
 
+local gitgraph = pcall(require, "gitgraph") and require("gitgraph")
+
 vim.keymap.set('n', '<leader>gl', function()
-  vim.cmd('tabnew')
-  require('gitgraph').draw({}, { all = true, max_count = 5000 })
+  if gitgraph then
+    vim.cmd('tabnew')
+    gitgraph.draw({}, { all = true, max_count = 5000 })
+  else
+    print("GitGraph plugin is not installed")
+  end
 end, { desc = "GitGraph - Draw" })
 

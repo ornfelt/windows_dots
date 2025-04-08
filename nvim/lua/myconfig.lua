@@ -8,6 +8,21 @@ function M.normalize_path(path)
   return path
 end
 
+-- Utility function that tries to get the git root
+function M.get_git_root()
+  local git_root = vim.fn.system('git -C "' .. vim.fn.getcwd() .. '" rev-parse --show-toplevel')
+  git_root = vim.trim(git_root)
+
+  if vim.v.shell_error ~= 0 then
+    -- vim.notify("Not inside a Git repository.", vim.log.levels.ERROR)
+    -- return nil
+    return vim.fn.getcwd(), false
+  end
+
+  return git_root, true
+end
+
+-- Utility function to replace placeholders with env var value
 local function replace_placeholders(line)
   --  line = line:gsub("{code_root_dir}", vim.fn.getenv("code_root_dir") or "")
   -- Use gsub to find and replace all occurrences of {ENV_VAR_NAME}

@@ -1,46 +1,105 @@
 local myconfig = require("myconfig")
 
 local my_notes_path = myconfig.my_notes_path
-local selected_file_picker = myconfig.get_file_picker()
 
--- fzf
-local fzf_vim_installed = pcall(function() return vim.fn['fzf#run'] end)
---if fzf_vim_installed then
---    ----myconfig.map('n', '<M-a>', ':FZF ./<CR>')
---    --myconfig.map('n', '<M-W>', ':FZF ./<CR>')
---    --myconfig.map('n', '<M-A>', ':FZF ~/<CR>')
---    myconfig.map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
---end
---
--- fzf-lua
-local fzf_lua_installed = pcall(require, 'fzf-lua')
---if fzf_lua_installed then
---    --local opts = { noremap = true, silent = true }
---    --vim.api.nvim_set_keymap('n', '<M-a>', ":lua require('fzf-lua').git_files()<CR>", opts)
---    --vim.api.nvim_set_keymap('n', '<M-A>', ":lua require('fzf-lua').files()<CR>", opts)
---    ----vim.api.nvim_set_keymap('n', 'M-W', ":lua require('fzf-lua').files({ cwd = os.getenv('HOME') })<CR>", opts)
---    --myconfig.map('n', '<M-W>', ":lua require('fzf-lua').files({ cwd = '~/' })<CR>")
---    local root_dir = vim.fn.has('unix') == 1 and '/' or 'C:/'
---    myconfig.map('n', '<M-S>', ":lua require('fzf-lua').files({ cwd = '" .. root_dir .. "' })<CR>")
---end
+local utils = require('telescope.utils')
+local builtin = require('telescope.builtin')
 
-local use_fzf = selected_file_picker == myconfig.FilePicker.FZF
-local use_fzf_lua = selected_file_picker == myconfig.FilePicker.FZF_LUA
--- else telescope...
-
--- fzf
-if use_fzf and fzf_vim_installed then
-  myconfig.map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
+function ts_project_files()
+  local _, ret, _ = utils.get_os_command_output({ 'git', 'rev-parse', '--is-inside-work-tree' })
+  if ret == 0 then
+    --builtin.git_files()
+    builtin.git_files({
+      previewer = true,
+    })
+  else
+    --builtin.find_files()
+    builtin.find_files({
+      previewer = true,
+    })
+  end
 end
 
--- fzf-lua
-if (use_fzf_lua or not use_fzf) and fzf_lua_installed then
-  local root_dir = vim.fn.has('unix') == 1 and '/' or 'C:/'
-  myconfig.map('n', '<M-S>', ":lua require('fzf-lua').files({ cwd = '" .. root_dir .. "' })<CR>")
+--if myconfig.get_file_picker() == myconfig.FilePicker.TELESCOPE then
+--  vim.api.nvim_set_keymap('n', '<M-a>', '<cmd>lua ts_project_files()<CR>', { noremap = true, silent = true })
+--end
+
+--function ts_project_files_opts(opts)
+--  opts = opts or {}
+--  local _, ret, _ = utils.get_os_command_output({ 'git', 'rev-parse', '--is-inside-work-tree' })
+--  if ret == 0 then
+--    builtin.git_files(opts)
+--  else
+--    builtin.find_files(opts)
+--  end
+--end
+--if myconfig.get_file_picker() == myconfig.FilePicker.TELESCOPE then
+--  vim.api.nvim_set_keymap('n', '<M-a>', '<cmd>lua ts_project_files_opts({ hidden = true })<CR>', { noremap = true, silent = true })
+--end
+
+-- Make sure you have ripgrep installed!
+
+--if myconfig.get_file_picker() == myconfig.FilePicker.TELESCOPE then
+--  --vim.api.nvim_set_keymap('n', '<M-a>', '<cmd>Telescope git_files<CR>', { noremap = true, silent = true })
+--  vim.api.nvim_set_keymap('n', '<M-A>', '<cmd>Telescope find_files<CR>', { noremap = true, silent = true })
+--end
+
+function fuzzy_project_files()
+  local git_root, is_git = myconfig.get_git_root()
+  local cwd = is_git and git_root or vim.fn.getcwd()
+  local file_picker = myconfig.get_file_picker()
+
+  if file_picker == myconfig.FilePicker.FZF then
+    cwd = cwd:gsub(" ", '\\ ')
+    vim.cmd("FZF " .. cwd)
+  elseif file_picker == myconfig.FilePicker.FZF_LUA then
+    require("fzf-lua").git_files({ cwd = cwd })
+  else
+    ts_project_files()
+  end
 end
+
+function fuzzy_files()
+  local file_picker = myconfig.get_file_picker()
+
+  if file_picker == myconfig.FilePicker.FZF then
+    vim.cmd('FZF')
+  elseif file_picker == myconfig.FilePicker.FZF_LUA then
+    require("fzf-lua").files({})
+  else
+    vim.cmd("Telescope find_files")
+  end
+end
+
+vim.api.nvim_set_keymap('n', '<M-a>', '<cmd>lua fuzzy_project_files()<CR>', { noremap = true, silent = true, desc = "Project Files (git-aware)" })
+vim.api.nvim_set_keymap('n', '<M-A>', '<cmd>lua fuzzy_files()<CR>', { noremap = true, silent = true, desc = "All Files" })
+
+-- Fuzzy search C:/ drive
+vim.keymap.set('n', '<M-S>', function()
+  local use_fzf = myconfig.get_file_picker() == myconfig.FilePicker.FZF
+  local use_fzf_lua = myconfig.get_file_picker() == myconfig.FilePicker.FZF_LUA
+  local root_dir = (vim.fn.has('unix') == 1) and '/' or 'C:/'
+
+  if use_fzf then
+    vim.cmd("FZF " ..root_dir)
+  elseif use_fzf_lua then
+    require("fzf-lua").files({ cwd = root_dir })
+  else
+    -- Search using telescope
+    local telescope_builtin = require('telescope.builtin')
+    telescope_builtin.find_files({
+      cwd = root_dir,
+      hidden = false,
+      prompt_title = "Search in " .. root_dir,
+      previewer = true,
+    })
+  end
+end, { noremap = true, silent = true })
 
 -- Start fzf/telescope from a given environment variable
 function StartFinder(env_var, additional_path)
+  local use_fzf = myconfig.get_file_picker() == myconfig.FilePicker.FZF
+  local use_fzf_lua = myconfig.get_file_picker() == myconfig.FilePicker.FZF_LUA
   local path = os.getenv(env_var) or "~/"
 
   if additional_path then
@@ -76,6 +135,8 @@ vim.api.nvim_set_keymap('n', '<leader>A', ':lua StartFinder("code_root_dir")<CR>
 vim.api.nvim_set_keymap('n', '<leader>f', ':lua StartFinder("my_notes_path")<CR>', { noremap = true, silent = true })
 
 function open_files_from_list()
+  local use_fzf = myconfig.get_file_picker() == myconfig.FilePicker.FZF
+  local use_fzf_lua = myconfig.get_file_picker() == myconfig.FilePicker.FZF_LUA
   local file_path = my_notes_path .. "/files.txt"
   local files = myconfig.read_lines_from_file(file_path, true)
 
@@ -167,6 +228,9 @@ local finders = require("telescope.finders")
 local conf = require("telescope.config").values
 
 function list_tabs()
+  local use_fzf = myconfig.get_file_picker() == myconfig.FilePicker.FZF
+  local use_fzf_lua = myconfig.get_file_picker() == myconfig.FilePicker.FZF_LUA
+
   local tabs = {}
   for i = 1, vim.fn.tabpagenr("$") do
     --local tabname = vim.fn.gettabvar(i, "tabname", "[No Name]")
