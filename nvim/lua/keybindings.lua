@@ -262,7 +262,7 @@ function toggle_filetree()
 end
 map('n', '<M-e>', ':lua toggle_filetree()<CR>')
 
----- fzf
+-- fzf
 local fzf_vim_installed = pcall(function() return vim.fn['fzf#run'] end)
 --if fzf_vim_installed then
 --    ----map('n', '<M-a>', ':FZF ./<CR>')
@@ -271,7 +271,7 @@ local fzf_vim_installed = pcall(function() return vim.fn['fzf#run'] end)
 --    map('n', '<M-S>', ':FZF ' .. (vim.fn.has('unix') == 1 and '/' or 'C:/') .. '<CR>')
 --end
 --
----- fzf-lua
+-- fzf-lua
 local fzf_lua_installed = pcall(require, 'fzf-lua')
 --if fzf_lua_installed then
 --    --local opts = { noremap = true, silent = true }
