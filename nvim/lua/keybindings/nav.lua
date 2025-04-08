@@ -155,9 +155,9 @@ vim.api.nvim_set_keymap('n', '<leader>tl', '<cmd>lua goto_last_tab()<CR>', { nor
 vim.api.nvim_set_keymap('v', '<leader>tl', '<cmd>lua goto_last_tab()<CR>', { noremap = true, silent = true })
 
 -- Merge with right tab
---myconfig.map('n', '<leader>l', ':Tabmerge right<CR>')
+--myconfig.map('n', '<leader>tm', ':Tabmerge right<CR>')
 -- lua tabmerge
-local function merge_next_tab_into_current()
+local function tab_merge()
   local current = vim.fn.tabpagenr()
   local total = vim.fn.tabpagenr('$')
 
@@ -170,16 +170,12 @@ local function merge_next_tab_into_current()
   local buffer_to_merge = vim.fn.bufnr('%')
 
   vim.cmd("tabnext " .. current)
-
   vim.cmd("vsplit")
   vim.cmd("buffer " .. buffer_to_merge)
-
   vim.cmd("tabclose " .. (current + 1))
-
-  print("Merged next tab into current tab.")
 end
 
-vim.keymap.set('n', '<leader>l', merge_next_tab_into_current, { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>tm', tab_merge, { noremap = true, silent = true })
 
 -- Unbind ctrl-tab (used for wezterm and tmux)
 vim.api.nvim_set_keymap('n', '<C-Tab>', '', { noremap = true, silent = true })

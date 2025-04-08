@@ -1,20 +1,9 @@
+local myconfig = require("myconfig")
+
 -- Vimgrep 
 -- myconfig.map('n', '<M-f>', ':vimgrep //g **/*.txt<C-f><Esc>0f/li')
 -- myconfig.map('n', '<M-g>', ':vimgrep //g **/*.*<C-f><Esc>0f/li') -- Search all
 -- myconfig.map('n', '<M-G>', ':vimgrep //g **/.*<C-f><Esc>0f/li') -- Search dotfiles
-
-local function get_git_root()
-  local git_root = vim.fn.system('git -C "' .. vim.fn.getcwd() .. '" rev-parse --show-toplevel')
-  git_root = vim.trim(git_root)
-
-  if vim.v.shell_error ~= 0 then
-    -- vim.notify("Not inside a Git repository.", vim.log.levels.ERROR)
-    -- return nil
-    return vim.fn.getcwd(), false
-  end
-
-  return git_root, true
-end
 
 function enter_vimgrep_command(pattern, use_current_word)
   --local current_word = use_current_word and vim.fn.expand("<cword>") or ""
@@ -53,7 +42,7 @@ function enter_vimgrep_command(pattern, use_current_word)
       return
     end
 
-    local directory, is_git_repo = get_git_root()
+    local directory, is_git_repo = myconfig.get_git_root()
     directory = directory:gsub('\\', '/')
     directory = directory:gsub('/+', '/')
 
