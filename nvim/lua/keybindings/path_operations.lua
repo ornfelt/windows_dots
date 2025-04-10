@@ -22,7 +22,7 @@ function ReplacePathBasedOnContext()
   local line = vim.fn.getline(".")
 
   if myconfig.should_debug_print() then
-    print(line)
+    print("input line: " .. line)
     print("my_notes_path: " .. my_notes_path)
     print("code_root_dir: " .. code_root_dir)
     print("ps_profile_path: " .. ps_profile_path)
@@ -169,6 +169,7 @@ function copy_current_file_path(replace_env_vars)
 
   path = myconfig.normalize_path(path)
   path = path:gsub("oil:", "")
+  path = path:gsub("c:", "C:")
 
   if replace_env_vars then
     path = replace_env(path, my_notes_path, "{my_notes_path}")
@@ -182,9 +183,14 @@ function copy_current_file_path(replace_env_vars)
       local code_prefix = code_env .. "/Code"
       path = replace_env(path, code_prefix, "{code_root_dir}/Code")
     end
+
+    path = path:gsub(vim.pesc(myconfig.get_conf_dir()), "{conf_dir}/")
+
   else
     path = remove_file_name(path)
   end
+
+  path = myconfig.normalize_path(path)
 
   vim.fn.setreg('+', path)
   print("Copied to clipboard: " .. path)
