@@ -21,15 +21,25 @@ function ReplacePathBasedOnContext()
 
   local line = vim.fn.getline(".")
 
+  if myconfig.should_debug_print() then
+    print(line)
+    print("my_notes_path: " .. my_notes_path)
+    print("code_root_dir: " .. code_root_dir)
+    print("ps_profile_path: " .. ps_profile_path)
+    print("conf_dir: " .. myconfig.get_conf_dir())
+  end
+
   -- vim.pesc will escape the string for use in Vim regular expressions
   -- It adds necessary backslashes to special chars etc.
-  if line:find("{my_notes_path}/", 1, true) or line:find("{code_root_dir}/", 1, true) then
+  if line:find("{my_notes_path}/", 1, true) or line:find("{code_root_dir}/", 1, true) or line:find("{conf_dir}/", 1, true) then
     line = line:gsub("{my_notes_path}", vim.pesc(my_notes_path))
     line = line:gsub("{code_root_dir}", vim.pesc(code_root_dir))
+    line = line:gsub("{conf_dir}", vim.pesc(myconfig.get_conf_dir()))
   else
     line = line:gsub(vim.pesc(my_notes_path), "{my_notes_path}/")
     --line = line:gsub(vim.pesc(code_root_dir), "{code_root_dir}/")
     line = line:gsub(vim.pesc(code_root_dir) .. "(/?Code)", "{code_root_dir}/%1")
+    line = line:gsub(vim.pesc(myconfig.get_conf_dir()), "{conf_dir}/")
   end
 
   if ps_profile_path then
@@ -218,6 +228,9 @@ function open_file_with_env()
 
   if cword:find("{") then
     local new_cword = cword:gsub("{(.-)}", function(var)
+      if var == "conf_dir" then
+        return myconfig.get_conf_dir()
+      end
       local value = os.getenv(var)
       if value then
         return value
