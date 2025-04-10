@@ -74,6 +74,16 @@ M.my_notes_path = my_notes_path
 M.code_root_dir = code_root_dir
 M.ps_profile_path = ps_profile_path
 
+-- Get nvim config dir
+function M.get_conf_dir()
+  local os_name = vim.loop.os_uname().sysname
+  if os_name == "Windows_NT" then
+    return M.normalize_path(home_dir .. "/AppData/Local")
+  else
+    return M.normalize_path(home_dir .. "/.config")
+  end
+end
+
 -- Customized config (for fun)
 local config_file_path = my_notes_path .. "scripts/files/nvim_config.txt"
 

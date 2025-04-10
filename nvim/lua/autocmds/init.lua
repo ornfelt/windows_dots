@@ -90,3 +90,11 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
+-- Enable line numbers in all windows, even new tabs
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  pattern = "*",
+  callback = function()
+    vim.wo.number = true
+  end,
+})
+
