@@ -68,11 +68,13 @@ local home_dir = M.normalize_path((os.getenv("HOME") or os.getenv("USERPROFILE")
 local my_notes_path = M.normalize_path((os.getenv("my_notes_path") or home_dir) .. "/")
 local code_root_dir = M.normalize_path((os.getenv("code_root_dir") or home_dir) .. "/")
 local ps_profile_path = M.normalize_path((tostring(os.getenv("ps_profile_path")) or home_dir) .. "/")
+local user_domain = os.getenv("UserDomain") or home_dir
 
 M.home_dir = home_dir
 M.my_notes_path = my_notes_path
 M.code_root_dir = code_root_dir
 M.ps_profile_path = ps_profile_path
+M.user_domain = user_domain
 
 -- Get nvim config dir
 function M.get_conf_dir()
