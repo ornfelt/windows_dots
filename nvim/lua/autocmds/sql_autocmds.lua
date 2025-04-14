@@ -293,7 +293,10 @@ function insert_engine_env_from_db()
   local db_data, engine_env_map = parse_db_files(db_path)
   local tables = extract_tables_from_buffer()
   local matches = find_matching_databases(tables, db_data)
-  -- print_results(matches, engine_env_map)
+
+  if myconfig.should_debug_print() then
+    print_results(matches, engine_env_map)
+  end
 
   local engines, envs = determine_engine_env(matches, engine_env_map)
 
@@ -408,6 +411,8 @@ function insert_select_statements_from_db()
 
   local db_data, engine_env_map = parse_db_files(db_path)
 
+  local use_debug_print = myconfig.should_debug_print()
+
   -- Extract engine and env from the buffer
   local engine, env = extract_engine_env_from_buffer()
   if not engine or not env then
@@ -417,7 +422,9 @@ function insert_select_statements_from_db()
 
   -- Find file corresponding to env
   local db_name = find_file_for_env(env, db_data, engine_env_map)
-  -- print("db_name: " .. db_name)
+  if use_debug_print then
+    print("db_name: " .. db_name)
+  end
 
   if not db_name then
     print("No matching database file found for the environment:", env)
@@ -425,7 +432,9 @@ function insert_select_statements_from_db()
   end
 
   local file_path = db_path .. "/" .. db_name .. ".txt"
-  -- print("file_path: " .. file_path)
+  if use_debug_print then
+    print("file_path: " .. file_path)
+  end
 
   local statements = generate_select_statements(file_path, engine)
   if #statements == 0 then

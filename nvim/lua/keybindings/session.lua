@@ -1,6 +1,7 @@
 local myconfig = require("myconfig")
 
 local my_notes_path = myconfig.my_notes_path
+local user_domain = myconfig.user_domain
 
 -- Session management
 function load_session()
@@ -18,8 +19,8 @@ function load_session()
   local index = 0
   for _, filepath in ipairs(session_files) do
     local filename = vim.fn.fnamemodify(filepath, ':t')
-    -- Exclude files with "layout" (case-insensitive)
-    if not string.match(string.lower(filename), 'layout') then
+    -- Exclude files with "s_layout" (case-insensitive)
+    if not string.match(string.lower(filename), 's_layout') then
       index = index + 1
       table.insert(sessions, { index = index, name = filename, path = filepath })
     end
@@ -31,22 +32,19 @@ function load_session()
   -- Build options for user selection
   local options = {}
   for _, session in ipairs(sessions) do
-    local option_text = session.index .. ': ' .. session.name
-    table.insert(options, option_text)
+    table.insert(options, session.name)
   end
 
   -- Prompt user to select a session
   vim.ui.select(options, { prompt = 'Select a session to load:' }, function(choice)
     if choice then
-      local selected_index = choice:match('^(%d+):')
-      selected_index = tonumber(selected_index)
-      if selected_index then
-        for _, session in ipairs(sessions) do
-          if session.index == selected_index then
-            vim.cmd('silent source ' .. session.path)
-            -- print('Session loaded from ' .. session.path)
-            return
+      for _, session in ipairs(sessions) do
+        if session.name == choice then
+          vim.cmd('silent source ' .. session.path)
+          if myconfig.should_debug_print() then
+            print('Session loaded from ' .. session.path)
           end
+          return
         end
       end
       print('Invalid selection.')
@@ -71,8 +69,8 @@ function load_session_also_works()
   local options = { 'Select a session to load:' }
   for idx, filepath in ipairs(session_files) do
     local filename = vim.fn.fnamemodify(filepath, ':t')
-    -- Exclude files with "layout" (case-insensitive)
-    if not string.match(string.lower(filename), 'layout') then
+    -- Exclude files with "s_layout" (case-insensitive)
+    if not string.match(string.lower(filename), 's_layout') then
       index = index + 1
       table.insert(sessions, { idx = index, name = filename, path = filepath })
       table.insert(options, index .. ': ' .. filename)
@@ -332,6 +330,106 @@ function save_tabs_and_splits()
   -- Save the session
   vim.cmd("mks! " .. session_filename)
 end
+
+function remove_session()
+  local session_dir = vim.fn.expand('~/.vim/sessions/')
+  local pattern = 's*.vim'
+  local session_files = vim.fn.globpath(session_dir, pattern, 0, 1)
+
+  if #session_files == 0 then
+    print("No session files found in " .. session_dir)
+    return
+  end
+
+  local sessions = {}
+  local index = 0
+  for _, filepath in ipairs(session_files) do
+    local filename = vim.fn.fnamemodify(filepath, ':t')
+    if not string.match(string.lower(filename), 's_layout') then
+      index = index + 1
+      table.insert(sessions, { index = index, name = filename, path = filepath })
+    end
+  end
+
+  table.sort(sessions, function(a, b) return a.index < b.index end)
+
+  local options = {}
+  for _, session in ipairs(sessions) do
+    table.insert(options, session.name)
+  end
+
+  -- Prompt user to select a session
+  vim.ui.select(options, { prompt = 'Select a session to remove:' }, function(choice)
+    if not choice then
+      print("No session selected.")
+      return
+    end
+
+    local selected_session = nil
+    for _, session in ipairs(sessions) do
+      if session.name == choice then
+        selected_session = session
+        break
+      end
+    end
+
+    if not selected_session then
+      print("Invalid selection.")
+      return
+    end
+
+    if selected_session.name == "s.vim" then
+      print("Cannot delete the default session file (s.vim).")
+      return
+    end
+
+    local backup_dir = my_notes_path .. ".vim/"
+    local layout_name = "s_layout" .. selected_session.name:sub(2)
+    local layout_path = session_dir .. layout_name
+
+    local backup_session_name = user_domain .. "_" .. selected_session.name
+    local backup_session_path = backup_dir .. backup_session_name
+    local backup_layout_name = user_domain .. "_" .. layout_name
+    local backup_layout_path = backup_dir .. backup_layout_name
+
+    if myconfig.should_debug_print() then
+      print("selected_session.path: " .. selected_session.path)
+      print("layout_path: " .. layout_path)
+      print("backup_session_path: " .. backup_session_path)
+      print("backup_layout_path: " .. backup_layout_path)
+    end
+
+    local removed_files = {}
+    local function try_remove(filepath)
+      local ok, err = os.remove(filepath)
+      if ok then
+        table.insert(removed_files, filepath)
+      else
+        if not string.find(err or "", "No such file") then
+          print("Error removing file: " .. filepath .. " (" .. (err or "unknown error") .. ")")
+        end
+      end
+    end
+
+    try_remove(selected_session.path)
+    try_remove(layout_path)
+
+    try_remove(backup_session_path)
+    try_remove(backup_layout_path)
+
+    if #removed_files > 0 then
+      print("Deleted the following files:")
+      for _, filepath in ipairs(removed_files) do
+        print(filepath)
+      end
+    else
+      print("No files were deleted. They may not exist or an error occurred.")
+    end
+
+  end)
+end
+
+vim.api.nvim_create_user_command("RemoveSession", remove_session, {})
 
 -- Load session keybind
 -- myconfig.map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')

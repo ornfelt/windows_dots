@@ -27,6 +27,7 @@ vim.keymap.set('n', '<leader><leader>', function()
     { label = "Config - ToggleDebugPrint", cmd = "ToggleDebugPrint" },
     { label = "Config - PrintConfig", cmd = "PrintConfig" },
     { label = "Llama", cmd = "Llm" },
+    { label = "RemoveSession", cmd = "RemoveSession" },
     -- SQL
     { label = "SqlsExecuteQuery", cmd = "SqlsExecuteQuery" },
     { label = "SqlsShowDatabases", cmd = "SqlsShowDatabases" },
