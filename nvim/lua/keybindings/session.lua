@@ -335,6 +335,7 @@ function remove_session()
   local session_dir = vim.fn.expand('~/.vim/sessions/')
   local pattern = 's*.vim'
   local session_files = vim.fn.globpath(session_dir, pattern, 0, 1)
+  local use_debug_print = myconfig.should_debug_print()
 
   if #session_files == 0 then
     print("No session files found in " .. session_dir)
@@ -361,7 +362,9 @@ function remove_session()
   -- Prompt user to select a session
   vim.ui.select(options, { prompt = 'Select a session to remove:' }, function(choice)
     if not choice then
-      print("No session selected.")
+      if use_debug_print then
+        print("No session selected.")
+      end
       return
     end
 
@@ -392,7 +395,7 @@ function remove_session()
     local backup_layout_name = user_domain .. "_" .. layout_name
     local backup_layout_path = backup_dir .. backup_layout_name
 
-    if myconfig.should_debug_print() then
+    if use_debug_print then
       print("selected_session.path: " .. selected_session.path)
       print("layout_path: " .. layout_path)
       print("backup_session_path: " .. backup_session_path)
@@ -418,10 +421,7 @@ function remove_session()
     try_remove(backup_layout_path)
 
     if #removed_files > 0 then
-      print("Deleted the following files:")
-      for _, filepath in ipairs(removed_files) do
-        print(filepath)
-      end
+      print("Deleted the following files:\n" .. table.concat(removed_files, "\n"))
     else
       print("No files were deleted. They may not exist or an error occurred.")
     end
