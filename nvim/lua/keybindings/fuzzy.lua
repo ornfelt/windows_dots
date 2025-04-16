@@ -53,7 +53,11 @@ function fuzzy_project_files()
     cwd = cwd:gsub(" ", '\\ ')
     vim.cmd("FZF " .. cwd)
   elseif file_picker == myconfig.FilePicker.FZF_LUA then
-    require("fzf-lua").git_files({ cwd = cwd })
+    if is_git then
+      require("fzf-lua").git_files({ cwd = cwd })
+    else
+      require("fzf-lua").files({})
+    end
   else
     ts_project_files()
   end

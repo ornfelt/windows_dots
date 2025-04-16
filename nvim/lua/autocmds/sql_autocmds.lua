@@ -130,7 +130,6 @@ local function read_program_cs()
 end
 
 -- Function to insert the engine and env values into the current buffer
--- No initial new line
 function insert_engine_env_values()
   local engines, envs = read_program_cs()
   if not engines or not envs then
@@ -146,7 +145,7 @@ function insert_engine_env_values()
   local row, col = unpack(vim.api.nvim_win_get_cursor(0))
   vim.api.nvim_win_set_cursor(0, { row, col + 1 })
 
-  -- Insert lines into buffer without an extra newline at the start
+  -- Insert lines into buffer (no extra newline at start)
   vim.api.nvim_put({ engine_line, env_line, blank_line }, "c", true, true)
 end
 
