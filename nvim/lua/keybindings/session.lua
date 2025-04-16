@@ -3,6 +3,20 @@ local myconfig = require("myconfig")
 local my_notes_path = myconfig.my_notes_path
 local user_domain = myconfig.user_domain
 
+local function source_session_by_name(selected_name, sessions)
+  for _, session in ipairs(sessions) do
+    if session.name == selected_name then
+      vim.cmd('silent source ' .. session.path)
+      if myconfig.should_debug_print() then
+        print('Session loaded from ' .. session.path)
+      end
+      return true
+    end
+  end
+  print("Invalid selection.")
+  return false
+end
+
 -- Session management
 function load_session()
   local session_dir = vim.fn.expand('~/.vim/sessions/')
@@ -35,26 +49,84 @@ function load_session()
     table.insert(options, session.name)
   end
 
-  -- Prompt user to select a session
-  vim.ui.select(options, { prompt = 'Select a session to load:' }, function(choice)
-    if choice then
-      for _, session in ipairs(sessions) do
-        if session.name == choice then
-          vim.cmd('silent source ' .. session.path)
-          if myconfig.should_debug_print() then
-            print('Session loaded from ' .. session.path)
-          end
-          return
-        end
-      end
-      print('Invalid selection.')
+  -- Hardcoded...
+  --local use_file_picker = true
+  local use_file_picker = false
+
+  local selected_file_picker = myconfig.get_file_picker()
+  local use_fzf = selected_file_picker == myconfig.FilePicker.FZF
+  local use_fzf_lua = selected_file_picker == myconfig.FilePicker.FZF_LUA
+
+  if use_file_picker then
+    if use_fzf then
+      -- fzf
+      vim.fn["fzf#run"]({
+        source = options,
+        sink = function(selected)
+          source_session_by_name(selected, sessions)
+        end,
+        options = "--prompt 'Session> ' --reverse",
+      })
+    elseif use_fzf_lua then
+      -- fzf-lua
+      local fzf = require("fzf-lua")
+      fzf.fzf_exec(options, {
+        prompt = "Session> ",
+        actions = {
+          ["default"] = function(selected)
+            local sel_name = selected[1]
+            source_session_by_name(sel_name, sessions)
+          end,
+        },
+      })
     else
-      print('No session selected.')
+      -- Telescope
+      local pickers = require("telescope.pickers")
+      local finders = require("telescope.finders")
+      local conf = require("telescope.config").values
+      local actions = require("telescope.actions")
+      local action_state = require("telescope.actions.state")
+
+      pickers.new({}, {
+        prompt_title = "Select Session",
+        finder = finders.new_table({
+          results = options,
+          entry_maker = function(entry)
+            return {
+              value = entry,
+              display = entry,
+              ordinal = entry,
+            }
+          end,
+        }),
+        sorter = conf.generic_sorter({}),
+        attach_mappings = function(prompt_bufnr, map)
+          local function on_select()
+            local selected = action_state.get_selected_entry()
+            actions.close(prompt_bufnr)
+            source_session_by_name(selected.value, sessions)
+          end
+
+          map("i", "<CR>", on_select)
+          map("n", "<CR>", on_select)
+          return true
+        end,
+      }):find()
     end
-  end)
+  else
+    -- Prompt user to select a session
+    vim.ui.select(options, { prompt = 'Select a session to load:' }, function(choice)
+      if choice then
+        source_session_by_name(choice, sessions)
+      else
+        print('No session selected.')
+      end
+    end)
+  end
 end
 
-function load_session_also_works()
+-- This also works for selecting a session (uses vim.fn.inputlist)
+function load_session_alt()
   local session_dir = vim.fn.expand('~/.vim/sessions/')
   local pattern = 's*.vim'
   local session_files = vim.fn.globpath(session_dir, pattern, 0, 1)
@@ -77,12 +149,14 @@ function load_session_also_works()
     end
   end
 
-  -- Prompt user to select a session
+  -- Prompt user to select a session via inputlist
   local choice = vim.fn.inputlist(options)
   if choice > 0 and choice <= #sessions then
     local session = sessions[choice]
     vim.cmd('silent source ' .. session.path)
-    --print('Session loaded from ' .. session.path)
+    if myconfig.should_debug_print() then
+      print('Session loaded from ' .. session.path)
+    end
   else
     print('No session selected.')
   end
@@ -416,7 +490,6 @@ function remove_session()
 
     try_remove(selected_session.path)
     try_remove(layout_path)
-
     try_remove(backup_session_path)
     try_remove(backup_layout_path)
 
@@ -431,11 +504,14 @@ end
 
 vim.api.nvim_create_user_command("RemoveSession", remove_session, {})
 
--- Load session keybind
+-- Simple keybinds for saving and loading single session via file
 -- myconfig.map('n', '<leader>m', ':mks! ~/.vim/sessions/s.vim<CR>')
 -- myconfig.map('n', '<leader>.', ':silent so ~/.vim/sessions/s.vim<CR>')
+
+-- Customimzed keybinds
 myconfig.map('n', '<leader>.', ':lua load_session()<CR>')
---myconfig.map('n', '<leader>.', ':lua load_session_also_works()<CR>')
+--myconfig.map('n', '<leader>.', ':lua load_session_alt()<CR>')
+-- This works as well (will load via session layout file instead of the one created via mksession)
 --vim.api.nvim_set_keymap('n', '<leader>.', ':lua load_tabs_and_splits()<CR>', { noremap = true, silent = true })
 
 -- Save session keybind
