@@ -405,11 +405,66 @@ function save_tabs_and_splits()
   vim.cmd("mks! " .. session_filename)
 end
 
+local function delete_session_by_name(selected_name, sessions, session_dir, backup_dir, user_domain, use_debug_print)
+  -- Find selected session
+  local target
+  for _, s in ipairs(sessions) do
+    if s.name == selected_name then
+      target = s
+      break
+    end
+  end
+
+  if not target then
+    print("Invalid selection.")
+    return
+  end
+
+  if target.name == "s.vim" then
+    print("Cannot delete the default session file (s.vim).")
+    return
+  end
+
+  -- Build the layout + backup paths
+  local layout_name       = "s_layout" .. target.name:sub(2)
+  local layout_path       = session_dir .. layout_name
+  local backup_sess_name  = user_domain .. "_" .. target.name
+  local backup_layout     = user_domain .. "_" .. layout_name
+  local backup_sess_path  = backup_dir .. backup_sess_name
+  local backup_layout_path= backup_dir .. backup_layout
+
+  if use_debug_print then
+    print("Deleting:", target.path, layout_path, backup_sess_path, backup_layout_path)
+  end
+
+  local removed = {}
+  local function try_remove(path)
+    local ok, err = os.remove(path)
+    if ok then
+      table.insert(removed, myconfig.normalize_path(path))
+    elseif err:match("No such file") == nil then
+      print(("Error deleting %s: %s"):format(path, err))
+    end
+  end
+
+  try_remove(target.path)
+  try_remove(layout_path)
+  try_remove(backup_sess_path)
+  try_remove(backup_layout_path)
+
+  if #removed > 0 then
+    print("Deleted:\n" .. table.concat(removed, "\n"))
+  else
+    print("No files were deleted.")
+  end
+end
+
 function remove_session()
-  local session_dir = vim.fn.expand('~/.vim/sessions/')
-  local pattern = 's*.vim'
-  local session_files = vim.fn.globpath(session_dir, pattern, 0, 1)
+  local session_dir     = vim.fn.expand('~/.vim/sessions/')
+  local pattern         = 's*.vim'
+  local session_files   = vim.fn.globpath(session_dir, pattern, 0, 1)
   local use_debug_print = myconfig.should_debug_print()
+  local backup_dir      = my_notes_path .. ".vim/"
 
   if #session_files == 0 then
     print("No session files found in " .. session_dir)
@@ -417,89 +472,81 @@ function remove_session()
   end
 
   local sessions = {}
-  local index = 0
-  for _, filepath in ipairs(session_files) do
-    local filename = vim.fn.fnamemodify(filepath, ':t')
-    if not string.match(string.lower(filename), 's_layout') then
-      index = index + 1
-      table.insert(sessions, { index = index, name = filename, path = filepath })
+  for _, fp in ipairs(session_files) do
+    local fn = vim.fn.fnamemodify(fp, ":t")
+    if not fn:lower():match("s_layout") then
+      table.insert(sessions, { name = fn, path = fp })
     end
   end
+  table.sort(sessions, function(a,b) return a.name < b.name end)
 
-  table.sort(sessions, function(a, b) return a.index < b.index end)
+  local options = vim.tbl_map(function(s) return s.name end, sessions)
 
-  local options = {}
-  for _, session in ipairs(sessions) do
-    table.insert(options, session.name)
-  end
+  -- Hardcoded...
+  --local use_file_picker = true
+  local use_file_picker = false
+  local picker           = myconfig.get_file_picker()
+  local use_fzf          = picker == myconfig.FilePicker.FZF
+  local use_fzf_lua      = picker == myconfig.FilePicker.FZF_LUA
 
-  -- Prompt user to select a session
-  vim.ui.select(options, { prompt = 'Select a session to remove:' }, function(choice)
-    if not choice then
-      if use_debug_print then
+  if use_file_picker then
+    if use_fzf then
+      -- fzf
+      vim.fn["fzf#run"]({
+        source  = options,
+        sink    = function(choice)
+          delete_session_by_name(choice, sessions, session_dir, backup_dir, user_domain, use_debug_print)
+        end,
+        options = "--prompt 'Remove> ' --reverse",
+      })
+
+    elseif use_fzf_lua then
+      -- fzf-lua
+      local fzf = require("fzf-lua")
+      fzf.fzf_exec(options, {
+        prompt  = "Remove> ",
+        actions = {
+          ["default"] = function(selected)
+            delete_session_by_name(selected[1], sessions, session_dir, backup_dir, user_domain, use_debug_print)
+          end,
+        },
+      })
+
+    else
+      -- Telescope
+      local pickers      = require("telescope.pickers")
+      local finders      = require("telescope.finders")
+      local conf         = require("telescope.config").values
+      local actions      = require("telescope.actions")
+      local action_state = require("telescope.actions.state")
+
+      pickers.new({}, {
+        prompt_title = "Remove Session",
+        finder       = finders.new_table { results = options },
+        sorter       = conf.generic_sorter({}),
+        attach_mappings = function(_, map)
+          local function on_ok()
+            local sel = action_state.get_selected_entry().value
+            actions.close(_)
+            delete_session_by_name(sel, sessions, session_dir, backup_dir, user_domain, use_debug_print)
+          end
+          map("i", "<CR>", on_ok)
+          map("n", "<CR>", on_ok)
+          return true
+        end,
+      }):find()
+    end
+
+  else
+    -- vim.ui.select fallback
+    vim.ui.select(options, { prompt = "Select a session to remove:" }, function(choice)
+      if choice then
+        delete_session_by_name(choice, sessions, session_dir, backup_dir, user_domain, use_debug_print)
+      elseif use_debug_print then
         print("No session selected.")
       end
-      return
-    end
-
-    local selected_session = nil
-    for _, session in ipairs(sessions) do
-      if session.name == choice then
-        selected_session = session
-        break
-      end
-    end
-
-    if not selected_session then
-      print("Invalid selection.")
-      return
-    end
-
-    if selected_session.name == "s.vim" then
-      print("Cannot delete the default session file (s.vim).")
-      return
-    end
-
-    local backup_dir = my_notes_path .. ".vim/"
-    local layout_name = "s_layout" .. selected_session.name:sub(2)
-    local layout_path = session_dir .. layout_name
-
-    local backup_session_name = user_domain .. "_" .. selected_session.name
-    local backup_session_path = backup_dir .. backup_session_name
-    local backup_layout_name = user_domain .. "_" .. layout_name
-    local backup_layout_path = backup_dir .. backup_layout_name
-
-    if use_debug_print then
-      print("selected_session.path: " .. selected_session.path)
-      print("layout_path: " .. layout_path)
-      print("backup_session_path: " .. backup_session_path)
-      print("backup_layout_path: " .. backup_layout_path)
-    end
-
-    local removed_files = {}
-    local function try_remove(filepath)
-      local ok, err = os.remove(filepath)
-      if ok then
-        table.insert(removed_files, filepath)
-      else
-        if not string.find(err or "", "No such file") then
-          print("Error removing file: " .. filepath .. " (" .. (err or "unknown error") .. ")")
-        end
-      end
-    end
-
-    try_remove(selected_session.path)
-    try_remove(layout_path)
-    try_remove(backup_session_path)
-    try_remove(backup_layout_path)
-
-    if #removed_files > 0 then
-      print("Deleted the following files:\n" .. table.concat(removed_files, "\n"))
-    else
-      print("No files were deleted. They may not exist or an error occurred.")
-    end
-
-  end)
+    end)
+  end
 end
 
 vim.api.nvim_create_user_command("RemoveSession", remove_session, {})
