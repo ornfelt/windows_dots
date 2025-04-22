@@ -49,10 +49,7 @@ function load_session()
     table.insert(options, session.name)
   end
 
-  -- Hardcoded...
-  --local use_file_picker = true
-  local use_file_picker = false
-
+  local use_file_picker = myconfig.use_file_picker_for_commands()
   local selected_file_picker = myconfig.get_file_picker()
   local use_fzf = selected_file_picker == myconfig.FilePicker.FZF
   local use_fzf_lua = selected_file_picker == myconfig.FilePicker.FZF_LUA
@@ -482,9 +479,7 @@ function remove_session()
 
   local options = vim.tbl_map(function(s) return s.name end, sessions)
 
-  -- Hardcoded...
-  --local use_file_picker = true
-  local use_file_picker = false
+  local use_file_picker = myconfig.use_file_picker_for_commands()
   local picker           = myconfig.get_file_picker()
   local use_fzf          = picker == myconfig.FilePicker.FZF
   local use_fzf_lua      = picker == myconfig.FilePicker.FZF_LUA
