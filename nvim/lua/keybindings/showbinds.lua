@@ -31,12 +31,15 @@ local function choose(prompt, options, callback)
       local finders      = require('telescope.finders')
       local actions      = require('telescope.actions')
       local action_state = require('telescope.actions.state')
-      local conf         = require('telescope.config').values
+      local sorters = require("telescope.sorters")
+      --local conf         = require('telescope.config').values
 
       pickers.new({}, {
         prompt_title = prompt,
         finder = finders.new_table({ results = options }),
-        sorter = conf.generic_sorter({}),
+        --sorter = conf.generic_sorter({}),
+        sorter = sorters.get_fzy_sorter(),
+        sorting_strategy = "ascending",
         attach_mappings = function(prompt_bufnr, map)
           local function on_select()
             local sel = action_state.get_selected_entry()
@@ -60,8 +63,9 @@ end
 
 -- Keymap: hierarchical pick from headers and subsequent lines -> copy to clipboard on select
 vim.keymap.set('n', '<leader>?', function()
-  local file_path = myconfig.my_notes_path .. "/scripts/files/nvim_keys.txt"
-  local lines     = myconfig.read_lines_from_file(file_path)
+  --local file_path = myconfig.my_notes_path .. "/scripts/files/nvim_keys.txt"
+  local file_path = myconfig.my_notes_path .. "/vimtutor2.txt"
+  local lines = myconfig.read_lines_from_file(file_path)
 
   -- Parse categories and their items
   local categories = {}
@@ -74,9 +78,9 @@ vim.keymap.set('n', '<leader>?', function()
       table.insert(categories, header)
       items[header] = {}
     elseif current then
-      if not (line:match("^%s*$")
-              or line:match("^%-%-")
-              or line:match("^[-]+$")) then
+      local is_content = not(line:match("^%s*$") or line:match("^%-%-") or line:match("^%*%*") or line:match("^[-]+$"))
+      local is_mapcmd = line:match("^%s*map:%s+") or line:match("^%s*cmd:%s+") or line:match("^%s*autocmd:%s+")
+      if is_content and is_mapcmd then
         table.insert(items[current], line)
       end
     end
