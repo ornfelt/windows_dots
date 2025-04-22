@@ -1,17 +1,34 @@
-# Set the source directory
+# Set nvim source dir
 $src = ".\nvim"
-# Set the destination directory, expanding the environment variable
-$dest = [System.Environment]::ExpandEnvironmentVariables("%localappdata%\nvim")
 
-# Create the destination directory if it doesn't exist
-if (-not (Test-Path $dest)) {
-    New-Item -Path $dest -ItemType Directory
+$destBase = [System.Environment]::ExpandEnvironmentVariables("%localappdata%")
+# This also works...
+#$dest = [System.Environment]::ExpandEnvironmentVariables("%localappdata%\nvim")
+
+# true to copy full nvim folder into $destBase, otherwise copy all its contents
+$copyFullDir = $true
+$dest = Join-Path $destBase "nvim"
+
+# Delete destination folder if it exists (to fully replace it)
+if (Test-Path $dest) {
+    Remove-Item -Path $dest -Recurse -Force
+    Write-Host "Removed existing directory: $dest"
 }
 
-# Copy all contents from source to destination, forcing overwrite
-Copy-Item -Path "$src\*" -Destination $dest -Recurse -Force
+# Create destination dir if it doesn't exist
+#if (-not (Test-Path $dest)) {
+#    New-Item -Path $dest -ItemType Directory | Out-Null
+#}
 
-Write-Host "Files copied successfully from $src to $dest"
+if ($copyFullDir) {
+    # Copy the entire directory as a folder
+    Copy-Item -Path $src -Destination $dest -Recurse -Force
+} else {
+    # Copy only the contents of the directory
+    Copy-Item -Path "$src\*" -Destination $dest -Recurse -Force
+}
+
+Write-Host "Nvim config files copied successfully from $src to $dest"
 
 # ------------------------------------------------------------
 # Copy .vimrc file to h:\ or home dir
