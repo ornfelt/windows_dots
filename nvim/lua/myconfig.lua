@@ -129,14 +129,19 @@ end
 
 -- Check if DebugPrint is enabled
 function M.should_debug_print()
-  local prioritize = read_config("DebugPrint", "false")
-  return prioritize:lower() == "true"
+  local debug_print = read_config("DebugPrint", "false")
+  return debug_print:lower() == "true"
 end
 
 -- Check if prioritizing build scripts is enabled
 function M.should_prioritize_build_script()
   local prioritize = read_config("PrioritizeBuildScript", "false")
   return prioritize:lower() == "true"
+end
+
+function M.use_file_picker_for_commands()
+  local use_file_picker = read_config("UseFilePickerForCommands", "false")
+  return use_file_picker:lower() == "true"
 end
 
 function M.get_py_command()
@@ -229,8 +234,13 @@ function ToggleDebugPrint()
   ToggleBooleanSetting("DebugPrint")
 end
 
+function ToggleUseFilePickerForCommands()
+  ToggleBooleanSetting("UseFilePickerForCommands")
+end
+
 vim.api.nvim_create_user_command('TogglePrioritizeBuildScript', TogglePrioritizeBuildScript, {})
 vim.api.nvim_create_user_command('ToggleDebugPrint', ToggleDebugPrint, {})
+vim.api.nvim_create_user_command('ToggleUseFilePickerForCommands', ToggleUseFilePickerForCommands, {})
 
 -- Dynamic filepicker selection
 local FilePicker = {

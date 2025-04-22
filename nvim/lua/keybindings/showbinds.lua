@@ -6,8 +6,7 @@ local function choose(prompt, options, callback)
   local use_fzf   = picker == myconfig.FilePicker.FZF
   local use_fzf_lua = picker == myconfig.FilePicker.FZF_LUA
   --local use_file_picker = picker ~= myconfig.FilePicker.NONE
-  local use_file_picker = true
-  --local use_file_picker = false
+  local use_file_picker = myconfig.use_file_picker_for_commands()
 
   if use_file_picker then
     if use_fzf then
