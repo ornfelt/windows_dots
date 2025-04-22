@@ -10,15 +10,18 @@ $copyFullDir = $true
 $dest = Join-Path $destBase "nvim"
 
 # Delete destination folder if it exists (to fully replace it)
-if (Test-Path $dest) {
-    Remove-Item -Path $dest -Recurse -Force
-    Write-Host "Removed existing directory: $dest"
+if ($copyFullDir) {
+    # Remove old dir
+    if (Test-Path $dest) {
+        Remove-Item -Path $dest -Recurse -Force
+        Write-Host "Removed existing directory: $dest"
+    }
+} else {
+    # Create destination dir if it doesn't exist
+    if (-not (Test-Path $dest)) {
+        New-Item -Path $dest -ItemType Directory | Out-Null
+    }
 }
-
-# Create destination dir if it doesn't exist
-#if (-not (Test-Path $dest)) {
-#    New-Item -Path $dest -ItemType Directory | Out-Null
-#}
 
 if ($copyFullDir) {
     # Copy the entire directory as a folder
