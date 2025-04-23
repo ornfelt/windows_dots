@@ -104,7 +104,7 @@ vim.keymap.set('n', '<leader>?', function()
       -- get map/cmd/autocmd key
       local key = line:match("^%s*map:%s*(.+)")
                or line:match("^%s*cmd:%s*(.+)")
-               or line:match("^%s*autocmd:%s*(.+)")
+               --or line:match("^%s*autocmd:%s*(.+)")
 
       if key then
         -- look ahead one line for desc:
