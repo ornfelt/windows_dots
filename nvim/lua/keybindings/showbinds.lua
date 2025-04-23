@@ -64,25 +64,67 @@ end
 -- Keymap: hierarchical pick from headers and subsequent lines -> copy to clipboard on select
 vim.keymap.set('n', '<leader>?', function()
   --local file_path = myconfig.my_notes_path .. "/scripts/files/nvim_keys.txt"
-  local file_path = myconfig.my_notes_path .. "/vimtutor2.txt"
+  local file_path = myconfig.my_notes_path .. ".vim/binds.txt"
   local lines = myconfig.read_lines_from_file(file_path)
 
   -- Parse categories and their items
   local categories = {}
   local items      = {}
   local current
-  for _, line in ipairs(lines) do
+
+  --for _, line in ipairs(lines) do
+  --  local header = line:match("^#%s*(.+)")
+  --  if header then
+  --    current = header
+  --    table.insert(categories, header)
+  --    items[header] = {}
+  --  elseif current then
+  --    local is_content = not(line:match("^%s*$") or line:match("^%-%-") or line:match("^%*%*") or line:match("^[-]+$"))
+  --    local is_mapcmd = line:match("^%s*map:%s+") or line:match("^%s*cmd:%s+") or line:match("^%s*autocmd:%s+")
+  --    if is_content and is_mapcmd then
+  --      table.insert(items[current], line)
+  --    end
+  --  end
+  --end
+
+  local i = 1
+  while i <= #lines do
+    local line = lines[i]
+
+    -- new category header
     local header = line:match("^#%s*(.+)")
     if header then
       current = header
-      table.insert(categories, header)
+      categories[#categories+1] = header
       items[header] = {}
+      i = i + 1
+
+    -- if inside a category...
     elseif current then
-      local is_content = not(line:match("^%s*$") or line:match("^%-%-") or line:match("^%*%*") or line:match("^[-]+$"))
-      local is_mapcmd = line:match("^%s*map:%s+") or line:match("^%s*cmd:%s+") or line:match("^%s*autocmd:%s+")
-      if is_content and is_mapcmd then
-        table.insert(items[current], line)
+      -- get map/cmd/autocmd key
+      local key = line:match("^%s*map:%s*(.+)")
+               or line:match("^%s*cmd:%s*(.+)")
+               or line:match("^%s*autocmd:%s*(.+)")
+
+      if key then
+        -- look ahead one line for desc:
+        local desc_line = lines[i+1] or ""
+        local desc = desc_line:match("^%s*desc:%s*(.+)") or ""
+
+        -- merge "key -> desc"
+        local merged = key .. " -> " .. desc
+        items[current][#items[current]+1] = merged
+
+        -- skip lines
+        i = i + 2
+      else
+        -- not a key+desc pair, just skip
+        i = i + 1
       end
+
+    else
+      -- outside of any category, just skip
+      i = i + 1
     end
   end
 
