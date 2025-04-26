@@ -306,6 +306,13 @@ function open_in_firefox()
     -- cword = cword:gsub('"', ''):gsub(',', ''):gsub("'", '')
     cword = cword:match([["(.-)"]]) or cword:match([['(.-)']]) or cword
     local url = "https://github.com/" .. cword
+
+    if cword:lower():find("github.com") then
+      -- Capture up to two slashes after github.com
+      local match = cword:match("^(.-/[^/]+/[^/]+)")
+      url = match or cword
+    end
+
     vim.fn.system("firefox " .. vim.fn.shellescape(url) .. " &")
   end
 end
