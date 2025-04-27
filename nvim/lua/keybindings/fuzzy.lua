@@ -10,11 +10,13 @@ function ts_project_files()
   if ret == 0 then
     --builtin.git_files()
     builtin.git_files({
+      cwd = utils.buffer_dir(),
       previewer = true,
     })
   else
     --builtin.find_files()
     builtin.find_files({
+      cwd = utils.buffer_dir(),
       previewer = true,
     })
   end
@@ -71,7 +73,8 @@ function fuzzy_files()
   elseif file_picker == myconfig.FilePicker.FZF_LUA then
     require("fzf-lua").files({})
   else
-    vim.cmd("Telescope find_files")
+    --vim.cmd("Telescope find_files")
+    require('telescope.builtin').find_files({ cwd = utils.buffer_dir() })
   end
 end
 
