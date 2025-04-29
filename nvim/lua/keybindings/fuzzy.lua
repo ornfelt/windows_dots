@@ -81,7 +81,7 @@ end
 vim.api.nvim_set_keymap('n', '<M-a>', '<cmd>lua fuzzy_project_files()<CR>', { noremap = true, silent = true, desc = "Project Files (git-aware)" })
 vim.api.nvim_set_keymap('n', '<M-A>', '<cmd>lua fuzzy_files()<CR>', { noremap = true, silent = true, desc = "All Files" })
 
--- map: <M-S> -> Fuzzy search C:/ drive
+-- fuzzy search at '/' or 'C:/'
 vim.keymap.set('n', '<M-S>', function()
   local use_fzf = myconfig.get_file_picker() == myconfig.FilePicker.FZF
   local use_fzf_lua = myconfig.get_file_picker() == myconfig.FilePicker.FZF_LUA
