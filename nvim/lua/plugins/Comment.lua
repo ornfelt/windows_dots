@@ -11,7 +11,7 @@ return {
     ---LHS of toggle mappings in NORMAL mode
     toggler = {
       --line = 'gc',
-      -- map: c-k -> toggle comment
+      -- map: <C-k> -> toggle comment
       line = '<C-k>',
       block = 'gb',
     },
