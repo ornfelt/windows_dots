@@ -299,7 +299,7 @@ local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protoc
 --
 -- LSP hover keybind/autocmd
 --
-vim.o.updatetime = 1000
+--vim.o.updatetime = 1000
 local enabled_filetypes = {
     bash = true,
     c = true,
