@@ -203,18 +203,27 @@ vim.api.nvim_set_keymap('v', '<leader>-', ':lua copy_current_file_path(false)<CR
 function open_file_with_env()
   -- local cword = vim.fn.expand("<cfile>")
   local cword = vim.fn.expand("<cWORD>")
+
+  local use_debug_print = myconfig.should_debug_print()
+
+  if use_debug_print then
+    print("original cword: " .. cword)
+  end
+
   -- Removes everything before drive letter (may appear in diff files)
   local trimmed_cword = cword:match("([a-zA-Z]:.*)")
   if trimmed_cword ~= nil then
     cword = trimmed_cword
   end
 
-  local use_debug_print = myconfig.should_debug_print()
-
-  -- hmmm
   cword = cword:gsub("#", "\\#")
   if use_debug_print then
-    print("cword: " .. cword)
+    print("cword after drive trim and '#' fix: " .. cword)
+  end
+
+  cword = myconfig.normalize_path(cword)
+  if use_debug_print then
+    print("cword after normalize_path: " .. cword)
   end
 
   -- Remove some characters: ', ", parenthesis and brackets
@@ -251,12 +260,13 @@ function open_file_with_env()
     end
 
     if use_debug_print then
-      print("new_cword: " .. new_cword)
+      print("new_cword (from placeholder): " .. new_cword)
     end
 
     -- vim.cmd("edit " .. new_cword)
     vim.cmd("tabe " .. new_cword)
 
+  -- Match colon followed by word that's not '/', like $env:code_root_dir
   elseif cword:match(":[^/]+/") then
     -- Strip everything before colon
     local colon_index = cword:find(":[^/]+/")
