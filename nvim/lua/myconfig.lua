@@ -4,7 +4,7 @@ local M = {} -- Module table
 function M.normalize_path(path)
   if not path then return nil end
   -- Replace backslashes with forward slashes and remove duplicate forward slashes
-  path = path:gsub("\\", "/"):gsub("//+", "/")
+  path = path:gsub("\\", "/"):gsub("//+", "/"):gsub("/#", "\\#")
   return path
 end
 
