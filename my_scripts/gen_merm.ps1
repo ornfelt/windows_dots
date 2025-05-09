@@ -7,6 +7,19 @@ if (-not $InputFile) {
     exit 1
 }
 
+# If no extension is provided, append .md
+if ([IO.Path]::GetExtension($InputFile) -eq "") {
+    $InputFile = "$InputFile.md"
+    Write-Host "No extension detected; trying input file '$InputFile'..." -ForegroundColor Yellow
+}
+
+# Verify file existence
+if (-not (Test-Path $InputFile)) {
+    Write-Host "Error: Input file '$InputFile' not found." -ForegroundColor Red
+    exit 1
+}
+
+# Ensure npx/mermaid-cli is available
 $mermaidCli = (Get-Command "npx" -ErrorAction SilentlyContinue)
 if (-not $mermaidCli) {
     Write-Host "Error: npx is not installed. Install Node.js and Mermaid CLI." -ForegroundColor Red
