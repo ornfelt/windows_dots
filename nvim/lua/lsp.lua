@@ -86,7 +86,8 @@ local lua_ls_config = {
           ".git",
           "AppData",
           "Application Data",
-          "scoop"
+          "scoop",
+          ".vim"
         },
       },
     },
