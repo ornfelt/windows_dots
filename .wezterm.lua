@@ -603,9 +603,13 @@ config.keys = {
     action = wezterm.action.QuickSelectArgs {
       label = 'quickselect words',
       --\S+ for every word without spaces, below also makes sure there's at least 2 chars
+      --patterns = {
+      --  [[\S{2,}]],
+      --},
+      -- Same as above but the match stops at the first colon
       patterns = {
-        [[\S{2,}]],
-      },
+        [[[^:\s]{2,}]],
+      }
       --action = wezterm.action.QuickSelect
     },
   },
