@@ -939,6 +939,10 @@ end
 
 wezterm.on("format-tab-title", function(tab)
   local new_title = tostring(tab.active_pane.current_working_dir):gsub("^file:///", "")
+  -- Normalize slashes
+  new_title = new_title:gsub("\\", "/")
+  new_title = new_title:gsub("//+", "/")
+
   --local max_title_len = 20 -- If use_fancy_tab_bar
   local max_title_len = 15
   if #new_title > max_title_len then
