@@ -606,13 +606,12 @@ config.keys = {
       --patterns = {
       --  [[\S{2,}]],
       --},
-      -- Same as above but the match stops at the first colon
-      --patterns = {
-      --  [[[^:\s]{2,}]],
-      --}
-      -- Same as above but the match stops at first colon but only if it's followed by a digit. ((?=:\d) is a lookahead
+      -- Same as above but the match stops at the first colon.
+      -- \S+? — a non-greedy match of non-space characters
+      -- (?=:\d) — a lookahead to ensure the match stops before a colon followed by a digit
+      -- | \S{2,} — fallback to match full non-space words of at least 2 characters when the lookahead doesn’t apply
       patterns = {
-        [[[^:\s]{2,}(?=:\d)|[^:\s]{2,}]]
+        [[\S+?(?=:\d)|\S{2,}]]
       }
       --action = wezterm.action.QuickSelect
     },
