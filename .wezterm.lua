@@ -607,8 +607,12 @@ config.keys = {
       --  [[\S{2,}]],
       --},
       -- Same as above but the match stops at the first colon
+      --patterns = {
+      --  [[[^:\s]{2,}]],
+      --}
+      -- Same as above but the match stops at first colon but only if it's followed by a digit. ((?=:\d) is a lookahead
       patterns = {
-        [[[^:\s]{2,}]],
+        [[[^:\s]{2,}(?=:\d)|[^:\s]{2,}]]
       }
       --action = wezterm.action.QuickSelect
     },
