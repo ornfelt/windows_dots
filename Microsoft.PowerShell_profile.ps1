@@ -16,6 +16,8 @@ Set-PSReadLineOption -EditMode Vi
 # Fzf
 # Install-Module -Name PSFzf -Force
 Import-Module PSFzf
+# Make FZF be case insensitive
+$env:_PSFZF_FZF_DEFAULT_OPTS = '-i'
 #Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory 'Ctrl+r'
 Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
 
