@@ -10,6 +10,7 @@ local commands = {
   -- Custom
   { label = "Diffi", cmd = "Diffi" },
   { label = "Diffg", cmd = "Diffg" },
+  { label = "Diffgf", cmd = "Diffgf" },
   { label = "DiffCp", cmd = "DiffCp" },
   { label = "MakefileTargets", cmd = "MakefileTargets" },
   { label = "GoLangTestFiles", cmd = "GoLangTestFiles" },
