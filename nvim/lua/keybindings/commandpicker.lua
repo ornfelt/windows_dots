@@ -20,6 +20,8 @@ local commands = {
   { label = "Config - ToggleUseFilePickerForCommands", cmd = "ToggleUseFilePickerForCommands" },
   { label = "Config - PrintConfig", cmd = "PrintConfig" },
   { label = "Llama", cmd = "Llm" },
+  { label = "SkeletonCopy", cmd = "SkeletonCopy" },
+  { label = "SkeletonCopy with comments", cmd = "SkeletonCopy!" },
   { label = "RemoveSession", cmd = "RemoveSession" },
   -- SQL
   { label = "SqlsExecuteQuery", cmd = "SqlsExecuteQuery" },
@@ -195,6 +197,8 @@ local selections_to_print = {
   ["CycleFilePicker"] = true,
   ["TogglePrioritizeBuildScript"] = true,
   ["ToggleDebugPrint"] = true,
+  ["SkeletonCopy"] = true,
+  ["SkeletonCopy!"] = true,
   ["PrintConfig"] = true,
 }
 
