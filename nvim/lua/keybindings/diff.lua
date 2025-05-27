@@ -225,13 +225,13 @@ end
 local function select_branch(callback)
   local use_debug_print = myconfig.should_debug_print()
 
-  -- Get any default upstream branch
+  -- Get any existing upstream branch
   local default_branch = get_default_branch()
 
   -- Get all branches sorted by commit date
   local branches = get_branches_sorted()
 
-  if #branches == 0 then
+  if #branches == 0 and not default_branch then
     print("No branches found.")
     if callback then callback("") end
     return
@@ -245,7 +245,7 @@ local function select_branch(callback)
   -- Add upstream branch as first option if it exists
   if has_upstream then
     table.insert(options, default_branch)
-    table.insert(labels, "[DEFAULT] " .. default_branch)
+    table.insert(labels, "[upstream] " .. default_branch)
   end
 
   -- Add other branches, avoiding duplicates
