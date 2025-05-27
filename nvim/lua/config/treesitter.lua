@@ -7,6 +7,7 @@ require("nvim-treesitter.configs").setup({
   ensure_installed = {
     'bash',
     'c',
+    'c_sharp',
     'cpp',
     'css',
     'go',
@@ -182,12 +183,14 @@ function select_function_node(inner)
   -- climb until we hit a function-like node
   while node do
     if vim.tbl_contains({
-      "function",
-      "function_definition",
-      "method_definition",
-      "arrow_function",
-      "function_declaration",
-      "class_method",
+      "function",                     -- generic
+      "function_definition",          -- python
+      "function_declaration",         -- c, cpp, java, js, ts
+      "function_expression",          -- js, ts
+      "generator_function_declaration",-- js, ts generators
+      "method_definition",            -- js, ts, java
+      "arrow_function",               -- js, ts
+      "class_method",                 -- ruby, python
     }, node:type()) then
       break
     end
@@ -283,13 +286,15 @@ function select_class_node(inner)
   while node do
     if vim.tbl_contains({
         -- TS node types for class/struct/etc in various langs
-        "class_declaration", -- java, csharp
-        "class_specifier",   -- cpp
-        "struct_specifier",  -- cpp
-        "class_definition",  -- python
-        "type_declaration",  -- go (covers struct, interface, aliases)
-        "struct_item",       -- rust
-        "impl_item",         -- rust impl blocks
+        "class_declaration",               -- java, csharp, js, ts
+        "class_expression",                -- js, ts inline
+        "export_default_class_declaration",-- js, ts default exports
+        "class_specifier",                 -- cpp
+        "struct_specifier",                -- cpp
+        "class_definition",                -- python
+        "type_declaration",                -- go
+        "struct_item",                     -- rust
+        "impl_item",                       -- rust impl blocks
       }, node:type())
     then
       break
@@ -328,30 +333,100 @@ vim.api.nvim_set_keymap("n", "vic", ":lua select_class_node(true)<CR>", { norema
 vim.api.nvim_set_keymap("n", "vac", ":lua select_class_node(false)<CR>", { noremap = true, silent = true })
 
 -- WIP: copy current buffer but replace every function body with "..."
-vim.api.nvim_create_user_command("CppSimplifyCopy", function()
+vim.api.nvim_create_user_command("SkeletonCopy", function(opts)
   local bufnr = vim.api.nvim_get_current_buf()
-  local ft = vim.bo.filetype
-  if ft ~= "cpp" and ft ~= "c" and ft ~= "h" then
-    vim.notify(":CppSimplifyCopy only works on C/C++ files", vim.log.levels.WARN)
+  local ft   = vim.bo.filetype
+  local remove_comments = not opts.bang
+
+  -- filetype -> treesitter language name
+  local lang_map = {
+    c           = "c",
+    cpp         = "cpp",
+    h           = "c",
+    cs          = "c_sharp",
+    python      = "python",
+    go          = "go",
+    rust        = "rust",
+    lua         = "lua",
+    java        = "java",
+    js          = "javascript",
+    javascript  = "javascript",
+    jsx         = "javascript",
+    ts          = "typescript",
+    typescript  = "typescript",
+    tsx         = "tsx",
+  }
+  local ts_lang = lang_map[ft]
+  if not ts_lang then
+    vim.notify(
+      ":SkeletonCopy only supported on C/C++/C#/Python/Go/Rust/Lua/Java/JS/TS (got '" .. ft .. "')",
+      vim.log.levels.WARN
+    )
     return
   end
 
+  -- per-language queries to capture function/method nodes
+  local queries = {
+    c         = [[ (function_definition) @func ]],
+    cpp       = [[ (function_definition) @func ]],
+    h         = [[ (function_definition) @func ]],
+    c_sharp   = [[
+      (method_declaration)        @func
+      (constructor_declaration)   @func
+    ]],
+    python    = [[ (function_definition) @func ]],
+    go        = [[ (function_declaration) @func ]],
+    rust      = [[ (function_item) @func ]],
+    lua       = [[ 
+      (function_declaration) @func 
+    ]],
+    java      = [[
+      (method_declaration)        @func
+      (constructor_declaration)   @func
+      (function_declaration)      @func
+    ]],
+    javascript = [[
+      (function_declaration) @func
+      (method_definition)   @func
+      (arrow_function)      @func
+    ]],
+    typescript = [[
+      (function_declaration) @func
+      (method_definition)   @func
+      (arrow_function)      @func
+    ]],
+    tsx       = [[
+      (function_declaration) @func
+      (method_definition)   @func
+      (arrow_function)      @func
+    ]],
+  }
+  local qstr = queries[ts_lang]
+  if not qstr then
+    vim.notify("No query defined for TS language: " .. ts_lang, vim.log.levels.ERROR)
+    return
+  end
+
+  -- grab all original lines
   local orig = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local parser = vim.treesitter.get_parser(bufnr, ft)
-  local tree   = parser:parse()[1]
-  local root   = tree:root()
 
-  -- Fallback for parse_query vs parse
-  local ts_query = vim.treesitter.query or vim.treesitter
-  local parse    = ts_query.parse_query or ts_query.parse
-  if not parse then
-    vim.notify("Treesitter query parser not found in this Neovim build", vim.log.levels.ERROR)
+  -- treesitter setup
+  local ok, parser = pcall(vim.treesitter.get_parser, bufnr, ts_lang)
+  if not ok or not parser then
+    vim.notify("Could not create TS parser for “" .. ts_lang .. "”", vim.log.levels.ERROR)
     return
   end
-  local query = parse(ft, [[
-    (function_definition) @func
-  ]])
+  local tree  = parser:parse()[1]
+  local root  = tree:root()
+  local tsq   = vim.treesitter.query or vim.treesitter
+  local parse = tsq.parse_query or tsq.parse
+  if not parse then
+    vim.notify("Treesitter query parser not available", vim.log.levels.ERROR)
+    return
+  end
+  local query = parse(ts_lang, qstr)
 
+  -- collect all function-body ranges
   local ranges = {}
   for id, node in query:iter_captures(root, bufnr, 0, -1) do
     if query.captures[id] == "func" then
@@ -364,9 +439,11 @@ vim.api.nvim_create_user_command("CppSimplifyCopy", function()
     end
   end
 
-  table.sort(ranges, function(a,b) return a.sr > b.sr end)
-  local out = vim.deepcopy(orig)
+  -- sort descending so edits don't shift later ranges
+  table.sort(ranges, function(a, b) return a.sr > b.sr end)
 
+  -- apply skeleton replacement
+  local out = vim.deepcopy(orig)
   for _, r in ipairs(ranges) do
     local sr, er = r.sr, r.er
     local indent = orig[sr+1]:match("^%s*") or ""
@@ -376,9 +453,56 @@ vim.api.nvim_create_user_command("CppSimplifyCopy", function()
     table.insert(out, sr+1, indent .. "...")
   end
 
+  if remove_comments then
+    local filtered = {}
+    for _, line in ipairs(out) do
+      local trimmed = line:match("^%s*(.-)%s*$")
+      local skip = false
+
+      -- language-specific single‐line comment prefixes
+      local single = {
+        c           = "//",
+        cpp         = "//",
+        h           = "//",
+        c_sharp     = "//",
+        java        = "//",
+        go          = "//",
+        rust        = "//",
+        javascript  = "//",
+        typescript  = "//",
+        tsx         = "//",
+        python      = "#",
+        lua         = "--",
+      }
+
+      -- skip if only a single-line comment
+      local prefix = single[ts_lang]
+      if prefix and trimmed:match("^" .. vim.pesc(prefix)) then
+        skip = true
+      end
+
+      -- also skip block‐comment lines for JS/TS
+      if not skip and (ts_lang == "javascript" or ts_lang == "typescript" or ts_lang == "tsx") then
+        if trimmed:match("^/%*") or trimmed:match("^%*") or trimmed:match("%*/$") then
+          skip = true
+        end
+      end
+
+      if not skip then
+        table.insert(filtered, line)
+      end
+    end
+    out = filtered
+  end
+
+  -- yank to system clipboard
   vim.fn.setreg("+", table.concat(out, "\n"))
-  vim.notify("C/C++ buffer simplified and copied to clipboard", vim.log.levels.INFO)
+  vim.notify(
+    ("Buffer skeleton %scopied to clipboard"):format(remove_comments and "(no comments) " or ""),
+    vim.log.levels.INFO
+  )
 end, {
-  desc = "Copy buffer with every C/C++ function body replaced by '...'",
+  bang = true,
+  desc = "Copy buffer skeleton (replace bodies with '...'); use ! to drop comment‐only lines",
 })
 
