@@ -227,31 +227,31 @@ function select_function_node(inner)
     end
     start_row = earliest
 
-    -- special-case for cpp and cs to avoid curly braces
+    -- special-case for C-style brace bodies
     local ft = vim.bo.filetype
-    if ft == "cpp" or ft == "cs" then
-      -- avoid selecting the brace lines themselves
-      start_row = start_row + 1
-      end_row   = end_row   - 1
+    local brace_langs = {
+      cpp         = true,
+      cs          = true,
+      java        = true,
+      javascript  = true,
+      jsx         = true,
+      typescript  = true,
+      tsx         = true,
+      go          = true,
+      rust        = true,
+    }
+
+    if brace_langs[ft] then
+      -- fetch the very first line of the body (0-based start_row)
+      local line = vim.api.nvim_buf_get_lines(bufnr, start_row, start_row + 1, false)[1] or ""
+      -- trim trailing whitespace
+      local trimmed = line:match("^(.-)%s*$")
+      -- if it truly ends with '{', skip that entire line
+      if trimmed:sub(-1) == "{" then
+        start_row = start_row + 1
+        end_row   = end_row   - 1
+      end
     end
-
-    -- Same as above but only avoid lines if they’re pure braces
-    --local ft = vim.bo.filetype
-    --if ft == "cpp" or ft == "cs" then
-    --  -- get the text of the start line
-    --  local sline = vim.api.nvim_buf_get_lines(bufnr, start_row, start_row+1, false)[1]
-    --  local stripped = sline:match("^%s*(.-)%s*$")
-    --  if stripped == "{" then
-    --    start_row = start_row + 1
-    --  end
-
-    --  -- get the text of the end line
-    --  local eline = vim.api.nvim_buf_get_lines(bufnr, end_row, end_row+1, false)[1]
-    --  local stripped2 = eline:match("^%s*(.-)%s*$")
-    --  if stripped2 == "}" then
-    --    end_row = end_row - 1
-    --  end
-    --end
 
   else
     start_row, start_col, end_row, end_col = node:range()
@@ -432,25 +432,60 @@ vim.api.nvim_create_user_command("SkeletonCopy", function(opts)
     if query.captures[id] == "func" then
       local body = node:field("body")[1]
       if body then
-        local sr = select(1, body:range())
-        local er = select(3, body:range())
-        table.insert(ranges, { sr = sr, er = er })
+        -- body:range() returns (start_row, start_col, end_row, end_col), ALL zero-based
+        local sr, sc, er, ec = body:range()
+        table.insert(ranges, { sr = sr, sc = sc, er = er, ec = ec })
       end
     end
   end
 
-  -- sort descending so edits don't shift later ranges
-  table.sort(ranges, function(a, b) return a.sr > b.sr end)
-
-  -- apply skeleton replacement
-  local out = vim.deepcopy(orig)
-  for _, r in ipairs(ranges) do
-    local sr, er = r.sr, r.er
-    local indent = orig[sr+1]:match("^%s*") or ""
-    for i = er+1, sr+1, -1 do
-      table.remove(out, i)
+  -- sort descending by start_row so that earlier edits don't shift later ranges
+  table.sort(ranges, function(a, b)
+    if a.sr ~= b.sr then
+      return a.sr > b.sr
+    else
+      -- if two bodies start on same line, put the one that ends later first
+      return a.ec > b.ec
     end
-    table.insert(out, sr+1, indent .. "...")
+  end)
+
+  -- Apply skeleton replacement
+  local out = vim.deepcopy(orig)
+
+  for _, r in ipairs(ranges) do
+    local sr, sc, er, ec = r.sr, r.sc, r.er, r.ec
+    local first_line = out[sr + 1] -- Lua list is 1-based, sr is 0-based
+    if sr == er then
+      -- single-line function body (everything from col sc to ec on the same line)
+      -- prefix = chars before the opening brace/indent
+      local prefix = first_line:sub(1, sc)
+      -- suffix = chars after the closing brace on that same line
+      -- (ec is zero-based, so ec+1 is the last char in the body; the next char is ec+2 in 1-based)
+      local suffix = first_line:sub(ec + 2)
+      out[sr + 1] = prefix .. "..." .. suffix
+
+    else
+      -- multi-line function body
+      -- First line: keep up to sc, then append "..."
+      local prefix = first_line:sub(1, sc)
+
+      -- Last line: keep from ec+1 onward
+      local last_line = out[er + 1]
+      local suffix = last_line:sub(ec + 2)
+
+      -- Remove all the “middle” lines (and the original last line),
+      --    i.e. lines (sr+2) .. (er+1) in 1-based indexing. We do this in reverse:
+      for i = (er + 1), (sr + 2), -1 do
+        table.remove(out, i)
+      end
+
+      out[sr + 1] = prefix .. "..."
+
+      -- If there's a non-empty suffix on the last line, insert it right after
+      if suffix ~= "" then
+        table.insert(out, sr + 2, suffix)
+      end
+    end
   end
 
   if remove_comments then
