@@ -185,7 +185,8 @@ function select_function_node(inner)
     if vim.tbl_contains({
       "function",                     -- generic
       "function_definition",          -- python
-      "function_declaration",         -- c, cpp, java, js, ts
+      "function_declaration",         -- c, cpp, js, ts
+      "method_declaration",           -- java
       "function_expression",          -- js, ts
       "generator_function_declaration",-- js, ts generators
       "method_definition",            -- js, ts, java
@@ -380,10 +381,9 @@ vim.api.nvim_create_user_command("SkeletonCopy", function(opts)
     lua       = [[ 
       (function_declaration) @func 
     ]],
-    java      = [[
+    java = [[
       (method_declaration)        @func
       (constructor_declaration)   @func
-      (function_declaration)      @func
     ]],
     javascript = [[
       (function_declaration) @func
