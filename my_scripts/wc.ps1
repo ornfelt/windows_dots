@@ -8,7 +8,8 @@ if ($buildConfig -ieq "d" -or $buildConfig -ieq "debug") {
     $buildFolder = "Release_x64"
 }
 
-$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Wow\tools\my_wow\c\wc\bin\$buildFolder"
+#$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Wow\tools\my_wow\c\wc\bin\$buildFolder"
+$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Wow\tools\my_wow\c\wc_clean\bin\$buildFolder"
 
 if (Test-Path $basePath) {
     $path = $basePath
