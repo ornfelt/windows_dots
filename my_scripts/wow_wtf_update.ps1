@@ -6,7 +6,7 @@
 #switch ($version) {
 #    'wotlk' {
 #        $wowEnv      = 'wow_dir'
-#        $addonSubDir = '3.3.5\WTF'
+#        $addonSubDir = 'wotlk\WTF'
 #    }
 #    'tbc' {
 #        $wowEnv      = 'wow_tbc_dir'
@@ -30,7 +30,7 @@ if ($args.Count -ge 1) {
 switch ($ver) {
     'wotlk' {
         $wowEnv      = 'wow_dir'
-        $addonSubDir = '3.3.5\WTF'
+        $addonSubDir = 'wotlk\WTF'
     }
     'tbc' {
         $wowEnv      = 'wow_tbc_dir'
