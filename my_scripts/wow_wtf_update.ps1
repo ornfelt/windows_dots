@@ -95,5 +95,8 @@ else {
     Write-Host "WARNING: Source Account folder not found: $sourceAccount" -ForegroundColor Yellow
 }
 
+Set-Location $destRoot
+# or:
+cd $destRoot
 Write-Host "Done."
 
