@@ -13,6 +13,9 @@ Set-PSReadLineOption -PredictionSource History
 Set-PSReadLineOption -PredictionViewStyle ListView
 Set-PSReadLineOption -EditMode Vi
 
+Set-PSReadLineKeyHandler -Chord 'Ctrl+n' -Function NextSuggestion
+Set-PSReadLineKeyHandler -Chord 'Ctrl+p' -Function PreviousSuggestion
+
 # Fzf
 # Install-Module -Name PSFzf -Force
 Import-Module PSFzf
