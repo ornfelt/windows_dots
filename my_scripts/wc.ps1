@@ -1,6 +1,11 @@
 param (
-    [string]$buildConfig = "debug"
+    [string]$buildConfig = "debug",
+    [bool]  $useCmake = $true
 )
+
+# Example:
+# .\wc.ps1 -buildConfig debug   -useCmake:$false
+# .\wc.ps1 -buildConfig release -useCmake:$true
 
 if ($buildConfig -ieq "d" -or $buildConfig -ieq "debug") {
     $buildFolder = "Debug_x64"
@@ -8,8 +13,22 @@ if ($buildConfig -ieq "d" -or $buildConfig -ieq "debug") {
     $buildFolder = "Release_x64"
 }
 
+# original version
 #$basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Wow\tools\my_wow\c\wc\bin\$buildFolder"
+# clean version (only used if useCmake is false)
 $basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Wow\tools\my_wow\c\wc_clean\bin\$buildFolder"
+
+# Adapt for cmake version...
+if ($useCmake) {
+    if ($buildConfig -ieq "d" -or $buildConfig -ieq "debug") {
+        $buildFolder = "build\bin\Debug"
+    } else {
+        $buildFolder = "build\bin\Release"
+    }
+
+    # cmake version
+    $basePath = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Wow\tools\my_wow\c\wc_clean\$buildFolder"
+}
 
 if (Test-Path $basePath) {
     $path = $basePath
