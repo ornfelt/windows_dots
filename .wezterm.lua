@@ -613,9 +613,9 @@ config.keys = {
       -- patterns = {
       --   [[\S+?(?=:\d)|\S{2,}]]
       -- }
-      -- Same as above but use \|? to match one tmux separator (but outside the capture)
+      -- Same as above but remove leading tmux split char
       patterns = {
-        [[\|?(\S+?(?=:\d)|\S{2,})]],
+        [[[^│\s]\S*?(?=:\d)|[^│\s]\S{2,}]]
       }
       --action = wezterm.action.QuickSelect
     },
