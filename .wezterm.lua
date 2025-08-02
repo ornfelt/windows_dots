@@ -610,8 +610,12 @@ config.keys = {
       -- \S+? — a non-greedy match of non-space characters
       -- (?=:\d) — a lookahead to ensure the match stops before a colon followed by a digit
       -- | \S{2,} — fallback to match full non-space words of at least 2 characters when the lookahead doesn’t apply
+      -- patterns = {
+      --   [[\S+?(?=:\d)|\S{2,}]]
+      -- }
+      -- Same as above but use \|? to match one tmux separator (but outside the capture)
       patterns = {
-        [[\S+?(?=:\d)|\S{2,}]]
+        [[\|?(\S+?(?=:\d)|\S{2,})]],
       }
       --action = wezterm.action.QuickSelect
     },
