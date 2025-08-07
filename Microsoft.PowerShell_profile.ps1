@@ -1,5 +1,8 @@
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
+# Note: to reload profile, run:
+# . $PROFILE
+
 # Oh-My-Posh
 #oh-my-posh init pwsh | Invoke-Expression
 #$omp_config = Join-Path $PSScriptRoot ".\custom_cobalt.omp.json"
@@ -52,7 +55,7 @@ $aliases = @(
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos", ".llama", ".update_nvim_from_linux", ".docs", ".down", ".cdh", ".clean_shada",
     ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
-    ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update"
+    ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".mangos_update"
 )
 
 foreach ($alias in $aliases) {
@@ -85,6 +88,12 @@ function run_keepawake {
     python "$env:code_root_dir\Code2\C#\wowbot\keep_awake.py" @args
 }
 Set-Alias -Name keepawake -Value run_keepawake -Scope Global
+
+function run_health_check {
+    & "$env:MY_NOTES_PATH\scripts\health_check.ps1" @args
+}
+
+Set-Alias -Name health_check -Value run_health_check -Scope Global
 
 # For wezterm cwd
 # https://wezfurlong.org/wezterm/shell-integration.html#osc-7-on-windows-with-powershell
