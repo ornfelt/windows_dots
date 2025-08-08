@@ -107,6 +107,7 @@ function run_health_check {
 }
 
 Set-Alias -Name health_check -Value run_health_check -Scope Global
+Set-Alias -Name '.health_check' -Value run_health_check -Scope Global
 
 # For wezterm cwd
 # https://wezfurlong.org/wezterm/shell-integration.html#osc-7-on-windows-with-powershell
