@@ -177,6 +177,8 @@ local function log_to_file(message)
   end
 end
 
+local is_linux = (wezterm.target_triple ~= "x86_64-pc-windows-msvc" and wezterm.target_triple ~= "x86_64-pc-windows-gnu")
+
 local function is_vim(pane)
   local process_info = pane:get_foreground_process_info()
   local process_name = process_info and process_info.name
@@ -187,6 +189,10 @@ local function is_vim(pane)
 end
 
 local function is_tmux(pane)
+  if not is_linux then
+    return false
+  end
+
   local process_info = pane:get_foreground_process_info()
   local process_name = process_info and process_info.name
   --wezterm.log_info("process_name: " .. (process_name or "nil"))
@@ -378,8 +384,6 @@ wezterm.on('trigger-vim-with-scrollback-copy-latest', function(window, pane)
     window:toast_notification("No Input/Output Found", "No valid input/output detected in scrollback.", nil, 5000)
   end
 end)
-
-local is_linux = (wezterm.target_triple ~= "x86_64-pc-windows-msvc" and wezterm.target_triple ~= "x86_64-pc-windows-gnu")
 
 -- Custom key bindings
 config.keys = {
@@ -682,6 +686,23 @@ config.keys = {
       wezterm.action.SendKey({ key = "Tab", mods = "CTRL|SHIFT" }),
     }),
   },
+  -- Fix for debian...
+  {
+    key = "Tab",
+    mods = "CTRL|SHIFT",
+    action = wezterm.action_callback(function(window, pane)
+      if is_tmux(pane) then
+        local success, stdout, stderr = wezterm.run_child_process({"tmux", "previous-window"})
+        if not success then
+          wezterm.log_error("Failed to switch tmux window: " .. (stderr or "unknown error"))
+        end
+      else
+        window:perform_action(act.ActivateTabRelative(-1), pane)
+        --window:perform_action(act.SendKey({ key = "Tab", mods = "CTRL|SHIFT" }), pane)
+      end
+    end),
+  },
+
   --{
   --  key = 'L',
   --  mods = 'ALT|CTRL',
