@@ -7,6 +7,13 @@ param(
     [string]$Lang = 'py'
 )
 
+# Usage:
+# .\playermap.ps1 acore js
+# .\playermap.ps1 cmangos-tbc py
+# .\playermap.ps1 mangoszero ts
+# with named parameters
+# .\playermap.ps1 -Server cmangos -Lang php
+
 # Ensure CODE_ROOT_DIR is set
 if (-not $env:CODE_ROOT_DIR) {
     Write-Error "Environment variable CODE_ROOT_DIR is not defined. Exiting."

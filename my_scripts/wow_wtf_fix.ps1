@@ -1,5 +1,9 @@
 # Basically the same as wow_wtf_update but it copies 
 # in the other direction: from the repo to local wow dir.
+# Usage:
+# .\wow_wtf_fix.ps1 classic
+# .\wow_wtf_fix.ps1 tbc
+# .\wow_wtf_fix.ps1 wotlk
 if ($args.Count -ge 1) {
     $ver = $args[0].ToLower()
 } else {
