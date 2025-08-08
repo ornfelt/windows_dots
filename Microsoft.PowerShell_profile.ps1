@@ -49,13 +49,26 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
     Invoke-FuzzyKillProcess
 }
 
+# Note:
+# scripts in my_scripts without "dot-commands":
+# {ps_profile_path}/my_scripts/chrome_s.ps1
+# {ps_profile_path}/my_scripts/closeApplication.ps1
+# {ps_profile_path}/my_scripts/copy_path.ps1
+# {ps_profile_path}/my_scripts/get_fonts.ps1
+# {ps_profile_path}/my_scripts/list_processes.ps1
+# {ps_profile_path}/my_scripts/list_processes_mem.ps1
+# {ps_profile_path}/my_scripts/map_util.ps1
+# {ps_profile_path}/my_scripts/network_names.ps1
+# {ps_profile_path}/my_scripts/playermap_old.ps1
+# {ps_profile_path}/my_scripts/task_commands.ps1
+# {ps_profile_path}/my_scripts/trust_dirs.ps1
 $aliases = @(
     ".cdn", ".cdc", ".cdp", ".ioq3", ".show_wifi", ".list_files", ".list_files_gui", 
     ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos", ".llama", ".update_nvim_from_linux", ".docs", ".down", ".cdh", ".clean_shada",
     ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
-    ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".mangos_update"
+    ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".mangos_update"
 )
 
 foreach ($alias in $aliases) {

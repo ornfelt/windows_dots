@@ -18,7 +18,12 @@
 #    }
 #}
 
-# Use args instead of param...
+# usage via params:
+# .\wow_wtf_update.ps1 -version tbc
+# without params:
+# .\wow_wtf_update.ps1 tbc
+
+# Use args instead of param (to avoid specifying param key)
 if ($args.Count -ge 1) {
     $ver = $args[0].ToLower()
 } else {
