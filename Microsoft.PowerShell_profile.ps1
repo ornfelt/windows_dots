@@ -51,6 +51,9 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
 
 # Note:
 # scripts in my_scripts without "dot-commands":
+# {ps_profile_path}/my_scripts/cd_code_root_dir.ps1
+# {ps_profile_path}/my_scripts/cd_my_notes_path.ps1
+# {ps_profile_path}/my_scripts/cd_ps_profile_path.ps1
 # {ps_profile_path}/my_scripts/chrome_s.ps1
 # {ps_profile_path}/my_scripts/closeApplication.ps1
 # {ps_profile_path}/my_scripts/copy_path.ps1
