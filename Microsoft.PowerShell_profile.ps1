@@ -72,7 +72,8 @@ $aliases = @(
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos", ".llama", ".update_nvim_from_linux", ".docs", ".down", ".cdh", ".clean_shada",
     ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
-    ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".mangos_update"
+    ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".mangos_update",
+    ".cmake"
 )
 
 foreach ($alias in $aliases) {
