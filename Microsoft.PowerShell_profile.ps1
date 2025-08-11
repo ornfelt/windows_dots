@@ -58,6 +58,7 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
 # {ps_profile_path}/my_scripts/closeApplication.ps1
 # {ps_profile_path}/my_scripts/copy_path.ps1
 # {ps_profile_path}/my_scripts/get_fonts.ps1
+# {ps_profile_path}/my_scripts/llama_old.ps1
 # {ps_profile_path}/my_scripts/list_processes.ps1
 # {ps_profile_path}/my_scripts/list_processes_mem.ps1
 # {ps_profile_path}/my_scripts/map_util.ps1
