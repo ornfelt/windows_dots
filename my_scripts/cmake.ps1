@@ -3,7 +3,9 @@ param(
     [string]$OnlyPrint
 )
 
-# TODO: go through all cmake commands from setup.sh!
+# Usage:
+# .\cmake.ps1            # detect path and RUN the chosen cmake
+# .\cmake.ps1 onlyprint  # detect path and PRINT commands (no execution)
 
 $cwd = (Get-Location).Path
 
@@ -72,11 +74,13 @@ elseif ($wowCppMatch) {
     if ($OnlyPrint) {
         Write-Output ""
         Write-Output "alternative cmake command without vcpkg:"
-        Write-Output 'cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug'
+        Write-Output 'cmake -B build -S . -DCMAKE_BUILD_TYPE=Release'
     }
 }
 else {
     # Default fallback
+    Write-Host "No cmake command found for: $cwd" -ForegroundColor DarkYellow
+    Write-Host "Using default cmake command..." -ForegroundColor DarkYellow
     $main = 'cmake ../ -DCMAKE_BUILD_TYPE=Release'
     Run-Or-Print $main
 }
