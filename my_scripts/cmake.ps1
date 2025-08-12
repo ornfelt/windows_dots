@@ -144,6 +144,15 @@ elseif ($cwd -imatch 'server') {
         Write-Output 'cmake -S .. -B ./ -DBUILD_MANGOSD=1 -DBUILD_REALMD=1 -DBUILD_TOOLS=1 -DUSE_STORMLIB=1 -DSCRIPT_LIB_ELUNA=1 -DSCRIPT_LIB_SD3=1 -DPLAYERBOTS=1 -DPCH=1 -DCMAKE_INSTALL_PREFIX=$HOME/mangoszero/run'
     }
 }
+elseif (($cwd -match 'tbc') -and ($cwd -match 'c\+\+')) {
+    $main = 'cmake .. -DUSE_SDL2=ON -DUSE_SOUND=ON -DUSE_NAMIGATOR=ON -DCMAKE_BUILD_TYPE=Debug'
+    $alts = @(
+        'cmake .. -DUSE_SDL2=OFF -DUSE_SOUND=ON -DUSE_NAMIGATOR=OFF -DCMAKE_BUILD_TYPE=Release'
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
 else {
     # Default fallback
     Write-Host "No cmake command found for: $cwd" -ForegroundColor DarkYellow
