@@ -3,8 +3,8 @@ param (
     [bool]  $useCmake = $true
 )
 
-# Example:
-# .\wc.ps1 -buildConfig debug   -useCmake:$false
+# Usage:
+# .\wc.ps1 -buildConfig debug -useCmake:$false
 # .\wc.ps1 -buildConfig release -useCmake:$true
 
 if ($buildConfig -ieq "d" -or $buildConfig -ieq "debug") {
