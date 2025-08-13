@@ -51,9 +51,12 @@ function Test-CMakeLists {
 
     # Not found: inform + force print-only
     if ([string]::IsNullOrWhiteSpace($Context)) { $Context = 'this project' }
+
     Write-Host "CMakeLists.txt not found at: $cmakePath ($Context)" -ForegroundColor Yellow
     Write-Host "Switching to PRINT-ONLY mode." -ForegroundColor Yellow
+    Write-Host ""
     $script:OnlyPrint = 'true'
+
     return $null
 }
 
@@ -193,8 +196,8 @@ elseif (($cwd -match 'tbc') -and ($cwd -match 'c\+\+')) {
     Print-Alternatives $alts
 }
 else {
-    $null = Test-CMakeLists -ParentDir
     # Default fallback
+    $null = Test-CMakeLists -ParentDir
     Write-Host "No cmake command found for: $cwd" -ForegroundColor DarkYellow
     Write-Host "Using default cmake command..." -ForegroundColor DarkYellow
     $main = 'cmake ../ -DCMAKE_BUILD_TYPE=Debug'
