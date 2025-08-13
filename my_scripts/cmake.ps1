@@ -27,8 +27,34 @@ function Print-Alternatives {
     if ($OnlyPrint -and $Lines.Count -gt 0) {
         Write-Output ""
         Write-Output "alternative cmake commands:"
-        foreach ($l in $Lines) { Write-Output $l }
+        foreach ($l in $Lines) {
+            Write-Output $l
+            Write-Output ""
+        }
     }
+}
+
+function Test-CMakeLists {
+    param(
+        [switch]$ParentDir, # if set: check parent; else: current dir
+        [string]$Context = '' # optional label for nicer messages
+    )
+
+    $base = (Get-Location).Path
+    if ($ParentDir) { $base = Split-Path -Path $base -Parent }
+
+    $cmakePath = Join-Path $base 'CMakeLists.txt'
+
+    if (Test-Path -LiteralPath $cmakePath) {
+        return $cmakePath
+    }
+
+    # Not found: inform + force print-only
+    if ([string]::IsNullOrWhiteSpace($Context)) { $Context = 'this project' }
+    Write-Host "CMakeLists.txt not found at: $cmakePath ($Context)" -ForegroundColor Yellow
+    Write-Host "Switching to PRINT-ONLY mode." -ForegroundColor Yellow
+    $script:OnlyPrint = 'true'
+    return $null
 }
 
 # Make string checks case-insensitive (can use -imatch to be more explicit)
@@ -37,6 +63,7 @@ $tcMatch = $cwd -match 'trinitycore'
 $wowCppMatch = ($cwd -match 'my_web_wow') -and ($cwd -match 'c\+\+')
 
 if ($azMatch) {
+    $null = Test-CMakeLists -ParentDir -Context 'azerothcore (expecting CMakeLists.txt one level up)'
     # linux-specific...
     $main = 'cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/acore/ -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static -DWITH_COREDEBUG=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo'
     $alts = @(
@@ -48,6 +75,7 @@ if ($azMatch) {
     Print-Alternatives $alts
 }
 elseif ($tcMatch) {
+    $null = Test-CMakeLists -ParentDir -Context 'trinitycore (expecting CMakeLists.txt one level up)'
     # linux-specific...
     $main = 'cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/tcore/ -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static -DWITH_COREDEBUG=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo'
     $alts = @(
@@ -59,6 +87,7 @@ elseif ($tcMatch) {
     Print-Alternatives $alts
 }
 elseif ($wowCppMatch) {
+    $null = Test-CMakeLists -Context 'my_web_wow c++ (expecting CMakeLists.txt in current directory)'
     # Windows / vcpkg toolchain case
     $vcpkgPrimary   = 'C:/Users/jonas/Code2/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake'
     $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
@@ -82,16 +111,19 @@ elseif ($wowCppMatch) {
     }
 }
 elseif ($cwd -imatch 'openjk') {
+    $null = Test-CMakeLists -ParentDir -Context 'openjk (expecting CMakeLists.txt one level up)'
     # linux-specific...
     $main = 'cmake -DCMAKE_INSTALL_PREFIX=$HOME/.local/share/openjk -DCMAKE_BUILD_TYPE=RelWithDebInfo ..'
     Run-Or-Print $main
 }
 elseif ($cwd -imatch 'jediknightgalaxies') {
+    $null = Test-CMakeLists -ParentDir -Context 'jediknightgalaxies (expecting CMakeLists.txt one level up)'
     # linux-specific...
     $main = 'cmake -DCMAKE_INSTALL_PREFIX=$HOME/Downloads/ja_data -DCMAKE_BUILD_TYPE=RelWithDebInfo ..'
     Run-Or-Print $main
 }
 elseif ($cwd -imatch 'stk-code') {
+    $null = Test-CMakeLists -ParentDir -Context 'stk-code (expecting CMakeLists.txt one level up)'
     $main = 'cmake .. -DCMAKE_BUILD_TYPE=Release -DNO_SHADERC=on'
     Run-Or-Print $main
 }
@@ -100,19 +132,23 @@ elseif ($cwd -imatch 'dhewm3') {
     Run-Or-Print $main
 }
 elseif ($cwd -imatch 'blpconverter') {
+    $null = Test-CMakeLists -ParentDir -Context 'blpconverter (expecting CMakeLists.txt one level up)'
     $main = 'cmake .. -DWITH_LIBRARY=YES'
     Run-Or-Print $main
 }
 elseif ($cwd -imatch 'stormlib') {
+    $null = Test-CMakeLists -ParentDir -Context 'stormlib (expecting CMakeLists.txt one level up)'
     $main = 'cmake .. -DBUILD_SHARED_LIBS=ON'
     Run-Or-Print $main
 }
 elseif ($cwd -imatch 'mangos-classic') {
+    $null = Test-CMakeLists -ParentDir -Context 'mangos-classic (expecting CMakeLists.txt one level up)'
     # linux-specific...
     $main = 'cmake .. -DCMAKE_INSTALL_PREFIX=~/cmangos/run -DBUILD_EXTRACTORS=ON -DPCH=1 -DDEBUG=0 -DBUILD_PLAYERBOTS=ON'
     Run-Or-Print $main
 }
 elseif ($cwd -imatch 'mangos-tbc') {
+    $null = Test-CMakeLists -ParentDir -Context 'mangos-tbc (expecting CMakeLists.txt one level up)'
     # linux-specific...
     $main = 'cmake -S .. -B ./ -DCMAKE_INSTALL_PREFIX=~/cmangos-tbc/run -DBUILD_EXTRACTORS=ON -DPCH=1 -DDEBUG=0 -DBUILD_PLAYERBOTS=ON -DCMAKE_BUILD_TYPE=Release'
     $alts = @(
@@ -129,11 +165,13 @@ elseif ($cwd -imatch 'mangos-tbc') {
     }
 }
 elseif ($cwd -imatch 'core') {
+    $null = Test-CMakeLists -ParentDir -Context 'vmangos(core) (expecting CMakeLists.txt one level up)'
     # linux-specific...
     $main = 'cmake .. -DDEBUG=0 -DSUPPORTED_CLIENT_BUILD=5875 -DUSE_EXTRACTORS=1 -DCMAKE_INSTALL_PREFIX=$HOME/vmangos'
     Run-Or-Print $main
 }
 elseif ($cwd -imatch 'server') {
+    $null = Test-CMakeLists -ParentDir -Context 'mangoszero(server) (expecting CMakeLists.txt one level up)'
     # linux-specific...
     $main = 'cmake -S .. -B ./ -DBUILD_MANGOSD=1 -DBUILD_REALMD=1 -DBUILD_TOOLS=1 -DUSE_STORMLIB=1 -DSCRIPT_LIB_ELUNA=0 -DSCRIPT_LIB_SD3=1 -DPLAYERBOTS=1 -DPCH=1 -DCMAKE_INSTALL_PREFIX=$HOME/mangoszero/run'
 
@@ -145,6 +183,7 @@ elseif ($cwd -imatch 'server') {
     }
 }
 elseif (($cwd -match 'tbc') -and ($cwd -match 'c\+\+')) {
+    $null = Test-CMakeLists -ParentDir -Context 'my_wow tbc c++ (expecting CMakeLists.txt one level up)'
     $main = 'cmake .. -DUSE_SDL2=ON -DUSE_SOUND=ON -DUSE_NAMIGATOR=ON -DCMAKE_BUILD_TYPE=Debug'
     $alts = @(
         'cmake .. -DUSE_SDL2=OFF -DUSE_SOUND=ON -DUSE_NAMIGATOR=OFF -DCMAKE_BUILD_TYPE=Release'
@@ -154,6 +193,7 @@ elseif (($cwd -match 'tbc') -and ($cwd -match 'c\+\+')) {
     Print-Alternatives $alts
 }
 else {
+    $null = Test-CMakeLists -ParentDir
     # Default fallback
     Write-Host "No cmake command found for: $cwd" -ForegroundColor DarkYellow
     Write-Host "Using default cmake command..." -ForegroundColor DarkYellow
