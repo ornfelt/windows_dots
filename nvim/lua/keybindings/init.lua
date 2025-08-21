@@ -67,7 +67,7 @@ local function smart_replace_word_under_cursor()
     return line:sub(i, i):match("[%w_]") ~= nil
   end
 
-  -- If not on a word char, bail (or you could scan to nearest word)
+  -- If not on a word char, bail
   if not isw(col) then return end
 
   -- Find word start/end around the cursor
@@ -76,22 +76,23 @@ local function smart_replace_word_under_cursor()
   local e = col
   while e < L and isw(e + 1) do e = e + 1 end
 
-  -- "Last word" means the word ends at the very end of the line (no trailing spaces)
+  -- "Last word" means the word ends at the very end of the line
   local is_last_word = (e == L)
 
   local command = is_last_word and 'viw"_dp' or 'viw"_dP'
 
+  -- Debug
   if myconfig.should_debug_print() then
     local word = line:sub(s, e)
-    print("Cursor column (1-based):        ", vim.fn.col('.'))
-    print("Current line:                   ", line)
-    print("Word under cursor:              ", word)
-    print("Word start col:                 ", s)
-    print("Word end col:                   ", e)
-    print("Line length:                    ", L)
-    print("Text after word:                >", line:sub(e + 1), "<")
+    print("Cursor column (1-based): ", vim.fn.col('.'))
+    print("Current line: ", line)
+    print("Word under cursor: ", word)
+    print("Word start col: ", s)
+    print("Word end col: ", e)
+    print("Line length: ", L)
+    print("Text after word: ", line:sub(e + 1), "<")
     print("Is last word (no chars after)?: ", is_last_word and "yes" or "no")
-    print("Using command:                  ", command)
+    print("Using command: ", command)
   end
 
   vim.api.nvim_feedkeys(command, 'n', false)
