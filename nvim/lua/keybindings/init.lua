@@ -49,8 +49,8 @@ myconfig.map('n', '<M-z>', ':noh<CR>')
 myconfig.map('n', 'Y', 'y$') -- Yank till end of line
 
 -- Pasting
---myconfig.map('n', '<leader>p', 'viw"_dP') -- Replace from void
---myconfig.map('v', '<leader>p', '"_dP') -- Replace from void
+myconfig.map('n', '<leader>P', 'viw"_dP') -- Replace from void
+myconfig.map('v', '<leader>P', '"_dP') -- Replace from void
 
 -- Same void/black-hole replacement as above BUT if the 
 -- word/selection ends exactly at the last character on 
