@@ -105,8 +105,9 @@ if ($elunaHeadDate -le $acoreDate) {
         Write-Output "  SHA:  $targetSha"
         Write-Output "  Date: $targetDate"
         Write-Output "Checking out mod-eluna commit $targetSha ..."
-        git checkout $targetSha || {
-            Write-Output "Failed to checkout $targetSha"
+        git checkout $targetSha
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to checkout $targetSha"
             exit 1
         }
         Write-Output "mod-eluna aligned to commit prior to AzerothCore's target date."
