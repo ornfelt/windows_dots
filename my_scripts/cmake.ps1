@@ -198,6 +198,14 @@ elseif (($cwd -match 'tbc') -and ($cwd -match 'c\+\+')) {
     Run-Or-Print $main
     Print-Alternatives $alts
 }
+elseif ($cwd -imatch 'neovim') {
+    $null = Test-CMakeLists -Context 'neovim (expecting CMakeLists.txt in current directory)'
+
+    Write-Output "Do the following:"
+    Write-Output "git checkout stable"
+    Write-Output "make CMAKE_BUILD_TYPE={Release / RelWithDebInfo}"
+    Write-Output "sudo make install"
+}
 else {
     # Default fallback
     $null = Test-CMakeLists -ParentDir
