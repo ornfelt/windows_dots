@@ -53,6 +53,9 @@ function Test-CMakeLists {
     if ([string]::IsNullOrWhiteSpace($Context)) { $Context = 'this project' }
 
     Write-Host "CMakeLists.txt not found at: $cmakePath ($Context)" -ForegroundColor Yellow
+    if ($ParentDir) { 
+        Write-Host "Maybe try:`n-> mkdir build; cd build`nThen try again!" -ForegroundColor Yellow
+    }
     Write-Host "Switching to PRINT-ONLY mode." -ForegroundColor Yellow
     Write-Host ""
     $script:OnlyPrint = 'true'
@@ -187,9 +190,9 @@ elseif ($cwd -imatch 'server') {
 }
 elseif (($cwd -match 'tbc') -and ($cwd -match 'c\+\+')) {
     $null = Test-CMakeLists -ParentDir -Context 'my_wow tbc c++ (expecting CMakeLists.txt one level up)'
-    $main = 'cmake .. -DUSE_SDL2=ON -DUSE_SOUND=ON -DUSE_NAMIGATOR=ON -DCMAKE_BUILD_TYPE=Debug'
+    $main = 'cmake .. -DUSE_SDL2=ON -DUSE_SOUND=ON -DUSE_NAMIGATOR=OFF -DUSE_STOPWATCH_DT=ON -DCMAKE_BUILD_TYPE=Debug'
     $alts = @(
-        'cmake .. -DUSE_SDL2=OFF -DUSE_SOUND=ON -DUSE_NAMIGATOR=OFF -DCMAKE_BUILD_TYPE=Release'
+        'cmake .. -DUSE_SDL2=OFF -DUSE_SOUND=ON -DUSE_NAMIGATOR=ON -DUSE_STOPWATCH_DT=OFF -DCMAKE_BUILD_TYPE=Release'
     )
 
     Run-Or-Print $main
