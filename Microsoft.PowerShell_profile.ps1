@@ -9,7 +9,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 #oh-my-posh --init --shell pwsh --config $omp_config | Invoke-Expression
 
 # PSReadLine
-# Install-Module -Name PSReadLine -Force
+#Install-Module -Name PSReadLine -Force -Scope CurrentUser
 Import-Module PSReadLine
 Set-PSReadLineOption -BellStyle None
 Set-PSReadLineOption -PredictionSource History
@@ -20,7 +20,7 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+n' -Function NextSuggestion
 Set-PSReadLineKeyHandler -Chord 'Ctrl+p' -Function PreviousSuggestion
 
 # Fzf
-# Install-Module -Name PSFzf -Force
+#Install-Module -Name PSFzf -Force -Scope CurrentUser
 Import-Module PSFzf
 # Make FZF be case insensitive
 $env:_PSFZF_FZF_DEFAULT_OPTS = '-i'

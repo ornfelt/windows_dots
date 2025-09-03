@@ -114,40 +114,55 @@ $alacrittyConfigFile = ".\alacritty\alacritty.toml"
 $oldFontName = "JetBrainsMono NF"
 $newFontName = "JetBrainsMono Nerd Font" # With spaces
 
-$settingsPath = (Get-Item "C:\users\$env:UserName\AppData\Local\Packages\Microsoft.WindowsTerminal_*\LocalState\settings.json").FullName
-$settingsContent = Get-Content -Path $settingsPath -Raw | ConvertFrom-Json
-$fontName = $settingsContent.profiles.defaults.font.face
+$settingsItem = Get-Item "C:\users\$env:UserName\AppData\Local\Packages\Microsoft.WindowsTerminal_*\LocalState\settings.json" -ErrorAction SilentlyContinue
 
-if ($fontName -eq "JetBrainsMono Nerd Font") {
-    Write-Output "Font is set to JetBrainsMono Nerd Font"
-    if (Test-Path $alacrittyConfigFile) {
-        Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
-        Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile"
-        $fontReplaced = $true
-    } else {
-        Write-Host "$alacrittyConfigFile not found."
-    }
-} elseif ($fontName -eq "JetBrainsMono NF") {
-    Write-Output "Font is set to JetBrainsMono NF"
+if (-not $settingsItem) {
+    Write-Warning "[warn] Could not find Windows Terminal settings.json."
 } else {
-    Write-Output "Font wasn't found in profiles.defaults.font.face. Checking file for JetBrainsMono*..."
-    $settingsContent = Get-Content -Path $settingsPath -Raw
-    if ($settingsContent -match "JetBrainsMono\s*(Nerd Font|NF)") {
-        $match = $matches[0]
-            if ($match -match "Nerd Font") {
-                Write-Output "Font is set to JetBrainsMono Nerd Font (second check)"
-                if (Test-Path $alacrittyConfigFile) {
+    $settingsPath = $settingsItem.FullName
+    try {
+        $settingsContent = Get-Content -Path $settingsPath -Raw | ConvertFrom-Json
+        $fontName = $settingsContent.profiles.defaults.font.face
+    } catch {
+        Write-Warning "[warn] Failed to parse JSON from $settingsPath: $_"
+        $fontName = $null
+    }
+
+    if ($fontName -eq "JetBrainsMono Nerd Font") {
+        Write-Output "Font is set to JetBrainsMono Nerd Font"
+        if (Test-Path $alacrittyConfigFile) {
+            Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
+            Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile"
+            $fontReplaced = $true
+        } else {
+            Write-Host "$alacrittyConfigFile not found."
+        }
+    } elseif ($fontName -eq "JetBrainsMono NF") {
+        Write-Output "Font is set to JetBrainsMono NF"
+    } else {
+        Write-Output "Font wasn't found in profiles.defaults.font.face. Checking file for JetBrainsMono*..."
+        try {
+            $settingsRaw = Get-Content -Path $settingsPath -Raw
+            if ($settingsRaw -match "JetBrainsMono\s*(Nerd Font|NF)") {
+                $match = $matches[0]
+                if ($match -match "Nerd Font") {
+                    Write-Output "Font is set to JetBrainsMono Nerd Font (second check)"
+                    if (Test-Path $alacrittyConfigFile) {
                         Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
                         Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile"
                         $fontReplaced = $true
                     } else {
                         Write-Host "$alacrittyConfigFile not found."
                     }
-            } elseif ($match -match "NF") {
-                Write-Output "Font is set to JetBrainsMono NF (second check)"
+                } elseif ($match -match "NF") {
+                    Write-Output "Font is set to JetBrainsMono NF (second check)"
+                }
+            } else {
+                Write-Output "No JetBrainsMono font found in the settings."
             }
-    } else {
-        Write-Output "No JetBrainsMono font found in the settings."
+        } catch {
+            Write-Warning "[warn] Could not read settings file as raw text: $_"
+        }
     }
 }
 
