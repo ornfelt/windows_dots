@@ -3,7 +3,7 @@
 # See:
 # https://github.com/sxyazi/yazi/blob/main/yazi-config/preset/yazi-default.toml
 
-[manager]
+[mgr]
 show_hidden = true
 #sort_by = "modified"
 #sort_reverse = true
