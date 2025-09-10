@@ -102,6 +102,11 @@ function Go-Up {
 }
 Set-Alias .. Go-Up
 
+function Go-Up-Twice {
+    Set-Location ../..
+}
+Set-Alias ... Go-Up-Twice
+
 function run_keepawake {
     python "$env:code_root_dir\Code2\C#\wowbot\keep_awake.py" @args
 }
