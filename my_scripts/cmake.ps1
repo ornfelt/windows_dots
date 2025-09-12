@@ -206,6 +206,17 @@ elseif ($cwd -imatch 'neovim') {
     Write-Output "make CMAKE_BUILD_TYPE={Release / RelWithDebInfo}"
     Write-Output "sudo make install"
 }
+elseif ($cwd -imatch 'ioq3') {
+    $null = Test-CMakeLists -Context 'ioq3 (expecting CMakeLists.txt in current directory)'
+
+    $main = 'cmake -S . -B build -G "Visual Studio 17 2022"; cmake --build build --config Release'
+    $alts = @(
+        'cmake -S . -B build -G "Visual Studio 17 2022"; cmake --build build --config Debug'
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
 else {
     # Default fallback
     $null = Test-CMakeLists -ParentDir
