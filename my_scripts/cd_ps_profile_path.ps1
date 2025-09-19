@@ -1,6 +1,6 @@
 $path1 = $env:ps_profile_path
 $path2 = Join-Path $HOME "OneDrive/Documents/WindowsPowerShell"
-$path3 = "\\***REMOVED***/My Documents/WindowsPowerShell"
+$path3 = $env:ps_profile_path_alt
 
 function IsValidPath($path) {
     return (Test-Path $path -PathType Container)
