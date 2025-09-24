@@ -26,10 +26,11 @@ local commands = {
   { label = "RemoveSession", cmd = "RemoveSession" },
   -- SQL
   { label = "SqlsExecuteQuery", cmd = "SqlsExecuteQuery" },
-  { label = "SqlsShowDatabases", cmd = "SqlsShowDatabases" },
   { label = "SqlsShowSchemas", cmd = "SqlsShowSchemas" },
-  { label = "SqlsShowConnections", cmd = "SqlsShowConnections" },
+  { label = "SqlsShowTables", cmd = "SqlsShowTables" },
+  { label = "SqlsShowDatabases", cmd = "SqlsShowDatabases" },
   { label = "SqlsSwitchDatabase", cmd = "SqlsSwitchDatabase" },
+  { label = "SqlsShowConnections", cmd = "SqlsShowDatabases" },
   { label = "SqlsSwitchConnection", cmd = "SqlsSwitchConnection" },
   -- GP
   { label = "GpChatNew - New chat", cmd = "GpChatNew" },
