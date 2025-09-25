@@ -7,10 +7,12 @@ local ENV = vim.loop.os_getenv("ROSLYN_LS_DLL")
 
 local function hard_dll_path()
   if vim.fn.has("win32")==1 then
-    return [[C:/Users/jonas/Downloads/Microsoft.CodeAnalysis.LanguageServer.win-x64.5.1.0-1.25473.11/content/LanguageServer/win-x64/Microsoft.CodeAnalysis.LanguageServer.dll]]
+    local user_profile = vim.env.USERPROFILE or "C:/Users/jonas"
+    return user_profile .. [[/Downloads/Microsoft.CodeAnalysis.LanguageServer/content/LanguageServer/win-x64/Microsoft.CodeAnalysis.LanguageServer.dll]]
   else
-    local home = uv.os_homedir() or (vim.env.HOME or "")
-    return home .. [[/Downloads/Microsoft.CodeAnalysis.LanguageServer.win-x64.5.1.0-1.25473.11/content/LanguageServer/win-x64/Microsoft.CodeAnalysis.LanguageServer.dll]]
+    --local home = uv.os_homedir() or (vim.env.HOME or "/home/jonas")
+    local home = vim.env.HOME or "/home/jonas"
+    return home .. [[/Downloads/Microsoft.CodeAnalysis.LanguageServer/content/LanguageServer/linux-x64/Microsoft.CodeAnalysis.LanguageServer.dll]]
   end
 end
 

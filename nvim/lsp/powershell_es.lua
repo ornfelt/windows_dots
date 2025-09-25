@@ -1,4 +1,6 @@
 if vim.fn.has('win32') == 1 then
+  -- you might need to run this:
+  -- Get-ChildItem "$env:USERPROFILE\Downloads\PowerShellEditorServices" -Recurse -File | Unblock-File
   local user_profile = vim.loop.os_getenv("USERPROFILE") or "C:/Users/jonas"
   local base_dir = user_profile .. [[/Downloads/PowerShellEditorServices]]
   local script_ps1 = base_dir .. [[/PowerShellEditorServices/Start-EditorServices.ps1]]
