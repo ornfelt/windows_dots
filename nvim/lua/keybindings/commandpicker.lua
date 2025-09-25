@@ -24,6 +24,10 @@ local commands = {
   { label = "SkeletonCopy", cmd = "SkeletonCopy" },
   { label = "SkeletonCopy with comments", cmd = "SkeletonCopy!" },
   { label = "RemoveSession", cmd = "RemoveSession" },
+  { label = "ToSnake", cmd = "ToSnake" },
+  { label = "ToKebab", cmd = "ToKebab" },
+  { label = "ToCamel", cmd = "ToCamel" },
+  { label = "ToPascal", cmd = "ToPascal" },
   -- SQL
   { label = "SqlsExecuteQuery", cmd = "SqlsExecuteQuery" },
   { label = "SqlsShowSchemas", cmd = "SqlsShowSchemas" },
