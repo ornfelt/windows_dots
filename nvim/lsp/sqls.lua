@@ -57,7 +57,7 @@ local function parse_line(line)
     driver, rest = "mysql", line
   end
 
-  -- ADO.NET-style ("Server=...;...") → convert; otherwise assume raw Go-MySQL DSN.
+  -- ADO.NET-style ("Server=...;...") -> convert; otherwise assume raw Go-MySQL DSN.
   local is_kv = (rest:find(";", 1, true) ~= nil) and (rest:match("[%w_ ]+%s*=") ~= nil)
 
   local dsn
