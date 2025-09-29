@@ -10,3 +10,4 @@ return {
     -- TODO: Place per-language settings here
   },
 }
+

@@ -12,3 +12,4 @@ else
     root_markers = { 'composer.json', '.git' },
   }
 end
+

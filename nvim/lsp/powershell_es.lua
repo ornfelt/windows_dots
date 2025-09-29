@@ -29,3 +29,4 @@ if vim.fn.has('win32') == 1 then
 else
   return {}
 end
+

@@ -3,3 +3,4 @@ return {
   filetypes = { 'fsharp' },
   root_markers = { 'paket.dependencies', 'Directory.Build.props', '.git' },
 }
+
