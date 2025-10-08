@@ -5,7 +5,7 @@ return {
   settings = {
     ['rust-analyzer'] = {
       cargo = { allFeatures = true },
-      checkOnSave = { command = 'clippy' },
+      --checkOnSave = { command = 'clippy' },
       diagnostics = { disabled = { 'inactive-code' } }, -- optional
     },
   },
