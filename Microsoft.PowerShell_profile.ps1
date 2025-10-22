@@ -15,6 +15,7 @@ Set-PSReadLineOption -BellStyle None
 Set-PSReadLineOption -PredictionSource History
 Set-PSReadLineOption -PredictionViewStyle ListView
 Set-PSReadLineOption -EditMode Vi
+#Set-PSReadLineOption -EditMode Windows
 
 Set-PSReadLineKeyHandler -Chord 'Ctrl+n' -Function NextSuggestion
 Set-PSReadLineKeyHandler -Chord 'Ctrl+p' -Function PreviousSuggestion
