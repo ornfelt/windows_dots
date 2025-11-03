@@ -28,6 +28,7 @@ local commands = {
   { label = "ToKebab", cmd = "ToKebab" },
   { label = "ToCamel", cmd = "ToCamel" },
   { label = "ToPascal", cmd = "ToPascal" },
+  { label = "FileInfo", cmd = "FileInfo" },
   -- SQL
   { label = "SqlsExecuteQuery", cmd = "SqlsExecuteQuery" },
   { label = "SqlsShowSchemas", cmd = "SqlsShowSchemas" },
