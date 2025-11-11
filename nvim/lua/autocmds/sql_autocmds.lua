@@ -50,7 +50,7 @@ local function read_envs_from_appsettings()
   local unique_envs = {}
   local seen_envs = {}
   local engine_prefixes = { "oracle_", "mysql_", "sql_server_", "sqlite_", "postgresql_" }
-  local suffixes = { "_local", "_dev", "_test", "_uat", "_stage", "_prod" }
+  local suffixes = { "_local", "_localhost", "_dev", "_test", "_uat", "_stage", "_prod" }
 
   for _, env in ipairs(envs) do
     -- Remove engine prefixes
@@ -340,7 +340,7 @@ vim.api.nvim_create_autocmd("FileType", {
 local function extract_engine_env_from_buffer()
   local buffer_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
   local engine, env = nil, nil
-  local suffixes = { "_local", "_dev", "_test", "_uat", "_stage", "_prod" }
+  local suffixes = { "_local", "_localhost", "_dev", "_test", "_uat", "_stage", "_prod" }
 
   for _, line in ipairs(buffer_lines) do
     if not engine then
@@ -742,6 +742,11 @@ function switch_sqls_connection()
 
   engine = engine:lower()
   env = env:lower()
+
+  if engine == "sql_server" then
+    engine = engine:gsub("sql_server", "mssql")
+    env = env:gsub("1bo", "oneback")
+  end
 
   local matched_index = nil
   for i, conn in ipairs(connections) do

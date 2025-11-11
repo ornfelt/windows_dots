@@ -79,6 +79,11 @@
 
 -- NEW
 
+-- for testing custom lsp
+vim.filetype.add({
+  extension = { csql = "csql" },
+})
+
 -- Keymaps on LSP attach (replaces on_attach)
 vim.api.nvim_create_autocmd('LspAttach', {
   desc = 'LSP actions',
