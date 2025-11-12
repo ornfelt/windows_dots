@@ -722,6 +722,12 @@ end
 
 function switch_sqls_connection()
   local use_debug_print = myconfig.should_debug_print()
+  if myconfig.should_use_custom_lsp_for_sql() then
+    if use_debug_print then
+      print("[sqls] Skipping connection switch - UseCustomLspForSql is enabled")
+    end
+    return
+  end
 
   local engine, env = extract_engine_env_from_buffer()
   if not engine or not env then
@@ -745,7 +751,7 @@ function switch_sqls_connection()
 
   if engine == "sql_server" then
     engine = engine:gsub("sql_server", "mssql")
-    env = env:gsub("1bo", "oneback")
+    env = env:gsub("1bo", "onebackoffice")
   end
 
   local matched_index = nil

@@ -18,9 +18,17 @@ return (function()
 
   --print("using sqlminilsp exe: " .. exe)
 
+  local myconfig = require('myconfig')
+  local filetypes
+  if myconfig.should_use_custom_lsp_for_sql() then
+    filetypes = { "sql", "mysql" }
+  else
+    filetypes = { "csql" }
+  end
+
   return {
     cmd = { exe, "--stdio" },
-    filetypes = { "csql" },
+    filetypes = filetypes,
     -- optional root inference (Neovim 0.11+)
     root_markers = { ".git", "sqlproj" },
     -- or, explicitly:
