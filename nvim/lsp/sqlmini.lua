@@ -13,7 +13,7 @@ return (function()
   if vim.fn.has("win32") == 1 then
     exe = base_dir .. [[\Code2\C#\my_csharp\SqlMiniLsp\bin\Debug\net8.0\SqlMiniLsp.exe]]
   else
-    exe = base_dir .. "/Code2/my_csharp/SqlMiniLsp/bin/Debug/net8.0/sqlminilsp"
+    exe = base_dir .. "/Code2/C#/my_csharp/SqlMiniLsp/bin/Debug/net9.0/SqlMiniLsp"
   end
 
   --print("using sqlminilsp exe: " .. exe)
