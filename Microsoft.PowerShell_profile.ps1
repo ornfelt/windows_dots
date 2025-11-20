@@ -74,7 +74,7 @@ $aliases = @(
 	".mangos", ".llama", ".update_nvim_from_linux", ".docs", ".down", ".cdh", ".clean_shada",
     ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
     ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".mangos_update",
-    ".cmake", ".cmangos_update", ".mw", ".mww", ".mwr"
+    ".cmake", ".cmangos_update", ".mw", ".mww", ".mwr", ".list_colors", ".list_std_colors"
 )
 
 foreach ($alias in $aliases) {
@@ -130,7 +130,26 @@ function prompt {
         $provider_path = $p.ProviderPath -Replace "\\", "/"
         $osc7 = "$ansi_escape]7;file://${env:COMPUTERNAME}/${provider_path}${ansi_escape}\"
     }
-    "${osc7}PS $p$('>' * ($nestedPromptLevel + 1)) ";
+
+    #"${osc7}PS $p$('>' * ($nestedPromptLevel + 1)) ";
+
+    # with color:
+    $esc = [char]27
+    $psColor = "$esc[38;2;255;140;0m"
+    #$pathColor  = "$esc[36m" # cyan
+    #$pathColor  = "$esc[34m" # blue
+    $pathColor  = "$esc[94m" # bright blue
+    $reset = "$esc[0m"
+
+    # Color only the prompt text, keep OSC7 as-is
+    # only use pathColor
+    return "${osc7}${pathColor}PS $p$('>' * ($nestedPromptLevel + 1))${reset} "
+    # with psColor, pathColor for rest
+    #return "${osc7}${psColor}PS ${pathColor}$p$('>' * ($nestedPromptLevel + 1))${reset} "
+    # psColor, pathColor and reset for '>'
+    #return "${osc7}${psColor}PS ${pathColor}$p${reset}$(' >' * ($nestedPromptLevel + 1)) "
+    # username + pathColor
+    #return "${osc7}$($env:USERNAME) @ ${pathColor}$p$('>' * ($nestedPromptLevel + 1))${reset} "
 }
 
 # Load all scripts
