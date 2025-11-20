@@ -142,14 +142,22 @@ function prompt {
     $reset = "$esc[0m"
 
     # Color only the prompt text, keep OSC7 as-is
-    # only use pathColor
-    return "${osc7}${pathColor}PS $p$('>' * ($nestedPromptLevel + 1))${reset} "
     # with psColor, pathColor for rest
     #return "${osc7}${psColor}PS ${pathColor}$p$('>' * ($nestedPromptLevel + 1))${reset} "
     # psColor, pathColor and reset for '>'
     #return "${osc7}${psColor}PS ${pathColor}$p${reset}$(' >' * ($nestedPromptLevel + 1)) "
     # username + pathColor
     #return "${osc7}$($env:USERNAME) @ ${pathColor}$p$('>' * ($nestedPromptLevel + 1))${reset} "
+    # only use pathColor
+    #return "${osc7}${pathColor}PS $p$('>' * ($nestedPromptLevel + 1))${reset} "
+
+    # Only show the leaf directory name, not the full path
+    $cwdName = Split-Path -Path $p.ProviderPath -Leaf
+    $cwdName = $cwdName -replace '\\', '/'
+    $user = $env:USERNAME
+    $user = $user.Replace('se-', '').Replace('-01', '')
+    #return "${osc7}${pathColor}PS $cwdName$('>' * ($nestedPromptLevel + 1))${reset} "
+    return "${osc7}${user}: ${pathColor}${cwdName}/${reset}> "
 }
 
 # Load all scripts
