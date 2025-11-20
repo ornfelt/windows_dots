@@ -157,8 +157,8 @@ function prompt {
     $user = $env:USERNAME
     $user = $user.Replace('se-', '').Replace('-01', '')
     #return "${osc7}${pathColor}PS $cwdName$('>' * ($nestedPromptLevel + 1))${reset} "
-    #return "${osc7}${user}: ${pathColor}${cwdName}/${reset}> "
-    return "${osc7}${user} @ ${pathColor}${cwdName}/${reset}> "
+    #return "${osc7}${user} @ ${pathColor}${cwdName}/${reset}> "
+    return "${osc7}${user}:${pathColor}${cwdName}/${reset} > "
 }
 
 # Load all scripts
