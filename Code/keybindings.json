@@ -173,5 +173,15 @@
     {
         "key": "ctrl+k ctrl+down",
         "command": "-workbench.action.focusBelowGroup"
+    },
+    {
+        "key": "alt+c",
+        "command": "workbench.action.chat.openagent",
+        "when": "config.chat.agent.enabled && !chatSetupDisabled && !chatSetupHidden"
+    },
+    {
+        "key": "ctrl+shift+i",
+        "command": "-workbench.action.chat.openagent",
+        "when": "config.chat.agent.enabled && !chatSetupDisabled && !chatSetupHidden"
     }
 ]
