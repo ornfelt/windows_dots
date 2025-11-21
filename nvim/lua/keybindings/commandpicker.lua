@@ -30,7 +30,7 @@ local commands = {
   { label = "ToCamel", cmd = "ToCamel" },
   { label = "ToPascal", cmd = "ToPascal" },
   { label = "FileInfo", cmd = "FileInfo" },
-  { label = "CopyHist x cmd", cmd = "CopyHist" },
+  { label = "CopyHist x type", cmd = "CopyHist" },
   -- Custom SQL LSP
   { label = "SqlMiniDump", cmd = "SqlMiniDump" },
   { label = "SqlMiniSwitch idx", cmd = "SqlMiniSwitch 2" },
