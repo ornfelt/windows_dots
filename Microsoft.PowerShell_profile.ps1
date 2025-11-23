@@ -52,6 +52,7 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
 
 # Note:
 # scripts in my_scripts without "dot-commands":
+# Note, the three cd scripts below are used through yazi
 # {ps_profile_path}/my_scripts/cd_code_root_dir.ps1
 # {ps_profile_path}/my_scripts/cd_my_notes_path.ps1
 # {ps_profile_path}/my_scripts/cd_ps_profile_path.ps1
@@ -60,8 +61,6 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
 # {ps_profile_path}/my_scripts/copy_path.ps1
 # {ps_profile_path}/my_scripts/get_fonts.ps1
 # {ps_profile_path}/my_scripts/llama_old.ps1
-# {ps_profile_path}/my_scripts/list_processes.ps1
-# {ps_profile_path}/my_scripts/list_processes_mem.ps1
 # {ps_profile_path}/my_scripts/map_util.ps1
 # {ps_profile_path}/my_scripts/network_names.ps1
 # {ps_profile_path}/my_scripts/playermap_old.ps1
@@ -74,7 +73,8 @@ $aliases = @(
 	".mangos", ".llama", ".update_nvim_from_linux", ".docs", ".down", ".cdh", ".clean_shada",
     ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
     ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".mangos_update",
-    ".cmake", ".cmangos_update", ".mw", ".mww", ".mwr", ".list_colors", ".list_std_colors"
+    ".cmake", ".cmangos_update", ".mw", ".mww", ".mwr", ".list_colors", ".list_std_colors",
+    ".help"
 )
 
 foreach ($alias in $aliases) {
