@@ -162,6 +162,7 @@ function Show-Usage {
     Write-Host "Other useful commands:"
 
     # Other useful commands: entire command in green
+    Write-Host "  . `$PROFILE" -ForegroundColor Green
     Write-Host "  keepawake" -ForegroundColor Green
     Write-Host "  vim `$env:code_root_dir/Code2/Wow/tools/my_wow/wow.conf" -ForegroundColor Green
     Write-Host "  cd `$env:my_notes_path; .\check_dirs.ps1" -ForegroundColor Green
@@ -287,8 +288,6 @@ function Show-JS-Help {
     Write-Host "Or:" -ForegroundColor Yellow
     Write-CodeLine "npm init -y"
     Write-CodeLine "  # fix package.json (add ""start"" script, etc.)" -CommandColor DarkGray
-
-    Write-Host ""
     Write-Host "Then:" -ForegroundColor Yellow
     Write-CodeLine "npm run start"
     Write-CodeLine "npm start"
