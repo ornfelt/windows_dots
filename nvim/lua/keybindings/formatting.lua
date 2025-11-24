@@ -91,6 +91,73 @@ vim.keymap.set('n', '<leader>wa', function()
   end
 end, { desc = 'Replace Unicode typography with ASCII' })
 
+-- Replace some math-related unicode chars to ascii equivalents
+vim.keymap.set('n', '<leader>wm', function()
+  local pos = vim.api.nvim_win_get_cursor(0)
+
+  local cmds = {
+    [[%s,²,^2,ge]],
+    [[%s,³,^3,ge]],
+    [[%s,ⁿ,^n,ge]],
+    [[%s,√,sqrt,ge]],
+  }
+
+  local show_stats = true
+  local show_detailed_stats = myconfig.should_debug_print()
+
+  local per_char_counts = {}
+  local total_chars = 0
+
+  -- Count how many character types *will* be replaced
+  if show_stats then
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+
+    for _, cmd in ipairs(cmds) do
+      -- Extract the character to search for
+      -- Format is: %s,<from>,<to>,ge
+      local from = cmd:match("%%s,(.-),")
+      if from then
+        local count = 0
+
+        -- Count occurrences in the whole buffer
+        for _, line in ipairs(lines) do
+          -- plain = true so Lua does not treat Unicode as patterns
+          local _, n = line:gsub(from, from)
+          count = count + n
+        end
+
+        if count > 0 then
+          total_chars = total_chars + 1
+          per_char_counts[from] = count
+        end
+      end
+    end
+  end
+
+  -- do the actual replacements
+  for _, cmd in ipairs(cmds) do
+    vim.cmd(cmd)
+  end
+
+  -- Restore cursor position
+  vim.api.nvim_win_set_cursor(0, pos)
+
+  if show_stats then
+    if total_chars > 0 then
+      print(string.format("Total characters expected to be replaced: %d", total_chars))
+
+      if show_detailed_stats then
+        print(string.format("Total characters expected to be replaced (tbl_count): %d", vim.tbl_count(per_char_counts)))
+        for ch, cnt in pairs(per_char_counts) do
+          print(string.format("  '%s' -> %d occurrence(s)", ch, cnt))
+        end
+      end
+    else
+      print("No typographic characters found")
+    end
+  end
+end, { desc = 'Replace Unicode typography with ASCII' })
+
 -- Format file
 function format_file()
   local filetype = vim.bo.filetype
