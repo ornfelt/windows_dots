@@ -153,12 +153,16 @@ function prompt {
 
     # Only show the leaf directory name, not the full path
     $cwdName = Split-Path -Path $p.ProviderPath -Leaf
-    $cwdName = $cwdName -replace '\\', '/'
+    #$cwdName = $cwdName -replace '\\', '/'
+    #$cwdName += "/"
+    #$cwdName = $cwdName -replace '/+', '/'
+    # one-liner:
+    $cwdName = ($cwdName -replace '\\', '/') + "/" -replace '/+', '/'
     $user = $env:USERNAME
     $user = $user.Replace('se-', '').Replace('-01', '')
     #return "${osc7}${pathColor}PS $cwdName$('>' * ($nestedPromptLevel + 1))${reset} "
     #return "${osc7}${user} @ ${pathColor}${cwdName}/${reset}> "
-    return "${osc7}${user}:${pathColor}${cwdName}/${reset} > "
+    return "${osc7}${user}:${pathColor}${cwdName}${reset} > "
 }
 
 # Load all scripts
