@@ -154,8 +154,17 @@ local my_notes_path = myconfig.my_notes_path
 
 vim.api.nvim_create_user_command('PrintAiModels', function()
   local script_path = my_notes_path .. "/scripts/gpt/gpt/print_all_models.py"
+
+  local file_exists = vim.fn.filereadable(script_path) == 1
+  if not file_exists then
+    print("Error: The script file '" .. script_path .. "' does not exist.")
+    return
+  end
+
   local output = vim.fn.systemlist("python " .. script_path)
-  output = vim.fn.substitute(output, '\\r', '', 'g') -- remove carriage return chars
+  for i, line in ipairs(output) do
+    output[i] = line:gsub('\r', '')
+  end
   vim.api.nvim_put(output, 'l', true, true)
 end, {})
 
