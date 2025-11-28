@@ -172,8 +172,16 @@ function Show-Usage {
 function Show-C-Help {
     Write-Host ""
     Write-Host "C / gcc quick examples:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "gcc --version"
+    Write-CodeLine "gcc --help"
+
+    Write-Host ""
+    Write-Host "Compile & run:" -ForegroundColor Yellow
     Write-CodeLine "gcc -Wall -Wextra -pedantic -std=c17 -o main main.c  # Compile C program"
-    Write-CodeLine "./main                                           # Run binary"
+    Write-CodeLine "./main  # Run binary"
     Write-Host ""
     Write-CodeLine "gcc -g -O0 -Wall -Wextra -std=c17 -o main_debug main.c  # Debug build"
 }
@@ -181,6 +189,11 @@ function Show-C-Help {
 function Show-CSharp-Help {
     Write-Host ""
     Write-Host "C# / .NET quick examples:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "dotnet --version"
+    Write-CodeLine "dotnet -h"
 
     Write-Host ""
     Write-Host "Create new projects:" -ForegroundColor Yellow
@@ -191,8 +204,6 @@ function Show-CSharp-Help {
 
     Write-Host ""
     Write-Host "Useful dotnet commands:" -ForegroundColor Yellow
-    Write-CodeLine "dotnet -h"
-    Write-CodeLine "dotnet --version"
     Write-CodeLine "dotnet --list-runtimes"
     Write-CodeLine "dotnet --list-sdks"
     Write-CodeLine "dotnet build"
@@ -204,8 +215,16 @@ function Show-CSharp-Help {
 function Show-CPP-Help {
     Write-Host ""
     Write-Host "C++ / g++ quick examples:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "g++ --version"
+    Write-CodeLine "g++ --help"
+
+    Write-Host ""
+    Write-Host "Compile & run:" -ForegroundColor Yellow
     Write-CodeLine "g++ -O2 -Wall -Wextra -std=c++20 -o main main.cpp  # Compile optimized"
-    Write-CodeLine "./main                                           # Run binary"
+    Write-CodeLine "./main  # Run binary"
     Write-Host ""
     Write-CodeLine "g++ -g -O0 -Wall -Wextra -std=c++20 -o main_debug main.cpp  # Debug build"
 }
@@ -213,6 +232,15 @@ function Show-CPP-Help {
 function Show-Rust-Help {
     Write-Host ""
     Write-Host "Rust / cargo quick examples:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "rustc --version"
+    Write-CodeLine "cargo --version"
+    Write-CodeLine "cargo -h"
+
+    Write-Host ""
+    Write-Host "Basic usage:" -ForegroundColor Yellow
     Write-CodeLine "cargo new TestProject               # Create new project"
     Write-CodeLine "cd TestProject"
     Write-CodeLine "cargo build                         # Build debug"
@@ -243,6 +271,15 @@ function Show-Rust-Help {
 function Show-Java-Help {
     Write-Host ""
     Write-Host "Java quick examples:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "java -version"
+    Write-CodeLine "javac -version"
+    Write-CodeLine "java -h"
+
+    Write-Host ""
+    Write-Host "Compile & run:" -ForegroundColor Yellow
     Write-CodeLine "javac Main.java                     # Compile"
     Write-CodeLine "java Main                           # Run"
     Write-Host ""
@@ -253,6 +290,14 @@ function Show-Java-Help {
 function Show-Python-Help {
     Write-Host ""
     Write-Host "Python quick examples:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "python --version"
+    Write-CodeLine "python -h"
+
+    Write-Host ""
+    Write-Host "Basic usage:" -ForegroundColor Yellow
     Write-CodeLine "python main.py                      # Run script"
     Write-CodeLine "python -m venv .venv                # Create virtual environment"
     Write-CodeLine "source .venv/bin/activate           # Activate venv (Linux/macOS)"
@@ -265,6 +310,15 @@ function Show-Python-Help {
 function Show-Go-Help {
     Write-Host ""
     Write-Host "Go quick examples:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "go version"
+    Write-CodeLine "go help"
+    Write-CodeLine "go help <command>                   # e.g. go help build"
+
+    Write-Host ""
+    Write-Host "Basic usage:" -ForegroundColor Yellow
     Write-CodeLine "go mod init example.com/myapp       # Initialize module"
     Write-CodeLine "go run main.go                      # Run directly"
     Write-CodeLine "go build ./...                      # Build all packages"
@@ -281,9 +335,15 @@ function Show-JS-Help {
     Write-Host "JavaScript (Node) quick examples:" -ForegroundColor Yellow
 
     Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "node --version"
+    Write-CodeLine "node --help"
+    Write-CodeLine "npm -v"
+    Write-CodeLine "npm help"
+
+    Write-Host ""
     Write-Host "Do this:" -ForegroundColor Yellow
     Write-CodeLine "node main.js"
-
     Write-Host ""
     Write-Host "Or:" -ForegroundColor Yellow
     Write-CodeLine "npm init -y"
@@ -295,8 +355,15 @@ function Show-JS-Help {
 
 function Show-TS-Help {
     Write-Host ""
-    Write-Host "TypeScript quick setup:" -ForegroundColor Yellow
+    Write-Host "TypeScript quick examples:" -ForegroundColor Yellow
 
+    Write-Host ""
+    Write-Host "Version / help:" -ForegroundColor Yellow
+    Write-CodeLine "tsc -v"
+    Write-CodeLine "npx tsc --help"
+
+    Write-Host ""
+    Write-Host "Do this:" -ForegroundColor Yellow
     Write-CodeLine "npm init -y # init npm"
     Write-CodeLine "# install dev dependencies"
     Write-CodeLine "npm install --save-dev typescript ts-node @types/node"
