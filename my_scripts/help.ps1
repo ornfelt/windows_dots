@@ -151,10 +151,19 @@ function Show-Usage {
 
     Write-Host "# Display history with graph and decorate:" -ForegroundColor DarkGray
     Write-Host "git log --graph --decorate" -ForegroundColor Blue
-    Write-Host "# Generate diff for specificed commit id, filtering on specific file type:" -ForegroundColor DarkGray
+
+    Write-Host "# Generate diff showing changes from latest commit:" -ForegroundColor DarkGray
+    Write-Host "git show HEAD | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+
+    Write-Host "# Generate diff showing changes from second latest commit (use HEAD^^ for third etc.):" -ForegroundColor DarkGray
+    Write-Host "git show HEAD^ | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+
+    Write-Host "# Generate diff for specified commit id, filtering on specific file type:" -ForegroundColor DarkGray
     Write-Host "git show c7aa908 -- '*.go' | Set-Content -Encoding UTF8 go_fixes.diff" -ForegroundColor Blue
+
     Write-Host "# Generate diff between specific commit and now, filtering on specific file types:" -ForegroundColor DarkGray
     Write-Host "git diff cbceb5a..HEAD -- '**/*.java' '*.cs' > new_java_cs_changes.diff" -ForegroundColor Blue
+
     Write-Host "# Apply patch:" -ForegroundColor DarkGray
     Write-Host 'cd $env:code_root_dir/Code2/C#/dotnet-integration; git apply $env:my_notes_path/notes/svea/diffs/testshop_dev.diff --verbose' -ForegroundColor Blue
 
