@@ -34,6 +34,9 @@ local function SqlExecCommand()
       file_exists(executable_net8) and executable_net8 or
       executable_net7
 
+  -- Override with other lang
+  executable = code_root_dir .. '/Code2/SQL/my_sql/sql_exec/go/sql_exec.exe'
+
   local current_file = vim.fn.expand('%:p') -- Full path of current file
   local mode = vim.fn.mode()
   local args = { '"' .. current_file .. '"' }
