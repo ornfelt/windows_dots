@@ -3,6 +3,16 @@ local myconfig = require("myconfig")
 local code_root_dir = myconfig.code_root_dir
 
 local function SqlExecCommand()
+  -- Debug print setup
+  local use_debug_print = myconfig.should_debug_print()
+  local function dprint(msg)
+    if use_debug_print then
+      print(msg)
+      -- alternative:
+      --vim.notify(msg, vim.log.levels.INFO)
+    end
+  end
+
   code_root_dir = code_root_dir:gsub(" ", '" "') -- Handle spaces in the path
 
   -- Add '/' at the end if it doesn't exist
@@ -57,8 +67,9 @@ local function SqlExecCommand()
   --end
   -- cleaner:
   local exec_map = {
-    go  = '/Code2/SQL/my_sql/sql_exec/go/sql_exec.exe',
-    cpp = '/Code2/SQL/my_sql/sql_exec/cpp/build/SqlExec.exe',
+    go = '/Code2/SQL/my_sql/sql_exec/go/sql_exec.exe',
+    cpp = '/Code2/SQL/my_sql/sql_exec/cpp/build/Release/SqlExec.exe',
+    java = '/Code2/SQL/my_sql/sql_exec/java/build.ps1',
   }
 
   local rel_path = exec_map[sql_exec_lang]
@@ -66,12 +77,24 @@ local function SqlExecCommand()
     local candidate = code_root_dir .. rel_path
     if vim.fn.has('win32') == 0 then
       candidate = candidate:gsub('%.exe$', '')
+      if sql_exec_lang == "java" then
+        candidate = candidate:gsub('%.ps1$', '.sh')
+      end
     end
 
     if file_exists(candidate) then
       executable = candidate
+    -- specific fallback for cpp -> check debug dir
+    elseif sql_exec_lang == "cpp" then
+      local debug_candidate = candidate:gsub('/Release/', '/Debug/')
+      dprint("[SqlExec] Release not found, trying cpp Debug executable: " .. debug_candidate)
+      if file_exists(debug_candidate) then
+        executable = debug_candidate
+      end
     end
   end
+
+  dprint("[SqlExec] using executable: " .. (executable or "<nil>"))
 
   local current_file = vim.fn.expand('%:p') -- Full path of current file
   local mode = vim.fn.mode()
@@ -103,7 +126,28 @@ local function SqlExecCommand()
   end
 
   local formatted_args = table.concat(args, " ")
-  local output = vim.fn.system(executable .. " " .. formatted_args)
+
+  --local output = vim.fn.system(executable .. " " .. formatted_args)
+  -- Dynamic cmd
+  local cmd
+  if sql_exec_lang == "java" then
+    if vim.fn.has('win32') == 1 then
+      cmd = string.format(
+        'powershell -NoProfile -ExecutionPolicy Bypass -File "%s" %s',
+        executable,
+        formatted_args
+      )
+    else
+      cmd = string.format('sh "%s" %s', executable, formatted_args)
+    end
+    dprint("[SqlExec] java mode: executing command: " .. cmd)
+  else
+    -- Default -> exe/native binary
+    cmd = executable .. " " .. formatted_args
+    dprint("[SqlExec] executing: " .. cmd)
+  end
+
+  local output = vim.fn.system(cmd)
 
   vim.cmd('belowright 15new')
   local new_buf = vim.api.nvim_get_current_buf()
