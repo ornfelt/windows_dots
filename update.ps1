@@ -132,7 +132,7 @@ if (-not $settingsItem) {
         Write-Output "Font is set to JetBrainsMono Nerd Font"
             if (Test-Path $alacrittyConfigFile) {
                 Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
-                    Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile"
+                    Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile" -ForegroundColor DarkBlue
                     $fontReplaced = $true
             } else {
                 Write-Host "$alacrittyConfigFile not found." -ForegroundColor DarkYellow
@@ -140,7 +140,7 @@ if (-not $settingsItem) {
     } elseif ($fontName -eq "JetBrainsMono NF") {
         Write-Output "Font is set to JetBrainsMono NF"
     } else {
-        Write-Output "Font wasn't found in profiles.defaults.font.face. Checking file for JetBrainsMono*..."
+        Write-Output "Font wasn't found in profiles.defaults.font.face. Checking file for JetBrainsMono*..." -ForegroundColor DarkYellow
             try {
                 $settingsRaw = Get-Content -Path $settingsPath -Raw
                     if ($settingsRaw -match "JetBrainsMono\s*(Nerd Font|NF)") {
@@ -149,7 +149,7 @@ if (-not $settingsItem) {
                                 Write-Output "Font is set to JetBrainsMono Nerd Font (second check)"
                                     if (Test-Path $alacrittyConfigFile) {
                                         Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
-                                            Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile"
+                                            Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile" -ForegroundColor DarkBlue
                                             $fontReplaced = $true
                                     } else {
                                         Write-Host "$alacrittyConfigFile not found." -ForegroundColor DarkYellow
@@ -183,7 +183,7 @@ Write-Host "`nFiles copied successfully from $srcAlacritty to $destAlacritty" -F
 # If font was replaced, replace it back
 if ($fontReplaced) {
     Replace-FontName -filePath $alacrittyConfigFile -oldFontName $newFontName -newFontName $oldFontName
-    Write-Host "Replaced '$newFontName' back to '$oldFontName' in $alacrittyConfigFile"
+    Write-Host "Replaced '$newFontName' back to '$oldFontName' in $alacrittyConfigFile" -ForegroundColor DarkBlue
 }
 
 # 'oh-my-posh font install' to install JetBrains font...
@@ -202,11 +202,11 @@ if (Test-Path $autohotkeyPath) {
     if (Test-Path $v2Path) {
         # Copy caps_v2.ahk to the startup folder
         Copy-Item -Path "caps_v2.ahk" -Destination $startupPath -Force
-        Write-Output "`ncaps_v2.ahk has been copied to the startup folder." -ForegroundColor Cyan
+        Write-Host "`ncaps_v2.ahk has been copied to the startup folder." -ForegroundColor Cyan
     } else {
         # Copy caps.ahk to the startup folder
         Copy-Item -Path "caps.ahk" -Destination $startupPath -Force
-        Write-Output "`ncaps.ahk has been copied to the startup folder." -ForegroundColor Cyan
+        Write-Host "`ncaps.ahk has been copied to the startup folder." -ForegroundColor Cyan
     }
 } else {
     Write-Output "`nAutoHotkey is not installed." -ForegroundColor DarkYellow
