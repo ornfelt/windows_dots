@@ -31,7 +31,7 @@ if ($copyFullDir) {
     Copy-Item -Path "$src\*" -Destination $dest -Recurse -Force
 }
 
-Write-Host "Nvim config files copied successfully from $src to $dest"
+Write-Host "Nvim config files copied successfully from $src to $dest" -ForegroundColor Cyan
 
 # ------------------------------------------------------------
 # Copy .vimrc file to h:\ or home dir
@@ -44,7 +44,7 @@ if (Test-Path -Path "H:\") {
 # Copy .vimrc file to the determined destination, forcing overwrite
 Copy-Item -Path ".\.vimrc" -Destination $vimrcDest -Force
 
-Write-Host "`n'.vimrc' file copied successfully to $vimrcDest"
+Write-Host "`n'.vimrc' file copied successfully to $vimrcDest" -ForegroundColor Cyan
 
 # ------------------------------------------------------------
 # Copy .wezterm.lua file to home dir
@@ -53,7 +53,7 @@ $weztermDest = [System.Environment]::ExpandEnvironmentVariables("%USERPROFILE%\.
 # Copy .wezterm.lua file
 Copy-Item -Path ".\.wezterm.lua" -Destination $weztermDest -Force
 
-Write-Host "`n'.wezterm.lua' file copied successfully to $weztermDest"
+Write-Host "`n'.wezterm.lua' file copied successfully to $weztermDest" -ForegroundColor Cyan
 
 # ------------------------------------------------------------
 # Check if the .wezterm/wezterm-session-manager directory exists in %USERPROFILE%
@@ -63,7 +63,7 @@ if (-not (Test-Path -Path $weztermDir)) {
     # Create the directory if it doesn't exist
     New-Item -Path $weztermDir -ItemType Directory -Force
 
-    Write-Host "`nDirectory '$weztermDir' created successfully"
+    Write-Host "`nDirectory '$weztermDir' created successfully" -ForegroundColor Green
 }
 
 # ------------------------------------------------------------
@@ -76,7 +76,7 @@ $sessionManagerFile = Join-Path -Path $myNotesPath -ChildPath "scripts\wes\sessi
 Copy-Item -Path $sessionManagerFile -Destination $weztermDir -Force
 #Copy-Item -Path $weztermStateFile -Destination $weztermDir -Force
 
-Write-Host "`nFiles copied successfully to '$weztermDir'"
+Write-Host "`nFiles copied successfully to '$weztermDir'" -ForegroundColor Cyan
 
 # ------------------------------------------------------------
 # Copy vscode files
@@ -94,7 +94,7 @@ if (-not (Test-Path -Path $destinationDirectory)) {
 Copy-Item -Path $keybindingsFile -Destination $destinationDirectory -Force
 Copy-Item -Path $settingsFile -Destination $destinationDirectory -Force
 
-Write-Host "`n'Copied vs code files (settings.json and keybindings.json) to $destinationDirectory"
+Write-Host "`n'Copied vs code files (settings.json and keybindings.json) to $destinationDirectory" -ForegroundColor Cyan
 
 # ------------------------------------------------------------
 # Replace font name in alacritty.toml and copy alacritty to %appdata
@@ -117,14 +117,14 @@ $newFontName = "JetBrainsMono Nerd Font" # With spaces
 $settingsItem = Get-Item "C:\users\$env:UserName\AppData\Local\Packages\Microsoft.WindowsTerminal_*\LocalState\settings.json" -ErrorAction SilentlyContinue
 
 if (-not $settingsItem) {
-    Write-Warning "[warn] Could not find Windows Terminal settings.json."
+    Write-Warning "[warn] Could not find Windows Terminal settings.json." -ForegroundColor DarkYellow
 } else {
     $settingsPath = $settingsItem.FullName
         try {
             $settingsContent = Get-Content -Path $settingsPath -Raw | ConvertFrom-Json
                 $fontName = $settingsContent.profiles.defaults.font.face
         } catch {
-            Write-Warning "[warn] Failed to parse JSON from ${settingsPath}: $_"
+            Write-Warning "[warn] Failed to parse JSON from ${settingsPath}: $_" -ForegroundColor Red
                 $fontName = $null
         }
 
@@ -135,7 +135,7 @@ if (-not $settingsItem) {
                     Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile"
                     $fontReplaced = $true
             } else {
-                Write-Host "$alacrittyConfigFile not found."
+                Write-Host "$alacrittyConfigFile not found." -ForegroundColor DarkYellow
             }
     } elseif ($fontName -eq "JetBrainsMono NF") {
         Write-Output "Font is set to JetBrainsMono NF"
@@ -152,16 +152,16 @@ if (-not $settingsItem) {
                                             Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile"
                                             $fontReplaced = $true
                                     } else {
-                                        Write-Host "$alacrittyConfigFile not found."
+                                        Write-Host "$alacrittyConfigFile not found." -ForegroundColor DarkYellow
                                     }
                             } elseif ($match -match "NF") {
                                 Write-Output "Font is set to JetBrainsMono NF (second check)"
                             }
                     } else {
-                        Write-Output "No JetBrainsMono font found in the settings."
+                        Write-Output "No JetBrainsMono font found in the settings." -ForegroundColor DarkYellow
                     }
             } catch {
-                Write-Warning "[warn] Could not read settings file as raw text: $_"
+                Write-Warning "[warn] Could not read settings file as raw text: $_" -ForegroundColor Red
             }
     }
 }
@@ -178,7 +178,7 @@ if (-not (Test-Path $destAlacritty)) {
 # Copy contents from alacritty source to destination, forcing overwrite
 Copy-Item -Path "$srcAlacritty\*" -Destination $destAlacritty -Recurse -Force
 
-Write-Host "`nFiles copied successfully from $srcAlacritty to $destAlacritty"
+Write-Host "`nFiles copied successfully from $srcAlacritty to $destAlacritty" -ForegroundColor Cyan
 
 # If font was replaced, replace it back
 if ($fontReplaced) {
@@ -202,14 +202,14 @@ if (Test-Path $autohotkeyPath) {
     if (Test-Path $v2Path) {
         # Copy caps_v2.ahk to the startup folder
         Copy-Item -Path "caps_v2.ahk" -Destination $startupPath -Force
-        Write-Output "`ncaps_v2.ahk has been copied to the startup folder."
+        Write-Output "`ncaps_v2.ahk has been copied to the startup folder." -ForegroundColor Cyan
     } else {
         # Copy caps.ahk to the startup folder
         Copy-Item -Path "caps.ahk" -Destination $startupPath -Force
-        Write-Output "`ncaps.ahk has been copied to the startup folder."
+        Write-Output "`ncaps.ahk has been copied to the startup folder." -ForegroundColor Cyan
     }
 } else {
-    Write-Output "`nAutoHotkey is not installed."
+    Write-Output "`nAutoHotkey is not installed." -ForegroundColor DarkYellow
 }
 
 # ------------------------------------------------------------
@@ -218,16 +218,16 @@ if (Test-Path $autohotkeyPath) {
 # Ensure lf config dir exists
 $lfPath = Join-Path $env:localappdata "lf"
 if (-not (Test-Path -Path $lfPath)) {
-    Write-Host "`nCreating directory: $lfPath"
+    Write-Host "`nCreating directory: $lfPath" -ForegroundColor Blue
     New-Item -ItemType Directory -Path $lfPath -Force
 }
 
 $sourceLfPath = Join-Path $currentDir "lf"
 if (Test-Path -Path $sourceLfPath) {
-    Write-Host "`nCopying files from $sourceLfPath to $lfPath"
+    Write-Host "`nCopying files from $sourceLfPath to $lfPath" -ForegroundColor Cyan
     Copy-Item -Path "$sourceLfPath\*" -Destination $lfPath -Recurse -Force
 } else {
-    Write-Warning "`nSource directory $sourceLfPath does not exist. Skipping copy for lf."
+    Write-Warning "`nSource directory $sourceLfPath does not exist. Skipping copy for lf." -ForegroundColor DarkYellow
 }
 
 # ------------------------------------------------------------
@@ -236,16 +236,16 @@ if (Test-Path -Path $sourceLfPath) {
 # Ensure yazi config dir exists
 $yaziConfigPath = Join-Path $env:appdata "yazi/config"
 if (-not (Test-Path -Path $yaziConfigPath)) {
-    Write-Host "`nCreating directory: $yaziConfigPath"
+    Write-Host "`nCreating directory: $yaziConfigPath" -ForegroundColor Blue
     New-Item -ItemType Directory -Path $yaziConfigPath -Force
 }
 
 $sourceYaziPath = Join-Path $currentDir "yazi"
 if (Test-Path -Path $sourceYaziPath) {
-    Write-Host "`nCopying files from $sourceYaziPath to $yaziConfigPath"
+    Write-Host "`nCopying files from $sourceYaziPath to $yaziConfigPath" -ForegroundColor Cyan
     Copy-Item -Path "$sourceYaziPath\*" -Destination $yaziConfigPath -Recurse -Force
 } else {
-    Write-Warning "`nSource directory $sourceYaziPath does not exist. Skipping copy for yazi."
+    Write-Warning "`nSource directory $sourceYaziPath does not exist. Skipping copy for yazi." -ForegroundColor DarkYellow
 }
 
 $scriptFiles = @(
@@ -258,10 +258,10 @@ $scriptFiles = @(
 foreach ($script in $scriptFiles) {
     $sourceScriptPath = Join-Path $currentDir $script
     if (Test-Path -Path $sourceScriptPath) {
-        Write-Host "`nCopying $sourceScriptPath to $yaziConfigPath"
+        Write-Host "`nCopying $sourceScriptPath to $yaziConfigPath" -ForegroundColor Cyan
         Copy-Item -Path $sourceScriptPath -Destination $yaziConfigPath -Force
     } else {
-        Write-Warning "`nScript file $sourceScriptPath does not exist. Skipping."
+        Write-Warning "`nScript file $sourceScriptPath does not exist. Skipping." -ForegroundColor DarkYellow
     }
 }
 
