@@ -70,6 +70,7 @@ local function SqlExecCommand()
     go = '/Code2/SQL/my_sql/sql_exec/go/sql_exec.exe',
     cpp = '/Code2/SQL/my_sql/sql_exec/cpp/build/Release/SqlExec.exe',
     java = '/Code2/SQL/my_sql/sql_exec/java/build.ps1',
+    python = '/Code2/SQL/my_sql/sql_exec/py/main.py',
   }
 
   local rel_path = exec_map[sql_exec_lang]
@@ -141,6 +142,9 @@ local function SqlExecCommand()
       cmd = string.format('sh "%s" %s', executable, formatted_args)
     end
     dprint("[SqlExec] java mode: executing command: " .. cmd)
+  elseif sql_exec_lang == "python" then
+    cmd = string.format('python "%s" %s', executable, formatted_args)
+    dprint("[SqlExec] python mode: executing command: " .. cmd)
   else
     -- Default -> exe/native binary
     cmd = executable .. " " .. formatted_args
