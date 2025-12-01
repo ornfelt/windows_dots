@@ -117,6 +117,7 @@ function Show-Usage {
     Write-Host ""
     Write-Host "  Listing helpers:" -ForegroundColor DarkGray
     Write-CommandWithDescription ".list_colors"      "print colors"                            'Cyan'
+    Write-CommandWithDescription ".list_all_colors"  "print all colors"                        'Cyan'
     Write-CommandWithDescription ".list_std_colors"  "print standard colors"                   'Cyan'
     Write-CommandWithDescription ".list_files"       "list largest files recursively (CLI)"    'Cyan'
     Write-CommandWithDescription ".list_files_gui"   "list largest files recursively via GUI"  'Cyan'
