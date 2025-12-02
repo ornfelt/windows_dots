@@ -71,8 +71,23 @@ local function SqlExecCommand()
     cpp = '/Code2/SQL/my_sql/sql_exec/cpp/build/Release/SqlExec.exe',
     java = '/Code2/SQL/my_sql/sql_exec/java/build.ps1',
     python = '/Code2/SQL/my_sql/sql_exec/py/main.py',
+    rust = '/Code2/SQL/my_sql/sql_exec/rust/sql_exec/target/debug/sql_exec.exe',
+    typescript = '/Code2/SQL/my_sql/sql_exec/ts/dist/Main.js',
   }
 
+  if sql_exec_lang == "golang" then
+    sql_exec_lang = "go"
+  elseif sql_exec_lang == "c++" then
+    sql_exec_lang = "cpp"
+  elseif sql_exec_lang == "py" then
+    sql_exec_lang = "python"
+  elseif sql_exec_lang == "rs" then
+    sql_exec_lang = "rust"
+  elseif sql_exec_lang == "ts" then
+    sql_exec_lang = "typescript"
+  end
+
+  local override_used = false
   local rel_path = exec_map[sql_exec_lang]
   if rel_path then
     local candidate = code_root_dir .. rel_path
@@ -85,14 +100,21 @@ local function SqlExecCommand()
 
     if file_exists(candidate) then
       executable = candidate
+      override_used = true
     -- specific fallback for cpp -> check debug dir
     elseif sql_exec_lang == "cpp" then
       local debug_candidate = candidate:gsub('/Release/', '/Debug/')
       dprint("[SqlExec] Release not found, trying cpp Debug executable: " .. debug_candidate)
       if file_exists(debug_candidate) then
         executable = debug_candidate
+        override_used = true
       end
     end
+  end
+
+  if not override_used then
+    sql_exec_lang = "cs"
+    dprint("[SqlExec] override not used, falling back to C#.")
   end
 
   dprint("[SqlExec] using executable: " .. (executable or "<nil>"))
@@ -141,14 +163,17 @@ local function SqlExecCommand()
     else
       cmd = string.format('sh "%s" %s', executable, formatted_args)
     end
-    dprint("[SqlExec] java mode: executing command: " .. cmd)
+    dprint("[SqlExec] java mode: running cmd: " .. cmd)
   elseif sql_exec_lang == "python" then
     cmd = string.format('python "%s" %s', executable, formatted_args)
-    dprint("[SqlExec] python mode: executing command: " .. cmd)
+    dprint("[SqlExec] python mode: running cmd: " .. cmd)
+  elseif sql_exec_lang == "typescript" then
+    cmd = string.format('node "%s" %s', executable, formatted_args)
+    dprint("[SqlExec] typescript mode: running cmd: " .. cmd)
   else
     -- Default -> exe/native binary
     cmd = executable .. " " .. formatted_args
-    dprint("[SqlExec] executing: " .. cmd)
+    dprint("[SqlExec] running: " .. cmd)
   end
 
   local output = vim.fn.system(cmd)
