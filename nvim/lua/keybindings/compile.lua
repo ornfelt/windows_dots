@@ -67,18 +67,18 @@ local function SqlExecCommand()
   --end
   -- cleaner:
   local exec_map = {
-    go = '/Code2/SQL/my_sql/sql_exec/go/sql_exec.exe',
     cpp = '/Code2/SQL/my_sql/sql_exec/cpp/build/Release/SqlExec.exe',
+    go = '/Code2/SQL/my_sql/sql_exec/go/sql_exec.exe',
     java = '/Code2/SQL/my_sql/sql_exec/java/build.ps1',
     python = '/Code2/SQL/my_sql/sql_exec/py/main.py',
     rust = '/Code2/SQL/my_sql/sql_exec/rust/sql_exec/target/debug/sql_exec.exe',
     typescript = '/Code2/SQL/my_sql/sql_exec/ts/dist/Main.js',
   }
 
-  if sql_exec_lang == "golang" then
-    sql_exec_lang = "go"
-  elseif sql_exec_lang == "c++" then
+  if sql_exec_lang == "c++" then
     sql_exec_lang = "cpp"
+  elseif sql_exec_lang == "golang" then
+    sql_exec_lang = "go"
   elseif sql_exec_lang == "py" then
     sql_exec_lang = "python"
   elseif sql_exec_lang == "rs" then
