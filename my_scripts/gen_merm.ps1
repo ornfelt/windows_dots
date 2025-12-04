@@ -3,8 +3,16 @@ param (
 )
 
 if (-not $InputFile) {
-    Write-Host "Usage: mermaid_script.ps1 <input_file>" -ForegroundColor Red
+    Write-Host "Usage: mermaid_script.ps1 <input_file>/all/*" -ForegroundColor Red
     exit 1
+}
+
+if ($InputFile -ieq "all" -or $InputFile -ieq "*") {
+    Write-Host "Generating Mermaid diagrams for all .md files in current directory..." -ForegroundColor Cyan
+    Get-ChildItem -Filter *.md | ForEach-Object {
+        & $PSCommandPath $_.Name
+    }
+    exit 0
 }
 
 # If no extension is provided, append .md

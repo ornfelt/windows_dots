@@ -3,8 +3,16 @@ param (
 )
 
 if (-not $InputFile) {
-    Write-Host "Usage: plantuml_script.ps1 <input_file>" -ForegroundColor Red
+    Write-Host "Usage: plantuml_script.ps1 <input_file>/all/*" -ForegroundColor Red
     exit 1
+}
+
+if ($InputFile -ieq "all" -or $InputFile -ieq "*") {
+    Write-Host "Generating PlantUML diagrams for all .txt files in current directory..." -ForegroundColor Cyan
+    Get-ChildItem -Filter *.txt | ForEach-Object {
+        & $PSCommandPath $_.Name
+    }
+    exit 0
 }
 
 # If no extension is provided, append .txt
