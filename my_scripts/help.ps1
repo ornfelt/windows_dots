@@ -176,6 +176,8 @@ function Show-Usage {
     Write-Host "  keepawake" -ForegroundColor Green
     Write-Host "  vim `$env:code_root_dir/Code2/Wow/tools/my_wow/wow.conf" -ForegroundColor Green
     Write-Host "  cd `$env:my_notes_path; .\check_dirs.ps1" -ForegroundColor Green
+    Write-Host "  (Get-Location).Path | Set-Clipboard" -ForegroundColor Green
+    Write-Host "  (Get-Command go).Source" -ForegroundColor Green
 }
 
 # Language-specific helpers
