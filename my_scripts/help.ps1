@@ -217,20 +217,15 @@ function Show-Usage {
 
     Write-Host ""
     Write-Host "Count items:" -ForegroundColor Yellow
-    Write-CodeLine "(gci -File).Count                               # count files"
-    Write-CodeLine "(gci -Directory).Count                          # count directories"
-    Write-CodeLine "(gci).Count                                     # count all items"
-    Write-CodeLine "gci -File | measure | select -exp Count         # count files (alternative)"
-
-    Write-Host ""
-    Write-Host "Count items:" -ForegroundColor Yellow
     Write-CodeLine "Get-ChildItem -File | Measure-Object | Select-Object -ExpandProperty Count       # count files (full)"
     Write-CodeLine "Get-ChildItem -Directory | Measure-Object | Select-Object -ExpandProperty Count  # count directories (full)"
     Write-CodeLine "Get-ChildItem | Measure-Object | Select-Object -ExpandProperty Count             # count all items (full)"
     Write-CodeLine "gci -File | measure | select -exp Count         # count files (shorthand)"
     Write-CodeLine "gci -Directory | measure | select -exp Count    # count directories (shorthand)"
     Write-CodeLine "(gci -File).Count                               # count files (shortest)"
+    Write-CodeLine "(gci -File -Recurse).Count                      # count files recursive"
     Write-CodeLine "(gci -Directory).Count                          # count directories (shortest)"
+    Write-CodeLine "(gci -Directory -Recurse -ErrorAction SilentlyContinue).Count  # count dirs (recursive and suppress permission errors)"
     Write-CodeLine "(gci).Count                                     # count all items (shortest)"
 }
 
