@@ -178,6 +178,60 @@ function Show-Usage {
     Write-Host "  cd `$env:my_notes_path; .\check_dirs.ps1" -ForegroundColor Green
     Write-Host "  (Get-Location).Path | Set-Clipboard" -ForegroundColor Green
     Write-Host "  (Get-Command go).Source" -ForegroundColor Green
+
+    Write-Host ""
+    Write-Host "PS file/dir operations:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "List only directories:" -ForegroundColor Yellow
+    Write-CodeLine "ls -Directory                                   # shorthand (PowerShell 3.0+)"
+    Write-CodeLine "ls | Where-Object {`$_.PSIsContainer}           # works in all versions"
+    Write-CodeLine "Get-ChildItem -Directory                        # explicit"
+
+    Write-Host ""
+    Write-Host "List only files:" -ForegroundColor Yellow
+    Write-CodeLine "ls -File                                        # shorthand (PowerShell 3.0+)"
+    Write-CodeLine "ls | Where-Object {!`$_.PSIsContainer}          # works in all versions"
+    Write-CodeLine "Get-ChildItem -File                             # explicit"
+
+    Write-Host ""
+    Write-Host "Filter by keyword:" -ForegroundColor Yellow
+    Write-CodeLine "ls | Select-String 'keyword'                    # searches file contents, like grep"
+    Write-CodeLine "ls | Select-String -CaseSensitive keyword       # case-sensitive"
+    Write-CodeLine "ls | Where-Object {`$_.Name -like '*keyword*'}   # filter by name (case-insensitive)"
+    Write-CodeLine "ls | Where-Object {`$_.Name -clike '*keyword*'}  # filter by name (case-sensitive)"
+    Write-CodeLine "ls | Where-Object {`$_.Name -match 'keyword'}    # regex match (case-insensitive)"
+    Write-CodeLine "ls | Where-Object {`$_.Name -cmatch 'keyword'}   # regex match (case-sensitive)"
+
+    Write-Host ""
+    Write-Host "Search recursively:" -ForegroundColor Yellow
+    Write-CodeLine "Get-ChildItem -Path ./ -Recurse -ErrorAction SilentlyContinue -Filter 'filename.ext' | Select-Object -ExpandProperty FullName  # find file"
+    Write-CodeLine "Get-ChildItem -Path C:\ -Recurse -Directory -ErrorAction SilentlyContinue -Filter 'dirname'  # find directory"
+
+    Write-Host ""
+    Write-Host "View file content:" -ForegroundColor Yellow
+    Write-CodeLine "Get-Content -Path .\file.txt -TotalCount 10     # first 10 lines"
+    Write-CodeLine "gc .\file.txt | Select-Object -First 10         # first 10 lines (shorthand)"
+    Write-CodeLine "Get-Content -Path .\file.txt -Tail 10           # last 10 lines"
+    Write-CodeLine "gc .\file.txt | Select-Object -Last 10          # last 10 lines (shorthand)"
+
+    Write-Host ""
+    Write-Host "Count items:" -ForegroundColor Yellow
+    Write-CodeLine "(gci -File).Count                               # count files"
+    Write-CodeLine "(gci -Directory).Count                          # count directories"
+    Write-CodeLine "(gci).Count                                     # count all items"
+    Write-CodeLine "gci -File | measure | select -exp Count         # count files (alternative)"
+
+    Write-Host ""
+    Write-Host "Count items:" -ForegroundColor Yellow
+    Write-CodeLine "Get-ChildItem -File | Measure-Object | Select-Object -ExpandProperty Count       # count files (full)"
+    Write-CodeLine "Get-ChildItem -Directory | Measure-Object | Select-Object -ExpandProperty Count  # count directories (full)"
+    Write-CodeLine "Get-ChildItem | Measure-Object | Select-Object -ExpandProperty Count             # count all items (full)"
+    Write-CodeLine "gci -File | measure | select -exp Count         # count files (shorthand)"
+    Write-CodeLine "gci -Directory | measure | select -exp Count    # count directories (shorthand)"
+    Write-CodeLine "(gci -File).Count                               # count files (shortest)"
+    Write-CodeLine "(gci -Directory).Count                          # count directories (shortest)"
+    Write-CodeLine "(gci).Count                                     # count all items (shortest)"
 }
 
 # Language-specific helpers
