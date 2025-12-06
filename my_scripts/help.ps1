@@ -222,6 +222,7 @@ function Show-CSharp-Help {
     Write-CodeLine "dotnet run --framework net9.0"
     Write-CodeLine "dotnet run -f net7.0"
     Write-CodeLine "dotnet run *> test.txt                  # Run and capture output to test.txt"
+    Write-CodeLine "dotnet test                             # Run tests (from solution dir)"
 }
 
 function Show-CPP-Help {
