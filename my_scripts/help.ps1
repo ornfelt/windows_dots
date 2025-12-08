@@ -251,6 +251,8 @@ function Show-CSharp-Help {
     Write-Host ""
     Write-Host "C# / .NET quick examples:" -ForegroundColor Yellow
 
+    # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet
+
     Write-Host ""
     Write-Host "Version / help:" -ForegroundColor Yellow
     Write-CodeLine "dotnet --version"
@@ -268,6 +270,8 @@ function Show-CSharp-Help {
     Write-CodeLine "dotnet --list-runtimes"
     Write-CodeLine "dotnet --list-sdks"
     Write-CodeLine "dotnet build"
+    Write-CodeLine "dotnet build -c Release"
+    Write-CodeLine "dotnet run -c Release"
     Write-CodeLine "dotnet run --framework net9.0"
     Write-CodeLine "dotnet run -f net7.0"
     Write-CodeLine "dotnet run *> test.txt                  # Run and capture output to test.txt"
