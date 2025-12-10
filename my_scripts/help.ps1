@@ -136,6 +136,7 @@ function Show-Usage {
     Write-CommandWithDescription ".cmake"   "helper script for cmake"                          'Cyan'
     Write-CommandWithDescription ".git_push"  "helper script for git push"                     'Cyan'
     Write-CommandWithDescription ".git_pull"  "helper script for git pull"                     'Cyan'
+    Write-CommandWithDescription ".git_ignore" "helper script for git ignore"                  'Cyan'
     Write-CommandWithDescription ".gen_plant" "generate PlantUML image"                        'Cyan'
     Write-CommandWithDescription ".gen_merm"  "generate Mermaid image"                         'Cyan'
     Write-CommandWithDescription ".acore_update"  "update acore repo"                          'Cyan'
