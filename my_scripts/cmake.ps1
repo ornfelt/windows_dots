@@ -217,6 +217,19 @@ elseif ($cwd -imatch 'ioq3') {
     Run-Or-Print $main
     Print-Alternatives $alts
 }
+elseif ($cwd -imatch 'torchless') {
+    $null = Test-CMakeLists -ParentDir -Context 'torchless (expecting CMakeLists.txt one level up)'
+    $main = 'cmake .. -DCMAKE_BUILD_TYPE=Release'
+
+    Run-Or-Print $main
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "compile command:"
+        Write-Output "cmake .. -DCMAKE_BUILD_TYPE=Release; cmake --build ."
+        Write-Output "On windows, run cmake, then build in vs:"
+        Write-Output ".\*.slnx"
+    }
+}
 else {
     # Default fallback
     $null = Test-CMakeLists -ParentDir
