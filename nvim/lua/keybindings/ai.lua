@@ -118,6 +118,7 @@ local function get_local_ipv4(debug)
   -- Windows: .NET DNS HostEntry approach
   if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
     local out = get_ipv4_ps()
+      -- debug
     --print("out (ps): " .. out)
     --print("shell_error (ps): " .. tostring(vim.v.shell_error))
     if is_ipv4(out) then
@@ -129,9 +130,13 @@ local function get_local_ipv4(debug)
   -- Linux
   if vim.fn.has("linux") == 1 then
     do
-      local out = trim(vim.fn.system([[sh -lc "hostname -I 2>/dev/null | tr ' ' '\n' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | grep -v '^127\.' | head -n1"]]) or "")
+      local out = vim.fn.system([[sh -lc "ip addr show | grep -v 'inet6' | grep -v 'inet 127' | grep 'inet' | head -n 1 | awk '{print $2}' | cut -d/ -f1"]]) or ""
+      out = out:gsub("inet", "")
+      out = trim(out)
+      -- debug
+      --print("out (ip addr): " .. out)
       if is_ipv4(out) then
-        dbg_log(("get_local_ipv4: %s (branch: linux/hostname -I)"):format(out))
+        dbg_log(("get_local_ipv4: %s (branch: linux/ip addr)"):format(out))
         return out
       end
     end
