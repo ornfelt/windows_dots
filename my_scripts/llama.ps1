@@ -154,6 +154,8 @@ switch -Regex ($Command.ToLower()) {
     #}
     "^server$" {
         $hostIp = Get-LocalIPv4
+        # override
+        #$hostIp = "localhost"
         Write-Host "Running llama in Server mode on host $hostIp ..."
         #& "$binaryDir/llama-server.exe" -m $modelPath $commonArgs --host $hostIp
         # Print the command being run and better parsing of args...
