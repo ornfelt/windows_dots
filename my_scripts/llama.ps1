@@ -152,10 +152,13 @@ switch -Regex ($Command.ToLower()) {
     #    Write-Host "Running llama in Server mode..." -ForegroundColor Cyan
     #    & "$binaryDir/llama-server.exe" -m $modelPath $commonArgs
     #}
-    "^server$" {
-        $hostIp = Get-LocalIPv4
-        # override
-        #$hostIp = "localhost"
+    "^(server|serverlocal|local|localhost)$" {
+        $isLocal = $Command.ToLower() -match '^(serverlocal|local|localhost)$'
+        $hostIp = if ($isLocal) {
+            "localhost"
+        } else {
+            Get-LocalIPv4
+        }
         Write-Host "Running llama in Server mode on host $hostIp ..."
         #& "$binaryDir/llama-server.exe" -m $modelPath $commonArgs --host $hostIp
         # Print the command being run and better parsing of args...
@@ -170,13 +173,16 @@ switch -Regex ($Command.ToLower()) {
         & $exe @argsList
     }
     "^help$" {
-        Write-Host "Usage: .\llama.ps1 [cli|chat|server|list|help] [model_index]"
+        Write-Host "Usage: .\llama.ps1 [cli|chat|server|serverlocal|list|help] [model_index]"
         Write-Host "Commands:"
-        Write-Host "  cli    Run llama in CLI mode"
-        Write-Host "  chat   Alias for CLI mode"
-        Write-Host "  server Run llama in Server mode"
-        Write-Host "  list   List available models (existing files only)"
-        Write-Host "  help   Show this help message"
+        Write-Host "  cli         Run llama in CLI mode"
+        Write-Host "  chat        Alias for CLI mode"
+        Write-Host "  server      Run llama server bound to your primary IPv4"
+        Write-Host "  serverlocal Run llama server bound to localhost"
+        Write-Host "  local       Alias for serverlocal"
+        Write-Host "  localhost   Alias for serverlocal"
+        Write-Host "  list        List available models (existing files only)"
+        Write-Host "  help        Show this help message"
         Write-Host "  model_index Optional, 0-based index to select model."
     }
     default {
