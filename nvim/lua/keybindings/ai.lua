@@ -84,6 +84,11 @@ end
 -- Basic llama.cpp example request (no streaming)
 local function llm()
   local url = "http://127.0.0.1:8080/completion"
+  -- TODO:
+  --local ip = get_local_ipv4()
+  --print("x: " .. ip)
+  --local url = ("http://%s:8080/completion"):format(ip)
+
   local buffer_content = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
 
   local json_payload = {

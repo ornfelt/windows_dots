@@ -107,7 +107,17 @@ function Get-LocalIPv4 {
 switch -Regex ($Command.ToLower()) {
     "^(cli|chat)$" {
         Write-Host "Running llama in CLI mode..."
-        & "$binaryDir/llama-cli.exe" -m $modelPath $commonArgs -cnv -p "You are a helpful assistant"
+        #& "$binaryDir/llama-cli.exe" -m $modelPath $commonArgs -cnv -p "You are a helpful assistant"
+        # Print the command being run and better parsing of args...
+        $exe  = Join-Path $binaryDir "llama-cli.exe"
+        $argsList = @("-m", $modelPath) + ($commonArgs -split '\s+') + @("-cnv", "-p", "You are a helpful assistant")
+
+        $prettyArgs = ( $argsList | ForEach-Object {
+            if ($_ -match '\s') { "`"$_`"" } else { $_ }
+        } ) -join ' '
+
+        Write-Host ("RUN: `"{0}`" {1}" -f $exe, $prettyArgs)
+        & $exe @argsList
     }
     #"^server$" {
     #    Write-Host "Running llama in Server mode..."
@@ -116,7 +126,17 @@ switch -Regex ($Command.ToLower()) {
     "^server$" {
         $hostIp = Get-LocalIPv4
         Write-Host "Running llama in Server mode on host $hostIp ..."
-        & "$binaryDir/llama-server.exe" -m $modelPath $commonArgs --host $hostIp
+        #& "$binaryDir/llama-server.exe" -m $modelPath $commonArgs --host $hostIp
+        # Print the command being run and better parsing of args...
+        $exe  = Join-Path $binaryDir "llama-server.exe"
+        $argsList = @("-m", $modelPath) + ($commonArgs -split '\s+') + @("--host", $hostIp)
+
+        $prettyArgs = ( $argsList | ForEach-Object {
+            if ($_ -match '\s') { "`"$_`"" } else { $_ }
+        } ) -join ' '
+
+        Write-Host ("RUN: `"{0}`" {1}" -f $exe, $prettyArgs)
+        & $exe @argsList
     }
     "^help$" {
         Write-Host "Usage: .\llama.ps1 [cli|chat|server|help] [model_index]"
