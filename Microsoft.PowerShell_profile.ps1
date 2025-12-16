@@ -66,6 +66,7 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
 # {ps_profile_path}/my_scripts/playermap_old.ps1
 # {ps_profile_path}/my_scripts/task_commands.ps1
 # {ps_profile_path}/my_scripts/trust_dirs.ps1
+# {ps_profile_path}/my_scripts/unblock_files.ps1
 $aliases = @(
     ".cdn", ".cdc", ".cdp", ".ioq3", ".show_wifi", ".list_files", ".list_files_gui", 
     ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
