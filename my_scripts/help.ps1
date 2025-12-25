@@ -3,8 +3,9 @@ param(
     [string]$Language
 )
 
-# Map all aliases -> normalized language name
+# Map all aliases -> normalized name
 $languageMap = @{
+    # code langs
     'c'          = 'c'
     'cs'         = 'csharp'
     'c#'         = 'csharp'
@@ -22,6 +23,19 @@ $languageMap = @{
     'python'     = 'python'
     'rust'       = 'rust'
     'rs'         = 'rust'
+
+    # NEW args
+    'git'        = 'git'
+    'grep'       = 'grep'
+    'gitgrep'    = 'gitgrep'
+    'ggrep'      = 'gitgrep'
+    'ripgrep'    = 'ripgrep'
+    'rgrep'      = 'ripgrep'
+    'ps'         = 'other'
+    'x'          = 'other'
+    'other'      = 'other'
+    'scripts'    = 'scripts'
+    'script'     = 'scripts'
 }
 
 function Write-CommandWithDescription {
@@ -63,11 +77,10 @@ function Write-CodeLine {
     }
 }
 
-function Show-Usage {
-    Write-Host "Available code language arguments (case-insensitive):"
-
-    # Code language keywords in magenta / purple
-    $languages = @(
+# IMPORTANT: When no arg (or unknown arg), print ONLY the available args and nothing else.
+function Show-Args {
+    $args = @(
+        # code langs
         'c'
         'cs / c# / csharp'
         'cpp / c++'
@@ -77,16 +90,216 @@ function Show-Usage {
         'ts / typescript'
         'py / python'
         'rust / rs'
+
+        # NEW groups
+        'git'
+        'grep'
+        'gitgrep / ggrep'
+        'ripgrep / rgrep'
+        'ps / x / other'
+        'scripts / script'
     )
 
-    foreach ($lang in $languages) {
-        Write-Host "  $lang" -ForegroundColor Magenta
+    foreach ($a in $args) {
+        Write-Host "  $a" -ForegroundColor Magenta
     }
+}
+
+function Show-Git-Help {
+    Write-Host "Git commands:" -ForegroundColor Yellow
+    Write-Host ""
+
+    Write-CodeLine 'git push https://$env:GITHUB_TOKEN@github.com/ornfelt/small_games'
+    Write-CodeLine 'git clone --recurse-submodules -j8 https://$GITHUB_TOKEN@github.com/ornfelt/my_wow_docs'
+    Write-Host ""
+
+    # Existing useful git commands moved here
+    Write-Host "# Display history with graph and decorate:" -ForegroundColor DarkGray
+    Write-Host "git log --graph --decorate" -ForegroundColor Blue
+
+    Write-Host "# Generate diff showing changes from latest commit:" -ForegroundColor DarkGray
+    Write-Host "git show HEAD | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+
+    Write-Host "# Generate diff showing changes from second latest commit (use HEAD^^ for third etc.):" -ForegroundColor DarkGray
+    Write-Host "git show HEAD^ | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+
+    Write-Host "# Generate diff for specified commit id, filtering on specific file type:" -ForegroundColor DarkGray
+    Write-Host "git show c7aa908 -- '*.go' | Set-Content -Encoding UTF8 go_fixes.diff" -ForegroundColor Blue
+
+    Write-Host "# Generate diff between specific commit and now, filtering on specific file types:" -ForegroundColor DarkGray
+    Write-Host "git diff cbceb5a..HEAD -- '**/*.java' '*.cs' > new_java_cs_changes.diff" -ForegroundColor Blue
+
+    Write-Host "# Apply patch:" -ForegroundColor DarkGray
+    Write-Host 'cd $env:code_root_dir/Code2/C#/dotnet-integration; git apply $env:my_notes_path/notes/svea/diffs/testshop_dev.diff --verbose' -ForegroundColor Blue
+}
+
+function Show-RipGrep-Help {
+    Write-Host "## ripgrep" -ForegroundColor Yellow
+    Write-Host ""
+
+    Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'rg --max-depth 1 "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "*.txt"'
+    Write-Host "Use -g (glob) to include only .txt files." -ForegroundColor DarkGray
+    Write-Host ""
+
+    Write-Host "Multiple extensions:" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "*.txt" -g "*.md"'
+    Write-Host "You can add multiple -g filters." -ForegroundColor DarkGray
+    Write-Host ""
+
+    Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "!*.log"'
+    Write-Host "The ! negates the glob, so it excludes .log files." -ForegroundColor DarkGray
+    Write-Host ""
+
+    Write-Host "Exclude multiple:" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "!*.log" -g "!*.tmp"'
+    Write-Host ""
+
+    Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
+    Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "*.cs" -g "!*.Designer.cs"'
+    Write-Host ""
+
+    Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" path/to/directory'
+    Write-Host ""
+
+    Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
+    Write-CodeLine 'rg -l "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Show Line Numbers" -ForegroundColor DarkGray
+    Write-CodeLine 'rg -n "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'rg -i "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
+    Write-CodeLine 'rg -F "literal_text"'
+}
+
+function Show-GitGrep-Help {
+    Write-Host "## git grep" -ForegroundColor Yellow
+    Write-Host ""
+
+    Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- "./*"'
+    Write-Host ""
+
+    Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- "*.txt"'
+    Write-Host ""
+
+    Write-Host "Multiple extensions:" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- "*.txt" "*.md"'
+    Write-Host ""
+
+    Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- ":!*.log"'
+    Write-Host ""
+
+    Write-Host "Exclude multiple:" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- ":!*.log" ":!*.tmp"'
+    Write-Host ""
+
+    Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
+    Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- "*.cs" ":!*.Designer.cs"'
+    Write-Host ""
+
+    Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- path/to/directory'
+    Write-Host ""
+
+    Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep -l "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Show Line Numbers" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep -n "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep -i "your_search_text"'
+    Write-Host ""
+
+    Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep -F "literal_text"'
+}
+
+function Show-Grep-Help {
+    Write-Host "## grep" -ForegroundColor Yellow
+    Write-Host ""
+
+    Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -r "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'grep "your_search_text" *'
+    Write-Host ""
+
+    Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -r --include="*.txt" "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Multiple extensions:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -r --include="*.txt" --include="*.md" "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -r --exclude="*.log" "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Exclude multiple:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -r --exclude="*.log" --exclude="*.tmp" "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
+    Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -r --include="*.cs" --exclude="*.Designer.cs" "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -r "your_search_text" path/to/directory'
+    Write-Host ""
+
+    Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -rl "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Show Line Numbers" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -rn "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -ri "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -rF "literal_text" .'
+}
+
+# Moved: all dot commands / scripts
+function Show-Scripts-Help {
+    Write-Host "Some useful dot commands:" -ForegroundColor Yellow
 
     Write-Host ""
-    Write-Host "Some useful dot commands:"
-
-    # Dot commands: command in cyan, description in default color
     Write-Host "  Navigation / cd helpers:" -ForegroundColor DarkGray
     Write-CommandWithDescription ".cdn"   "cd into my_notes_path"             'Cyan'
     Write-CommandWithDescription ".cdc"   "cd into code_root_dir"             'Cyan'
@@ -147,32 +360,13 @@ function Show-Usage {
     Write-CommandWithDescription ".clean_shada" "clean neovim shada data"                      'Cyan'
     Write-CommandWithDescription ".wow_wtf_update" "copy WoW WTF files into wow_addons repo"   'Cyan'
     Write-CommandWithDescription ".wow_wtf_fix"    "copy WoW WTF files from wow_addons repo to local WoW dir" 'Cyan'
+}
 
+# Other commands
+function Show-Other-Help {
+    Write-Host "Other useful commands:" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Useful git commands:"
 
-    Write-Host "# Display history with graph and decorate:" -ForegroundColor DarkGray
-    Write-Host "git log --graph --decorate" -ForegroundColor Blue
-
-    Write-Host "# Generate diff showing changes from latest commit:" -ForegroundColor DarkGray
-    Write-Host "git show HEAD | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
-
-    Write-Host "# Generate diff showing changes from second latest commit (use HEAD^^ for third etc.):" -ForegroundColor DarkGray
-    Write-Host "git show HEAD^ | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
-
-    Write-Host "# Generate diff for specified commit id, filtering on specific file type:" -ForegroundColor DarkGray
-    Write-Host "git show c7aa908 -- '*.go' | Set-Content -Encoding UTF8 go_fixes.diff" -ForegroundColor Blue
-
-    Write-Host "# Generate diff between specific commit and now, filtering on specific file types:" -ForegroundColor DarkGray
-    Write-Host "git diff cbceb5a..HEAD -- '**/*.java' '*.cs' > new_java_cs_changes.diff" -ForegroundColor Blue
-
-    Write-Host "# Apply patch:" -ForegroundColor DarkGray
-    Write-Host 'cd $env:code_root_dir/Code2/C#/dotnet-integration; git apply $env:my_notes_path/notes/svea/diffs/testshop_dev.diff --verbose' -ForegroundColor Blue
-
-    Write-Host ""
-    Write-Host "Other useful commands:"
-
-    # Other useful commands: entire command in green
     Write-Host "  . `$PROFILE" -ForegroundColor Green
     Write-Host "  keepawake" -ForegroundColor Green
     Write-Host "  vim `$env:code_root_dir/Code2/Wow/tools/my_wow/wow.conf" -ForegroundColor Green
@@ -251,8 +445,6 @@ function Show-C-Help {
 function Show-CSharp-Help {
     Write-Host ""
     Write-Host "C# / .NET quick examples:" -ForegroundColor Yellow
-
-    # https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet
 
     Write-Host ""
     Write-Host "Version / help:" -ForegroundColor Yellow
@@ -414,7 +606,7 @@ function Show-JS-Help {
     Write-Host ""
     Write-Host "Or:" -ForegroundColor Yellow
     Write-CodeLine "npm init -y"
-    Write-CodeLine "  # fix package.json (add ""start"" script, etc.)" -CommandColor DarkGray
+    Write-CodeLine '  # fix package.json (add "start" script, etc.)' -CommandColor DarkGray
     Write-Host "Then:" -ForegroundColor Yellow
     Write-CodeLine "npm run start"
     Write-CodeLine "npm start"
@@ -444,24 +636,23 @@ function Show-TS-Help {
     Write-CodeLine "npm run dev"
 }
 
-# If no argument: show usage/help and exit
+# Main argument handling
+# If no argument: print ONLY available args and exit
 if (-not $Language) {
-    Show-Usage
+    Show-Args
     exit 0
 }
 
 # Normalize & validate argument (case-insensitive)
 $key = $Language.Trim().ToLower()
 if (-not $languageMap.ContainsKey($key)) {
-    Write-Host "Unknown code language argument: '$Language'" -ForegroundColor Red
-    Write-Host ""
-    Show-Usage
+    Show-Args
     exit 1
 }
 
 $normalizedLanguage = $languageMap[$key]
 
-Write-Host "Selected code language: " -NoNewline
+Write-Host "Selected: " -NoNewline
 Write-Host $normalizedLanguage -ForegroundColor Magenta
 
 switch ($normalizedLanguage) {
@@ -474,6 +665,14 @@ switch ($normalizedLanguage) {
     'go'         { Show-Go-Help }
     'javascript' { Show-JS-Help }
     'typescript' { Show-TS-Help }
+
+    'git'        { Show-Git-Help }
+    'grep'       { Show-Grep-Help }
+    'gitgrep'    { Show-GitGrep-Help }
+    'ripgrep'    { Show-RipGrep-Help }
+    'scripts'    { Show-Scripts-Help }
+    'other'      { Show-Other-Help }
+
     default      { }  # Shouldn't happen
 }
 
