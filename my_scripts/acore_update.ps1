@@ -16,40 +16,43 @@ Write-Output "Performing git pull in $basePath"
 git pull
 
 # Check if modules dir exists
-if (-Not (Test-Path -Path $modulesPath)) {
-    Write-Output "Modules directory not found: $modulesPath"
-    exit 1
-}
+#if (-Not (Test-Path -Path $modulesPath)) {
+#    Write-Output "Modules directory not found: $modulesPath"
+#    exit 1
+#}
+if (-Not (Test-Path -LiteralPath $modulesPath -PathType Container)) {
+    Write-Output "Modules directory not found: $modulesPath (skipping module pulls)"
+} else {
+    # Perform git pull in each immediate subdirectory inside modules
+    foreach ($subdir in Get-ChildItem -Path $modulesPath -Directory) {
+        $subdirPath = $subdir.FullName
 
-# Perform git pull in each immediate subdirectory inside modules
-foreach ($subdir in Get-ChildItem -Path $modulesPath -Directory) {
-    $subdirPath = $subdir.FullName
+        # Check if subdir is a git repo
+        if (-Not (Test-Path -Path (Join-Path -Path $subdirPath -ChildPath ".git"))) {
+            Write-Output "Skipping non-Git directory: $subdirPath"
+            continue
+        }
 
-    # Check if subdir is a git repo
-    if (-Not (Test-Path -Path (Join-Path -Path $subdirPath -ChildPath ".git"))) {
-        Write-Output "Skipping non-Git directory: $subdirPath"
-        continue
-    }
+        # Navigate into subdir and do git pull
+        cd $subdirPath
 
-    # Navigate into subdir and do git pull
-    cd $subdirPath
-
-    #Write-Output ""
-    #Write-Output "`nPerforming git pull in $subdirPath"
-    #git pull
-    if ($subdirPath -match "mod-eluna") {
-        Write-Output "`nPerforming specific git pull for mod-eluna in $subdirPath"
-        git pull https://github.com/azerothcore/mod-eluna master
-    } else {
-        Write-Output "`nPerforming git pull in $subdirPath"
-        git pull
+        #Write-Output ""
+        #Write-Output "`nPerforming git pull in $subdirPath"
+        #git pull
+        if ($subdirPath -match "mod-eluna") {
+            Write-Output "`nPerforming specific git pull for mod-eluna in $subdirPath"
+            git pull https://github.com/azerothcore/mod-eluna master
+        } else {
+            Write-Output "`nPerforming git pull in $subdirPath"
+            git pull
+        }
     }
 }
 
 cd $basePath
 #Set-Location $basePath
 
-Write-Output "`nCompleted git pull in all directories."
+#Write-Output "`nCompleted git pull in all directories."
 #Write-Output "`n***If you need to specify branch for eluna, do: git pull https://github.com/azerothcore/mod-eluna master"
 
 #
@@ -62,7 +65,6 @@ if ($args.Count -eq 0) {
     $acoreInfo = git log --no-merges --regexp-ignore-case --invert-grep --grep='Merge branch' -1 --format='%H|%cI|%s'
     if (-not $acoreInfo) {
         Write-Output "Could not find a matching AzerothCore commit. Aborting eluna alignment."
-        Write-Output "`nCompleted git pull in all directories."
         exit 0
     }
 
@@ -81,7 +83,6 @@ if ($args.Count -eq 0) {
     # Check mod-eluna state and potentially checkout a prior commit
     if (-not (Test-Path $elunaPath)) {
         Write-Output "mod-eluna directory not found at $elunaPath; skipping eluna alignment."
-        Write-Output "`nCompleted git pull in all directories."
         exit 0
     }
 
