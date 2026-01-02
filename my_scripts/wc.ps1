@@ -33,7 +33,7 @@ if ($useCmake) {
 if (Test-Path $basePath) {
     $path = $basePath
 } else {
-    Write-Host "Couldn't find wc bin path. Is it compiled?"
+    Write-Host "Couldn't find wc bin path. Is it compiled?" -ForegroundColor Red
     exit 1
 }
 
