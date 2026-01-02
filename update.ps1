@@ -117,19 +117,19 @@ $newFontName = "JetBrainsMono Nerd Font" # With spaces
 $settingsItem = Get-Item "C:\users\$env:UserName\AppData\Local\Packages\Microsoft.WindowsTerminal_*\LocalState\settings.json" -ErrorAction SilentlyContinue
 
 if (-not $settingsItem) {
-    Write-Warning "[warn] Could not find Windows Terminal settings.json." -ForegroundColor DarkYellow
+    Write-Host "[warn] Could not find Windows Terminal settings.json." -ForegroundColor DarkYellow
 } else {
     $settingsPath = $settingsItem.FullName
         try {
             $settingsContent = Get-Content -Path $settingsPath -Raw | ConvertFrom-Json
                 $fontName = $settingsContent.profiles.defaults.font.face
         } catch {
-            Write-Warning "[warn] Failed to parse JSON from ${settingsPath}: $_" -ForegroundColor Red
+            Write-Host "[warn] Failed to parse JSON from ${settingsPath}: $_" -ForegroundColor Red
                 $fontName = $null
         }
 
     if ($fontName -eq "JetBrainsMono Nerd Font") {
-        Write-Output "Font is set to JetBrainsMono Nerd Font"
+        Write-Host "Font is set to JetBrainsMono Nerd Font"
             if (Test-Path $alacrittyConfigFile) {
                 Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
                     Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile" -ForegroundColor DarkBlue
@@ -138,15 +138,15 @@ if (-not $settingsItem) {
                 Write-Host "$alacrittyConfigFile not found." -ForegroundColor DarkYellow
             }
     } elseif ($fontName -eq "JetBrainsMono NF") {
-        Write-Output "Font is set to JetBrainsMono NF"
+        Write-Host "Font is set to JetBrainsMono NF"
     } else {
-        Write-Output "Font wasn't found in profiles.defaults.font.face. Checking file for JetBrainsMono*..." -ForegroundColor DarkYellow
+        Write-Host "Font wasn't found in profiles.defaults.font.face. Checking file for JetBrainsMono*..." -ForegroundColor DarkYellow
             try {
                 $settingsRaw = Get-Content -Path $settingsPath -Raw
                     if ($settingsRaw -match "JetBrainsMono\s*(Nerd Font|NF)") {
                         $match = $matches[0]
                             if ($match -match "Nerd Font") {
-                                Write-Output "Font is set to JetBrainsMono Nerd Font (second check)"
+                                Write-Host "Font is set to JetBrainsMono Nerd Font (second check)"
                                     if (Test-Path $alacrittyConfigFile) {
                                         Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
                                             Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile" -ForegroundColor DarkBlue
@@ -155,13 +155,13 @@ if (-not $settingsItem) {
                                         Write-Host "$alacrittyConfigFile not found." -ForegroundColor DarkYellow
                                     }
                             } elseif ($match -match "NF") {
-                                Write-Output "Font is set to JetBrainsMono NF (second check)"
+                                Write-Host "Font is set to JetBrainsMono NF (second check)"
                             }
                     } else {
-                        Write-Output "No JetBrainsMono font found in the settings." -ForegroundColor DarkYellow
+                        Write-Host "No JetBrainsMono font found in the settings." -ForegroundColor DarkYellow
                     }
             } catch {
-                Write-Warning "[warn] Could not read settings file as raw text: $_" -ForegroundColor Red
+                Write-Host "[warn] Could not read settings file as raw text: $_" -ForegroundColor Red
             }
     }
 }
@@ -209,7 +209,7 @@ if (Test-Path $autohotkeyPath) {
         Write-Host "`ncaps.ahk has been copied to the startup folder." -ForegroundColor Cyan
     }
 } else {
-    Write-Output "`nAutoHotkey is not installed." -ForegroundColor DarkYellow
+    Write-Host "`nAutoHotkey is not installed." -ForegroundColor DarkYellow
 }
 
 # ------------------------------------------------------------
@@ -227,7 +227,7 @@ if (Test-Path -Path $sourceLfPath) {
     Write-Host "`nCopying files from $sourceLfPath to $lfPath" -ForegroundColor Cyan
     Copy-Item -Path "$sourceLfPath\*" -Destination $lfPath -Recurse -Force
 } else {
-    Write-Warning "`nSource directory $sourceLfPath does not exist. Skipping copy for lf." -ForegroundColor DarkYellow
+    Write-Host "`nSource directory $sourceLfPath does not exist. Skipping copy for lf." -ForegroundColor DarkYellow
 }
 
 # ------------------------------------------------------------
@@ -245,7 +245,7 @@ if (Test-Path -Path $sourceYaziPath) {
     Write-Host "`nCopying files from $sourceYaziPath to $yaziConfigPath" -ForegroundColor Cyan
     Copy-Item -Path "$sourceYaziPath\*" -Destination $yaziConfigPath -Recurse -Force
 } else {
-    Write-Warning "`nSource directory $sourceYaziPath does not exist. Skipping copy for yazi." -ForegroundColor DarkYellow
+    Write-Host "`nSource directory $sourceYaziPath does not exist. Skipping copy for yazi." -ForegroundColor DarkYellow
 }
 
 $scriptFiles = @(
@@ -261,7 +261,7 @@ foreach ($script in $scriptFiles) {
         Write-Host "`nCopying $sourceScriptPath to $yaziConfigPath" -ForegroundColor Cyan
         Copy-Item -Path $sourceScriptPath -Destination $yaziConfigPath -Force
     } else {
-        Write-Warning "`nScript file $sourceScriptPath does not exist. Skipping." -ForegroundColor DarkYellow
+        Write-Host "`nScript file $sourceScriptPath does not exist. Skipping." -ForegroundColor DarkYellow
     }
 }
 
