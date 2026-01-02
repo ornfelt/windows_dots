@@ -1,11 +1,47 @@
 param(
     [Parameter(Position=0)]
-    [string]$OnlyPrint
+    [string]$Arg,
+
+    [Parameter(Position=1)]
+    [string]$Arg2
 )
 
 # Usage:
 # .\cmake.ps1            # detect path and RUN the chosen cmake
 # .\cmake.ps1 onlyprint  # detect path and PRINT commands (no execution)
+# .\cmake.ps1 r/release  # RUN in Release mode
+# .\cmake.ps1 r foo      # RUN in Release mode and PRINT commands (no execution)
+
+# Print-only unless argument is "r" or "release" (case-insensitive)
+$OnlyPrint = $null
+$Release = $false
+
+if (-not [string]::IsNullOrWhiteSpace($Arg)) {
+    $arg_lc = $Arg.ToLowerInvariant()
+
+    if ($arg_lc -eq 'r' -or $arg_lc -eq 'release') {
+        $Release = $true
+        # If there's also another arg, enable print-only too
+        if (-not [string]::IsNullOrWhiteSpace($Arg2)) {
+            $OnlyPrint = 'true'
+        }
+    }
+    else {
+        $OnlyPrint = 'true'
+    }
+}
+
+# build type helper
+$BuildType = 'Debug'
+if ($Release) { $BuildType = 'Release' }
+
+# Debug print
+if ($OnlyPrint) {
+    Write-Host ("[OnlyPrint]=ON  [BuildType]={0}" -f $BuildType) -ForegroundColor Magenta
+}
+else {
+    Write-Host ("[OnlyPrint]=OFF  [BuildType]={0}" -f $BuildType) -ForegroundColor Magenta
+}
 
 # Note: most of the cmake commands are only tested on linux
 
@@ -99,13 +135,13 @@ elseif ($wowCppMatch) {
     $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
 
     if (Test-Path $vcpkgPrimary) {
-        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DCMAKE_BUILD_TYPE=Debug"
+        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DCMAKE_BUILD_TYPE=$BuildType"
     }
     elseif (Test-Path $vcpkgSecondary) {
-        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DCMAKE_BUILD_TYPE=Debug"
+        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DCMAKE_BUILD_TYPE=$BuildType"
     }
     else {
-        $main = 'cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug'
+        $main = "cmake -B build -S . -DCMAKE_BUILD_TYPE=$BuildType"
     }
 
     Run-Or-Print $main
@@ -190,9 +226,9 @@ elseif ($cwd -imatch 'server') {
 }
 elseif (($cwd -match 'tbc') -and ($cwd -match 'c\+\+')) {
     $null = Test-CMakeLists -ParentDir -Context 'my_wow tbc c++ (expecting CMakeLists.txt one level up)'
-    $main = 'cmake .. -DUSE_SDL2=ON -DUSE_SOUND=ON -DUSE_NAMIGATOR=OFF -DUSE_STOPWATCH_DT=ON -DCMAKE_BUILD_TYPE=Debug'
+    $main = "cmake .. -DUSE_SDL2=ON -DUSE_SOUND=ON -DUSE_NAMIGATOR=OFF -DUSE_STOPWATCH_DT=ON -DCMAKE_BUILD_TYPE=$BuildType"
     $alts = @(
-        'cmake .. -DUSE_SDL2=OFF -DUSE_SOUND=ON -DUSE_NAMIGATOR=ON -DUSE_STOPWATCH_DT=OFF -DCMAKE_BUILD_TYPE=Release'
+        "cmake .. -DUSE_SDL2=OFF -DUSE_SOUND=ON -DUSE_NAMIGATOR=ON -DUSE_STOPWATCH_DT=OFF -DCMAKE_BUILD_TYPE=$BuildType"
     )
 
     Run-Or-Print $main
@@ -209,9 +245,9 @@ elseif ($cwd -imatch 'neovim') {
 elseif ($cwd -imatch 'ioq3') {
     $null = Test-CMakeLists -Context 'ioq3 (expecting CMakeLists.txt in current directory)'
 
-    $main = 'cmake -S . -B build -G "Visual Studio 17 2022"; cmake --build build --config Release'
+    $main = "cmake -S . -B build -G "Visual Studio 17 2022"; cmake --build build --config $BuildType"
     $alts = @(
-        'cmake -S . -B build -G "Visual Studio 17 2022"; cmake --build build --config Debug'
+        "cmake -S . -B build -G "Visual Studio 17 2022"; cmake --build build --config $BuildType"
     )
 
     Run-Or-Print $main
@@ -230,12 +266,31 @@ elseif ($cwd -imatch 'torchless') {
         Write-Output ".\*.slnx"
     }
 }
+elseif ($cwd -imatch 'ollama') {
+    # linux-specific...
+    $null = Test-CMakeLists -Context 'ollama (expecting CMakeLists.txt in current directory)'
+
+    $main = "cmake -B build; cmake --build build -j $([Environment]::ProcessorCount)"
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'llama\.cpp') {
+    # linux-specific...
+    $null = Test-CMakeLists -Context 'llama.cpp (expecting CMakeLists.txt in current directory)'
+
+    $main = "cmake -B build; cmake --build build --config Release -j $([Environment]::ProcessorCount)"
+    Run-Or-Print $main
+
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "cmake -B build; cmake --build build --config $BuildType -j $([Environment]::ProcessorCount)"
+    }
+}
 else {
     # Default fallback
     $null = Test-CMakeLists -ParentDir
     Write-Host "No cmake command found for: $cwd" -ForegroundColor DarkYellow
     Write-Host "Using default cmake command..." -ForegroundColor DarkYellow
-    $main = 'cmake ../ -DCMAKE_BUILD_TYPE=Debug'
+    $main = "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType"
     Run-Or-Print $main
 }
 
