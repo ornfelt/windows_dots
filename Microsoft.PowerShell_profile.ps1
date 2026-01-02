@@ -75,7 +75,7 @@ $aliases = @(
     ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
     ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".mangos_update",
     ".cmake", ".cmangos_update", ".mw", ".mww", ".mwr", ".list_colors", ".list_std_colors",
-    ".list_all_colors", ".git_ignore", ".help"
+    ".list_all_colors", ".git_ignore", ".help", ".mwd"
 )
 
 foreach ($alias in $aliases) {
