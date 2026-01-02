@@ -29,6 +29,9 @@ if (-not [string]::IsNullOrWhiteSpace($Arg)) {
     else {
         $OnlyPrint = 'true'
     }
+
+    Write-Host "If needed, run:" -ForegroundColor Blue
+    Write-Host 'make -j$([Environment]::ProcessorCount)' -ForegroundColor Blue
 }
 
 # build type helper
@@ -245,9 +248,9 @@ elseif ($cwd -imatch 'neovim') {
 elseif ($cwd -imatch 'ioq3') {
     $null = Test-CMakeLists -Context 'ioq3 (expecting CMakeLists.txt in current directory)'
 
-    $main = "cmake -S . -B build -G "Visual Studio 17 2022"; cmake --build build --config $BuildType"
+    $main = "cmake -S . -B build -G `"Visual Studio 17 2022`"; cmake --build build --config $BuildType"
     $alts = @(
-        "cmake -S . -B build -G "Visual Studio 17 2022"; cmake --build build --config $BuildType"
+        "cmake -S . -B build -G `"Visual Studio 17 2022`"; cmake --build build --config $BuildType"
     )
 
     Run-Or-Print $main
@@ -287,7 +290,9 @@ elseif ($cwd -imatch 'llama\.cpp') {
 }
 else {
     # Default fallback
-    $null = Test-CMakeLists -ParentDir
+    #$null = Test-CMakeLists -ParentDir
+    $null = Test-CMakeLists -ParentDir -Context (Split-Path -Leaf (Get-Location))
+
     Write-Host "No cmake command found for: $cwd" -ForegroundColor DarkYellow
     Write-Host "Using default cmake command..." -ForegroundColor DarkYellow
     $main = "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType"
