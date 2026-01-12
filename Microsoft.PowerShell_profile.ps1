@@ -50,6 +50,38 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
     Invoke-FuzzyKillProcess
 }
 
+# disable v -> vim
+Set-PSReadLineKeyHandler -ViMode Command -Key 'v' -ScriptBlock { }
+
+# Vi mode yank -> Windows clipboard
+Set-PSReadLineKeyHandler -ViMode Command -Chord 'y','y' -ScriptBlock {
+    [Microsoft.PowerShell.PSConsoleReadLine]::ViYankLine()
+    #Copy-PSReadLineYankToClipboard
+    try {
+        # debug test
+        #Set-Clipboard -Value "test"
+
+        # copy from PS:
+        $buffer = $null
+        $cursor = 0
+        # Get full current command line buffer + cursor position
+        [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$buffer, [ref]$cursor)
+        if ([string]::IsNullOrEmpty($buffer)) { return }
+
+        # Copy only the line the cursor is on (works even for multi-line)
+        $before = if ($cursor -gt 0) { $buffer.Substring(0, $cursor) } else { "" }
+
+        $start = $before.LastIndexOf("`n")
+        if ($start -lt 0) { $start = 0 } else { $start += 1 }
+
+        $end = $buffer.IndexOf("`n", $cursor)
+        if ($end -lt 0) { $end = $buffer.Length }
+
+        $line = $buffer.Substring($start, $end - $start).TrimEnd("`r")
+        Set-Clipboard -Value $line
+    } catch { }
+}
+
 # Note:
 # scripts in my_scripts without "dot-commands":
 # Note, the three cd scripts below are used through yazi
