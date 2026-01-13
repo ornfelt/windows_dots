@@ -24,7 +24,7 @@ $languageMap = @{
     'rust'       = 'rust'
     'rs'         = 'rust'
 
-    # NEW args
+    # other args
     'git'        = 'git'
     'grep'       = 'grep'
     'gitgrep'    = 'gitgrep'
@@ -36,6 +36,9 @@ $languageMap = @{
     'other'      = 'other'
     'scripts'    = 'scripts'
     'script'     = 'scripts'
+    'path'       = 'paths'
+    'paths'      = 'paths'
+    'p'          = 'paths'
 }
 
 function Write-CommandWithDescription {
@@ -91,13 +94,14 @@ function Show-Args {
         'py / python'
         'rust / rs'
 
-        # NEW groups
+        # other groups
         'git'
         'grep'
         'gitgrep / ggrep'
         'ripgrep / rgrep'
         'ps / x / other'
         'scripts / script'
+        'paths / path / p'
     )
 
     foreach ($a in $args) {
@@ -424,6 +428,56 @@ function Show-Other-Help {
     Write-CodeLine "(gci).Count                                     # count all items (shortest)"
 }
 
+function Show-Paths-Help {
+    Write-Host "Common config paths:" -ForegroundColor Yellow
+    Write-Host ""
+
+    # print the literal $env:… strings
+    Write-Host "nvim config path:" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/nvim/init.lua' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "wezterm config path:" -ForegroundColor DarkGray
+    Write-Host '$Env:userprofile/.wezterm.lua' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "wezterm session manager path:" -ForegroundColor DarkGray
+    Write-Host '$Env:userprofile/.wezterm/wezterm-session-manager/session-manager.lua' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "alacritty config path:" -ForegroundColor DarkGray
+    Write-Host '$Env:appdata/alacritty/alacritty.toml' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "lf config path:" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/lf/lfrc' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "yazi config path:" -ForegroundColor DarkGray
+    Write-Host '$Env:appdata/yazi/config/keymap.toml' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "vs code config path:" -ForegroundColor DarkGray
+    Write-Host '$Env:appdata/Code/User/keybindings.json' -ForegroundColor Green
+    Write-Host ""
+
+    # actual resolved paths:
+
+    Write-Host "autohotkey path:" -ForegroundColor DarkGray
+    $startupDir  = [System.IO.Path]::Combine($env:APPDATA, "Microsoft\Windows\Start Menu\Programs\Startup")
+    $startupPath = Join-Path $startupDir "caps_v2.ahk"
+    Write-Host $startupPath -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "vimrc path:" -ForegroundColor DarkGray
+    if (Test-Path -Path "H:\") {
+        Write-Host "H:\.vimrc" -ForegroundColor Green
+    } else {
+        $vimrc = Join-Path $Env:USERPROFILE ".vimrc"
+        Write-Host $vimrc -ForegroundColor Green
+    }
+}
+
 # Language-specific helpers
 function Show-C-Help {
     Write-Host ""
@@ -672,6 +726,7 @@ switch ($normalizedLanguage) {
     'ripgrep'    { Show-RipGrep-Help }
     'scripts'    { Show-Scripts-Help }
     'other'      { Show-Other-Help }
+    'paths'      { Show-Paths-Help }
 
     default      { }  # Shouldn't happen
 }
