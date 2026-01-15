@@ -191,6 +191,33 @@ function Show-RipGrep-Help {
 
     Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
     Write-CodeLine 'rg -F "literal_text"'
+    Write-Host ""
+
+    Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
+    Write-CodeLine 'rg -i "your_search_text" -g "!build/**" -g "!out/**" -g "!node_modules/**" -g "!.git/**" -g "!bin/**"'
+    Write-Host ""
+
+    Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "CMakeLists.txt"'
+    Write-Host ""
+
+    Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "*.cmake"'
+    Write-Host ""
+
+    Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "CMakeLists.txt" -g "*.cmake"'
+    Write-Host ""
+
+    Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" -g "*cmake*" -g "!*.cmake"'
+    Write-Host "CMake-ish filenames (case-insensitive filename glob):" -ForegroundColor DarkGray
+    Write-CodeLine 'rg "your_search_text" --iglob "*cmake*" --iglob "!*.cmake"'
+    Write-Host ""
+
+    Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
+    Write-Host "PowerShell version:" -ForegroundColor DarkGray
+    Write-CodeLine '$tmp = New-TemporaryFile; rg -in -C 3 "FIRST" . > $tmp; rg -i "SECOND" $tmp; Remove-Item $tmp'
 }
 
 function Show-GitGrep-Help {
@@ -244,6 +271,33 @@ function Show-GitGrep-Help {
 
     Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
     Write-CodeLine 'git grep -F "literal_text"'
+    Write-Host ""
+
+    Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep -i "your_search_text" -- ":(exclude)build/**" ":(exclude)out/**" ":(exclude)node_modules/**" ":(exclude).git/**" ":(exclude)bin/**"'
+    Write-Host ""
+
+    Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- "CMakeLists.txt"'
+    Write-Host ""
+
+    Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- "*.cmake"'
+    Write-Host ""
+
+    Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- "CMakeLists.txt" "*.cmake"'
+    Write-Host ""
+
+    Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- "*cmake*" ":(exclude)*.cmake"'
+    Write-Host "CMake-ish filenames (case-insensitive path match):" -ForegroundColor DarkGray
+    Write-CodeLine 'git grep "your_search_text" -- ":(icase)*cmake*" ":(exclude)*.cmake"'
+    Write-Host ""
+
+    Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
+    Write-Host "PowerShell version:" -ForegroundColor DarkGray
+    Write-CodeLine '$tmp = New-TemporaryFile; git grep -in -C 3 "FIRST" -- . > $tmp; git grep -i "SECOND" $tmp; Remove-Item $tmp'
 }
 
 function Show-Grep-Help {
@@ -297,6 +351,42 @@ function Show-Grep-Help {
 
     Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
     Write-CodeLine 'grep -rF "literal_text" .'
+    Write-Host ""
+
+    Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -rIn --exclude-dir={build,out,node_modules,.git,bin} "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
+    Write-Host "Original:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -R --line-number --with-filename "your_search_text" --include="CMakeLists.txt" .'
+    Write-Host "Shortened:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -RIn --include="CMakeLists.txt" "your_search_text" .'
+    Write-Host ""
+
+    Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
+    Write-Host "Original:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -R -n "your_search_text" --include="*.cmake" .'
+    Write-Host "Shortened:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -Rn --include="*.cmake" your_search_text .'
+    Write-Host ""
+
+    Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
+    Write-Host "Original:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -R -n "your_search_text" --include="CMakeLists.txt" --include="*.cmake" .'
+    Write-Host "Shortened:" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -Rn --include="CMakeLists.txt" --include="*.cmake" your_search_text .'
+    Write-Host ""
+
+    Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
+    Write-Host "Grep (simple):" -ForegroundColor DarkGray
+    Write-CodeLine 'grep -Rn --include="*cmake*" --exclude="*.cmake" "your_search_text" .'
+    Write-Host "Find + grep (case-insensitive filename match):" -ForegroundColor DarkGray
+    Write-CodeLine 'find . -type f -iname "*cmake*" ! -iname "*.cmake" -exec grep -n "your_search_text" {} +'
+    Write-Host ""
+
+    Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
+    Write-CodeLine 'tmp="$(mktemp)" && grep -rIn -C 3 "FIRST" . >"$tmp" && grep -i "SECOND" "$tmp" && rm -f "$tmp"'
 }
 
 # Moved: all dot commands / scripts
