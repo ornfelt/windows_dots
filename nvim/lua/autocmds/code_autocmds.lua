@@ -181,12 +181,12 @@ create_mappings("sh,bash", {
 
 -- PowerShell
 create_mappings("ps1,powershell", {
-  ["sout<Tab>"] = 'Write-Output ""<Esc>?""<Enter>li',
-  ["souti<Tab>"] = 'Write-Output "x: $x"<Esc>0f$ciw',
-  ["souts<Tab>"] = 'Write-Output "x: $x"<Esc>0f$ciw',
-  ["soutb<Tab>"] = 'Write-Output ("x: " + ($x -eq $true ? "true" : "false"))<Esc>0f$ciw',
-  ["soutf<Tab>"] = 'Write-Output ("x: " + "{0:N2}" -f $x)<Esc>0f$ciw',
-  ["for<Tab>"] = 'for ($i = 0; $i -lt 10; $i++) {<Enter>Write-Output "Element: $i"<Enter>}<Esc>kA<Enter>',
-  ["fore<Tab>"] = 'foreach ($item in $array) {<Enter>Write-Output "Item: $item"<Enter>}<Esc>kA<Enter>'
+  ["sout<Tab>"] = 'Write-Host "" -ForegroundColor Cyan<Esc>?""<Enter>li',
+  ["souti<Tab>"] = 'Write-Host "x: $x" -ForegroundColor Blue<Esc>0f$lciw',
+  ["souts<Tab>"] = 'Write-Host "x: $x" -ForegroundColor Green<Esc>0f$lciw',
+  ["soutb<Tab>"] = 'Write-Host ("x: " + ($x.ToString().ToLower())) -ForegroundColor Magenta<Esc>0f$lciw',
+  ["soutf<Tab>"] = 'Write-Host ("x: " + "{0:N2}" -f $x) -ForegroundColor DarkBlue<Esc>0f$lciw',
+  ["for<Tab>"] = 'for ($i = 0; $i -lt 10; $i++) {<Enter>Write-Host "Element: $i" -ForegroundColor Yellow<Enter>}<Esc>kA<Enter>',
+  ["fore<Tab>"] = 'foreach ($item in $array) {<Enter>Write-Host "Item: $item" -ForegroundColor DarkYellow<Enter>}<Esc>kA<Enter>'
 })
 
