@@ -36,60 +36,96 @@ cmd open ${{
 # Keys
 # Defaults:
 # https://github.com/gokcehan/lf/blob/master/doc.md
+# bind ctrl-r: reload
 map <c-r> reload
+# bind \:: shell
 map \: shell -Command
 
 #map <enter> &mimeopen "$f"
 #map o &mimeopen "$f"
 #map O $mimeopen --ask "$f"
+# bind enter: open file
 map <enter> open
+# bind o: shell
 map o shell -Command
 
+# bind v: invert-below (invert selection)
 map v invert-below
 
 cmd spawn_shell ${{
     powershell
 }}
 
+# bind S: spawn_shell
 map S spawn_shell
 
+# bind D: delete
 map D delete
 #map E extract
 #map C copyto
 #map M moveto
 
 # Sorting
+# bind ,n: sort by natural
 map ,n :set sortby natural; set info
+# bind ,s: sort by size
 map ,s :set sortby size; set info size
+# bind ,t: sort by time
 map ,t :set sortby time; set info time
+# bind ,a: sort by atime
 map ,a :set sortby atime; set info atime
+# bind ,c: sort by ctime
 map ,c :set sortby ctime; set info ctime
+# bind ,e: sort by extension
 map ,e :set sortby ext; set info
 
 # Settings
+# bind zh: toggle hidden
 map zh set hidden!
+# bind zr: toggle reverse
 map zr set reverse!
+# bind zn: set info none
 map zn set info
-map zs set info size
-map zt set info time
+# avoid conflict with compress binds
+#map zs set info size
+# bind zc: set info size
+map zc set info size
+# bind zi: set info time
+map zi set info time
+# bind za: set info size:time
 map za set info size:time
+# bind ctrl-h: toggle hidden
 map <c-h> set hidden!
+# bind .: toggle hidden
 map . set hidden!
 
 # g-binds
+# bind gg: top (go to top)
 map gg top
+# bind gC: cd C:/
 map gC cd C:/
+# bind ge: cd C:/Windows/System32
 map ge cd C:/Windows/System32
+# bind gu: cd C:/users
 map gu cd C:/users
+# bind gh: cd ~/
 map gh cd ~/
+# bind gl: cd ~/AppData/Local
 map gl cd ~/AppData/Local
+# bind gL: cd ~/AppData/Roaming
 map gL cd ~/AppData/Roaming
 #map gM cd /mnt
+# bind ga: cd ~/Downloads
 map ga cd ~/Downloads
+# bind gd: cd ~/Documents
 map gd cd ~/Documents
+# bind gw: cd ~/OneDrive/Pictures
 map gw cd ~/OneDrive/Pictures
+# bind gm: cd ~/OneDrive/Videos
 map gm cd ~/OneDrive/Videos
+# bind g.: cd ~/.config
 map g. cd ~/.config
+# bind g?: cd ~/AppData/Local/lf
 map g? cd ~/AppData/Local/lf
 
 #powershell -Command 'lf -remote \"send cd $env:code_root_dir/Code2"'
@@ -119,33 +155,49 @@ cmd firefox_open ${{
     firefox "$env:fx"
 }}
 
+# bind gc: cd_code_root_dir
 map gc cd_code_root_dir
-map gn cd_my_notes_path 
-map gp cd_ps_profile_path 
+# bind gn: cd_my_notes_path
+map gn cd_my_notes_path
+# bind gp: cd_ps_profile_path
+map gp cd_ps_profile_path
+# bind gr: cd to git root
 map gr cd_git_root
+# bind gf: open file in vim via wezterm cli
 map gf term_vim
+# bind gx: open file in firefox
 map gx firefox_open
 
 # Fuzzy search
+# bind ctrl-f: fzf select
 map <c-f> $lf -remote "send select '$(fzf)'"
 
 # Rename
 #map c push A<c-u> # new rename
 map c
+# bind cw: rename (clear and type new name)
 map cw push A<c-u> # new rename
+# bind a: rename after extension
 map a push A<a-b> # after extension
+# bind A: rename at the very end
 map A rename # at the very end
+# bind I: rename at the very beginning
 map I push A<c-a> # at the very beginning
+# bind i: rename before extension
 map i push A<a-b><a-b><a-f> # before extension
+# bind cW: bulkrename
 map cW bulkrename
 
 # Tagging / marking
 map <space>
 #map <space> :toggle; down
+# bind space-s: toggle mark and move down
 map <space>s :toggle; down
 
 # Custom
+# bind V: open nvim console
 map V push :!nvim<space>
+# bind ctrl-n: mkdir
 map <c-n> push :mkdir<space>
 
 # Open explorer
@@ -154,6 +206,7 @@ cmd open_explorer ${{
     Start-Process explorer.exe -ArgumentList '.'
 }}
 
+# bind bg: open_explorer
 map bg open_explorer
 
 # Copy path
@@ -165,6 +218,8 @@ cmd copy_path_arg ${{
     powershell -Command "& '$env:ps_profile_path/my_scripts/copy_path.ps1' '$env:fx' 1"
 }}
 
+# bind space--: copy_path
 map <space>- copy_path
+# bind space-_: copy_path_arg (alternate)
 map <space>_ copy_path_arg
 

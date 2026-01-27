@@ -14,23 +14,27 @@
 #on   = "S"
 #run  = 'shell "$SHELL" --block --confirm'
 #desc = "Open shell here"
+# bind S: open shell here
 [[mgr.prepend_keymap]]
 on = "S"
 run = [ '''shell powershell --block --confirm''' ]
 desc = "Open shell here"
 
+# bind ctrl-n: create new directory
 [[mgr.prepend_keymap]]
 on = "<C-n>"
 #run = [ '''shell --block --interactive''' ]
 run = [ '''create --dir''' ]
 desc = "Create new dir"
 
+# bind D: delete file or directory
 [[mgr.prepend_keymap]]
 on = "D"
 run = [ '''delete''' ]
 desc = "Delete file or directory"
 
 # oil-like
+# bind o: create file/dir
 [[mgr.prepend_keymap]]
 on = "o"
 run = [ '''create''' ]
@@ -60,6 +64,7 @@ desc = "Create"
 #desc = "Enter directory or open file"
 # Use plugin instead
 # https://github.com/yazi-rs/plugins/tree/main/smart-enter.yazi
+# bind l: smart-enter (enter dir or open file)
 [[mgr.prepend_keymap]]
 on   = "l"
 run  = "plugin smart-enter"
@@ -72,31 +77,37 @@ desc = "Enter the child directory, or open the file"
 # ...
 
 # g-binds
+# bind gC: cd to C:/
 [[mgr.prepend_keymap]]
 on = ["g", "C"]
 run = [ '''cd C:/''' ]
 desc = "cd to C:/"
 
+# bind ge: cd to C:/Windows/System32
 [[mgr.prepend_keymap]]
 on = ["g", "e"]
 run = [ '''cd C:/Windows/System32''' ]
 desc = "cd to System32"
 
+# bind gu: cd to C:/users
 [[mgr.prepend_keymap]]
 on = ["g", "u"]
 run = [ '''cd C:/users''' ]
 desc = "cd to C:/users"
 
+# bind gh: cd to home
 [[mgr.prepend_keymap]]
 on = ["g", "h"]
 run = [ '''cd ~''' ]
 desc = "no place like ~"
 
+# bind gl: cd to localappdata dir
 [[mgr.prepend_keymap]]
 on = ["g", "l"]
 run = [ '''cd ~/AppData/Local''' ]
 desc = "cd to localappdata"
 
+# bind gL: cd to appdata dir
 [[mgr.prepend_keymap]]
 on = ["g", "L"]
 run = [ '''cd ~/AppData/Roaming''' ]
@@ -107,57 +118,68 @@ desc = "cd to appdata"
 #run = [ '''cd /mnt''' ]
 #desc = "cd to /mnt"
 
+# bind ga: cd to Downloads dir
 [[mgr.prepend_keymap]]
 on = ["g", "a"]
 run = [ '''cd ~/Downloads''' ]
 desc = "cd to ~/Downloads"
 
+# bind gd: cd to Documents dir
 [[mgr.prepend_keymap]]
 on = ["g", "d"]
 run = [ '''cd ~/Documents''' ]
 desc = "cd to ~/Documents"
 
+# bind gw: cd to Pictures dir
 [[mgr.prepend_keymap]]
 on = ["g", "w"]
 run = [ '''cd ~/OneDrive/Pictures''' ]
 desc = "cd to pics"
 
+# bind gm: cd to movies dir
 [[mgr.prepend_keymap]]
 on = ["g", "m"]
 run = [ '''cd ~/OneDrive/Movies''' ]
 desc = "cd to Movies"
 
+# bind g.: cd to config dir
 [[mgr.prepend_keymap]]
 on = ["g", "."]
 run = [ '''cd ~/.config''' ]
 desc = "cd to ~/.config"
 
+# bind g?: cd to yazi config dir
 [[mgr.prepend_keymap]]
 on = ["g", "?"]
 run = [ '''cd ~/AppData/Roaming/yazi/config''' ]
 desc = "cd to yazi dir"
 
+# bind gc: cd to code_root_dir
 [[mgr.prepend_keymap]]
 on = ["g", "c"]
 run = [ ''' shell --confirm "powershell -NoProfile -Command \"& '~/AppData/Roaming/yazi/config/cd_code_root_dir.ps1'\"" ''' ]
 desc = "cd to code"
 
+# bind gn: cd to my_notes
 [[mgr.prepend_keymap]]
 on = ["g", "n"]
 run = [ ''' shell --confirm "powershell -NoProfile -Command \"& '~/AppData/Roaming/yazi/config/cd_my_notes_path.ps1'\"" ''' ]
 desc = "cd to my_notes"
 
+# bind gp: cd to ps_profile_path
 [[mgr.prepend_keymap]]
 on = ["g", "p"]
 run = [ ''' shell --confirm "powershell -NoProfile -Command \"& '~/AppData/Roaming/yazi/config/cd_ps_profile_path.ps1'\"" ''' ]
 desc = "cd to ps_profile_path"
 
+# bind gr: cd to git root
 [[mgr.prepend_keymap]]
 on = [ "g", "r" ]
 #run = [ '''shell --confirm "powershell -NoProfile -Command ya emit-to 0 cd (git rev-parse --show-toplevel)"''' ]
 run = [ '''shell --confirm "powershell -NoProfile -Command ya emit-to 0 cd ''$(git rev-parse --show-toplevel)''"''' ]
 desc = "cd to git root dir"
 
+# bind gf: open file in vim via wezterm cli
 [[mgr.prepend_keymap]]
 on = ["g", "f"]
 #run = [ '''shell 'wezterm cli split-pane --right --percent 50 -- powershell -Command vim %*' --confirm''' ]
@@ -165,6 +187,7 @@ on = ["g", "f"]
 run = [ ''' shell "wezterm cli split-pane --right --percent 50 -- powershell -NoExit -Command vim '%*'" --confirm ''' ]
 desc = "Open file in vim inside a new wezterm split"
 
+# bind gx: open file in firefox
 [[mgr.prepend_keymap]]
 on = ["g", "x"]
 run = [
@@ -186,12 +209,14 @@ desc = "Open file in firefox"
 #desc = "Search directories"
 
 # Default Z key can also be used instead of this
+# bind ctrl-f: fzf jump to file/directory
 [[mgr.prepend_keymap]]
 on = "<C-f>"
 run = [ '''plugin fzf''' ]
 desc = "Jump to a file/directory via fzf"
 
 # Rename
+# bind cw: rename
 [[mgr.prepend_keymap]]
 on = ["c", "w"]
 run = [ '''rename''' ]
@@ -226,21 +251,25 @@ desc = "Rename"
 #ya pack -i
 # Upgrade the plugin
 #ya pack -u
+# bind m: save bookmark
 [[mgr.prepend_keymap]]
 on = [ "m" ]
 run = "plugin bookmarks --args=save"
 desc = "Save current position as a bookmark"
 
+# bind ': jump to bookmark
 [[mgr.prepend_keymap]]
 on = [ "'" ]
 run = "plugin bookmarks --args=jump"
 desc = "Jump to a bookmark"
 
+# bind bd: delete bookmark
 [[mgr.prepend_keymap]]
 on = [ "b", "d" ]
 run = "plugin bookmarks --args=delete"
 desc = "Delete a bookmark"
 
+# bind bD: delete all bookmarks
 [[mgr.prepend_keymap]]
 on = [ "b", "D" ]
 run = "plugin bookmarks --args=delete_all"
@@ -250,6 +279,7 @@ desc = "Delete all bookmarks"
 # ...
 
 # Image commands
+# bind bg: open explorer here
 [[mgr.prepend_keymap]]
 on = ["b", "g"]
 #run = [ ''' shell --confirm powershell -Command 'explorer.exe -ArgumentList "$env:PWD"' ''' ]
@@ -257,12 +287,14 @@ run = [ '''shell --confirm "powershell -NoProfile -Command ii ."''' ]
 desc = "Open explorer"
 
 # Copy path
+# bind space--: copy_path.ps1
 [[mgr.prepend_keymap]]
 on = [" ", "-"]
 run = [ ''' shell --confirm "powershell -Command \"& '~/AppData/Roaming/yazi/config/copy_path.ps1' '%*'\"" ''' ]
 #run = [ ''' shell --confirm "powershell -Command \"if (Test-Path '\\\\***REMOVED***/My Documents/WindowsPowerShell/my_scripts/copy_path.ps1') { & '\\\\***REMOVED***/My Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '%*' } else { & 'C:/Users/jonas/OneDrive/Documents/WindowsPowerShell/my_scripts/copy_path.ps1' '%*' }\" \"" ''' ]
 desc = "Copy selection to clipboard"
 
+# bind space-_: copy_path.ps1 (alternate)
 [[mgr.prepend_keymap]]
 on = [" ", "_"]
 run = [ ''' shell --confirm "powershell -Command \"& '~/AppData/Roaming/yazi/config/copy_path.ps1' '%*' 1\"" ''' ]
