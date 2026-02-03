@@ -7,11 +7,23 @@ if (-not $InputFile) {
     exit 1
 }
 
+$Recursive = $false
+
 if ($InputFile -ieq "all" -or $InputFile -ieq "*") {
-    Write-Host "Generating Mermaid diagrams for all .md files in current directory..." -ForegroundColor Cyan
-    Get-ChildItem -Filter *.md | ForEach-Object {
-        & $PSCommandPath $_.Name
-    }
+    Write-Host "Generating Mermaid diagrams for all .md and .mermaid files..." -ForegroundColor Cyan
+
+    # old: only md files in current dir:
+    #Get-ChildItem -Filter *.md | ForEach-Object {
+    #    & $PSCommandPath $_.Name
+    #}
+    # new: md and mermaid files with recursive being optional
+    Get-ChildItem -Path . -File -Recurse:$Recursive | 
+        Where-Object { $_.Extension -in '.md', '.mermaid' } | 
+        ForEach-Object {
+            # Use FullName so recursion works from any depth
+            & $PSCommandPath $_.FullName
+        }
+
     exit 0
 }
 

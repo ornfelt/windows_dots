@@ -7,11 +7,23 @@ if (-not $InputFile) {
     exit 1
 }
 
+$Recursive = $false
+
 if ($InputFile -ieq "all" -or $InputFile -ieq "*") {
-    Write-Host "Generating PlantUML diagrams for all .txt files in current directory..." -ForegroundColor Cyan
-    Get-ChildItem -Filter *.txt | ForEach-Object {
-        & $PSCommandPath $_.Name
-    }
+    Write-Host "Generating PlantUML diagrams for all .txt and .puml files..." -ForegroundColor Cyan
+
+    # old: only txt files in current dir:
+    #Get-ChildItem -Filter *.txt | ForEach-Object {
+    #    & $PSCommandPath $_.Name
+    #}
+    # new: txt and puml files with recursive being optional
+    Get-ChildItem -Path . -File -Recurse:$Recursive | 
+        Where-Object { $_.Extension -in '.txt', '.puml' } | 
+        ForEach-Object {
+            # Use FullName so recursion works from any depth
+            & $PSCommandPath $_.FullName
+        }
+
     exit 0
 }
 
