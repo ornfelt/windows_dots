@@ -33,6 +33,14 @@ style = "Bold"
 family = "JetBrainsMono NF"
 style = "Regular"
 
+# bind ctrl-space: send custom key (to fix alacritty->wsl->autosuggest-accept)
+[[keyboard.bindings]]
+key = "Space"
+mods = "Control"
+#action = "ReceiveChar" # doesn't work
+#chars = "\u0000" # ascii null byte (0x00) - doesn't work
+chars = "\u001b[1;5P" # custom - no physical key (see zshrc)
+
 # bind alt-v: ToggleViMode
 [[keyboard.bindings]]
 action = "ToggleViMode"
