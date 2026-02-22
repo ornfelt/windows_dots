@@ -294,7 +294,7 @@ elseif ($cwd -imatch 'wc_clean_mcnk') {
     # Use parent dir (so run from build/ or any subdir)
     $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF -DLIBWOW_DLL=OFF"
     $alts = @(
-        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF -DLIBWOW_DLL=OFF"
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=ON -DLIBWOW_DLL=ON"
     )
 
     Run-Or-Print $main
