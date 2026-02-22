@@ -288,6 +288,18 @@ elseif ($cwd -imatch 'llama\.cpp') {
         Write-Output "cmake -B build; cmake --build build --config $BuildType -j $([Environment]::ProcessorCount)"
     }
 }
+elseif ($cwd -imatch 'wc_clean_mcnk') {
+    $null = Test-CMakeLists -ParentDir -Context 'wc_clean_mcnk (expecting CMakeLists.txt one level up)'
+
+    # Use parent dir (so run from build/ or any subdir)
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF -DLIBWOW_DLL=OFF"
+    $alts = @(
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF -DLIBWOW_DLL=OFF"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
 else {
     # Default fallback
     #$null = Test-CMakeLists -ParentDir
