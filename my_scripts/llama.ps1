@@ -20,13 +20,21 @@ if (-not $env:code_root_dir -or $env:code_root_dir.Trim() -eq "") {
     exit 1
 }
 
-# Binary directory
-$binaryDir = Join-Path $env:code_root_dir "Code/ml/llama.cpp/build/bin/Release"
+# Resolve binary dir
+$baseBinDir = Join-Path $env:code_root_dir "Code/ml/llama.cpp/build/bin"
+
+$binaryDir = Join-Path $baseBinDir "Release"
 if (-not (Test-Path -LiteralPath $binaryDir -PathType Container)) {
-    #Write-Error "Error: Binary directory not found at $binaryDir"
-    Write-Host "Error: Binary directory not found at $binaryDir" -ForegroundColor Red
+    $binaryDir = Join-Path $baseBinDir "Debug"
+}
+
+if (-not (Test-Path -LiteralPath $binaryDir -PathType Container)) {
+    Write-Host "Error: Binary directory not found at $baseBinDir\Release or $baseBinDir\Debug" -ForegroundColor Red
     exit 1
 }
+
+# Optional: show which one got picked
+Write-Host "Using binary directory: $binaryDir" -ForegroundColor Magenta
 
 # Define potential model paths
 $modelPaths = @(
