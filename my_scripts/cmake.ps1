@@ -12,6 +12,42 @@ param(
 # .\cmake.ps1 r/release  # RUN in Release mode
 # .\cmake.ps1 r foo      # RUN in Release mode and PRINT commands (no execution)
 
+function Show-Help {
+@"
+cmake.ps1 - context-aware cmake helper
+
+Usage:
+  .\cmake.ps1
+      Detect path and RUN the chosen cmake command.
+
+  .\cmake.ps1 onlyprint
+      Detect path and PRINT commands (no execution).
+
+  .\cmake.ps1 r | release
+      Run in Release mode.
+
+  .\cmake.ps1 r foo
+      Release mode + PRINT-ONLY (because a second arg exists).
+
+  .\cmake.ps1 h | help | -h | --help
+      Show this help.
+
+Notes:
+  - BuildType defaults to Debug unless you pass r/release.
+  - The script chooses a cmake command based on your current working directory.
+"@ | Write-Output
+}
+
+# Help check (case-insensitive). Accept in Arg or Arg2.
+$helpTokens = @('h', 'help', '-h', '--help')
+if (
+    (-not [string]::IsNullOrWhiteSpace($Arg)  -and $helpTokens -contains $Arg.ToLowerInvariant()) -or
+    (-not [string]::IsNullOrWhiteSpace($Arg2) -and $helpTokens -contains $Arg2.ToLowerInvariant())
+) {
+    Show-Help
+    exit 0
+}
+
 # Print-only unless argument is "r" or "release" (case-insensitive)
 $OnlyPrint = $null
 $Release = $false
@@ -288,8 +324,13 @@ elseif ($cwd -imatch 'llama\.cpp') {
         Write-Output "cmake -B build; cmake --build build --config $BuildType -j $([Environment]::ProcessorCount)"
     }
 }
-elseif ($cwd -imatch 'wc_clean_mcnk') {
-    $null = Test-CMakeLists -ParentDir -Context 'wc_clean_mcnk (expecting CMakeLists.txt one level up)'
+# wildcard matching (no regex):
+elseif ($cwd -ilike '*wc_clean_mcnk*' -or $cwd -ilike '*wc_clean_m2*') {
+    $proj = if ($cwd -ilike '*wc_clean_mcnk*') { 'wc_clean_mcnk' } else { 'wc_clean_m2' }
+# regex match
+#elseif ($cwd -imatch '(?<proj>wc_clean_mcnk|wc_clean_m2)') {
+#    $proj = $Matches['proj']
+    $null = Test-CMakeLists -ParentDir -Context "$proj (expecting CMakeLists.txt one level up)"
 
     # Use parent dir (so run from build/ or any subdir)
     $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF -DLIBWOW_DLL=OFF"
