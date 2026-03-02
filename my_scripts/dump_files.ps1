@@ -14,13 +14,13 @@ param(
 
 # Example usage:
 # Only required arg (non-recursive, file names only, output to dumped_files.txt in current dir)
-# .\dump_files.ps1 $Env:code_root_dir/Code2/C++/space/cs/BlackholeGfxV2/shaders/gl
+# .\dump_files.ps1 $Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders/gl
 # Specify output file:
-# .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfxV2/shaders/gl" "C:/temp/shader_dump.txt"
+# .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders/gl" "C:/temp/shader_dump.txt"
 # Recursive:
-# .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfxV2/shaders" "C:/temp/shader_dump.txt" $true
+# .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders" "C:/temp/shader_dump.txt" $true
 # Recursive + full paths in headers:
-# .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfxV2/shaders" "C:/temp/shader_dump.txt" $true $true
+# .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders" "C:/temp/shader_dump.txt" $true $true
 
 # Hard-coded toggle: when $true, prints metadata header at top of dump file
 $IncludeMetadataHeader = $false
@@ -105,7 +105,6 @@ foreach ($file in $files) {
 }
 
 # Write output (UTF-8)
-# PowerShell 7+: utf8 = UTF-8 without BOM. In Windows PowerShell, behavior differs slightly but this still works.
 $sb.ToString() | Set-Content -LiteralPath $OutputFile -Encoding utf8
 
 Write-Host "Dumped $($files.Count) file(s) to: $OutputFile"
