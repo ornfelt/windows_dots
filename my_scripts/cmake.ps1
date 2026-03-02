@@ -324,6 +324,18 @@ elseif ($cwd -imatch 'llama\.cpp') {
         Write-Output "cmake -B build; cmake --build build --config $BuildType -j $([Environment]::ProcessorCount)"
     }
 }
+elseif ($cwd -imatch 'wc_simple') {
+    $null = Test-CMakeLists -ParentDir -Context 'wc_simple (expecting CMakeLists.txt one level up)'
+
+    # Use parent dir (so run from build/ or any subdir)
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF"
+    $alts = @(
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=ON"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
 # wildcard matching (no regex):
 elseif ($cwd -ilike '*wc_clean_mcnk*' -or $cwd -ilike '*wc_clean_m2*') {
     $proj = if ($cwd -ilike '*wc_clean_mcnk*') { 'wc_clean_mcnk' } else { 'wc_clean_m2' }
