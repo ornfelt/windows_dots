@@ -127,7 +127,7 @@ function Test-CMakeLists {
     # Not found: inform + force print-only
     if ([string]::IsNullOrWhiteSpace($Context)) { $Context = 'this project' }
 
-    Write-Host "CMakeLists.txt not found at: $cmakePath ($Context)" -ForegroundColor Yellow
+    Write-Host "CMakeLists.txt not found at: $cmakePath - $Context" -ForegroundColor Yellow
     if ($ParentDir) { 
         Write-Host "Maybe try:`n-> mkdir build; cd build`nThen try again!" -ForegroundColor Yellow
     }
