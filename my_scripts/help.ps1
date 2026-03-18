@@ -832,6 +832,11 @@ function Show-Go-Help {
     Write-CodeLine "go test ./...                       # Run tests"
 
     Write-Host ""
+    Write-Host "With output redirected to test.txt:" -ForegroundColor Yellow
+    Write-CodeLine "go build; ./my_wow.exe *> test.txt"
+    Write-CodeLine "go build; ./my_wow.exe *> test.txt; vim .\test.txt"
+
+    Write-Host ""
     Write-Host "Add packages:" -ForegroundColor Yellow
     Write-CodeLine "go get github.com/some/package@latest          # Add latest version"
     Write-CodeLine "go get github.com/some/package@v1.2.3          # Add specific version"
@@ -839,11 +844,6 @@ function Show-Go-Help {
     Write-CodeLine "go get github.com/ebitengine/purego@v0.8.2"
     Write-CodeLine "go get github.com/some/package@none            # Remove a package"
     Write-CodeLine "go mod tidy                                    # Clean up go.mod / go.sum (removes unused deps)"
-
-    Write-Host ""
-    Write-Host "With output redirected to test.txt:" -ForegroundColor Yellow
-    Write-CodeLine "go build; ./my_wow.exe *> test.txt"
-    Write-CodeLine "go build; ./my_wow.exe *> test.txt; vim .\test.txt"
 }
 
 function Show-JS-Help {
