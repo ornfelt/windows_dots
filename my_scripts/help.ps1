@@ -31,6 +31,7 @@ $languageMap = @{
     'ggrep'      = 'gitgrep'
     'ripgrep'    = 'ripgrep'
     'rgrep'      = 'ripgrep'
+    'env'        = 'env'
     'ps'         = 'other'
     'x'          = 'other'
     'other'      = 'other'
@@ -99,6 +100,7 @@ function Show-Args {
         'grep'
         'gitgrep / ggrep'
         'ripgrep / rgrep'
+        'env'
         'ps / x / other'
         'scripts / script'
         'paths / path / p'
@@ -456,6 +458,60 @@ function Show-Scripts-Help {
     Write-CommandWithDescription ".wow_wtf_fix"    "copy WoW WTF files from wow_addons repo to local WoW dir" 'Cyan'
 }
 
+function Show-Env-Help {
+    Write-Host "Useful environment variables:" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "  System / machine:" -ForegroundColor DarkGray
+    Write-CommandWithDescription '$env:COMPUTERNAME'        "machine hostname"                  'Green'
+    Write-CommandWithDescription '$env:OS'                  "OS name (e.g. Windows_NT)"         'Green'
+    Write-CommandWithDescription '$env:PROCESSOR_ARCHITECTURE' "CPU arch (e.g. AMD64)"          'Green'
+    Write-CommandWithDescription '$env:NUMBER_OF_PROCESSORS' "CPU thread count (like nproc)"    'Green'
+    Write-CommandWithDescription '$env:PROCESSOR_IDENTIFIER' "CPU model string"                 'Green'
+
+    Write-Host ""
+    Write-Host "  User / profile:" -ForegroundColor DarkGray
+    Write-CommandWithDescription '$env:USERNAME'            "current user name"                  'Green'
+    Write-CommandWithDescription '$env:USERPROFILE'         "user home dir  (C:\Users\name)"     'Green'
+    Write-CommandWithDescription '$env:APPDATA'             "roaming AppData"                    'Green'
+    Write-CommandWithDescription '$env:LOCALAPPDATA'        "local AppData"                      'Green'
+    Write-CommandWithDescription '$env:TEMP'                "temp dir"                           'Green'
+    Write-CommandWithDescription '$env:TMP'                 "temp dir (legacy alias)"            'Green'
+    Write-CommandWithDescription '$env:HOMEPATH'            "user home path (no drive letter)"   'Green'
+    Write-CommandWithDescription '$env:HOMEDRIVE'           "drive of home path (e.g. C:)"       'Green'
+    Write-CommandWithDescription '$env:USERDOMAIN'          "domain the user belongs to"         'Green'
+
+    Write-Host ""
+    Write-Host "  System dirs:" -ForegroundColor DarkGray
+    Write-CommandWithDescription '$env:SystemRoot'          "Windows root  (C:\Windows)"         'Green'
+    Write-CommandWithDescription '$env:SystemDrive'         "system drive   (C:)"                'Green'
+    Write-CommandWithDescription '$env:ProgramFiles'        "64-bit Program Files"               'Green'
+    Write-CommandWithDescription '$env:ProgramFiles(x86)'   "32-bit Program Files"               'Green'
+    Write-CommandWithDescription '$env:ProgramData'         "shared app data (no user)"          'Green'
+    Write-CommandWithDescription '$env:PUBLIC'              "public user folder"                 'Green'
+    Write-CommandWithDescription '$env:CommonProgramFiles'  "shared program components"          'Green'
+    Write-CommandWithDescription '$env:windir'              "Windows dir alias (= SystemRoot)"   'Green'
+
+    Write-Host ""
+    Write-Host "  Shell / process:" -ForegroundColor DarkGray
+    Write-CommandWithDescription '$env:PATH'                "executable search paths"            'Green'
+    Write-CommandWithDescription '$env:PATHEXT'             "executable file extensions"         'Green'
+    Write-CommandWithDescription '$env:PSModulePath'        "PowerShell module search paths"     'Green'
+    Write-CommandWithDescription '$env:ComSpec'             "cmd.exe path"                       'Green'
+    Write-CommandWithDescription '$env:TERM'                "terminal type (if set)"             'Green'
+
+    Write-Host ""
+    Write-Host "  Print a variable value:" -ForegroundColor DarkGray
+    Write-CodeLine '$env:USERNAME'
+    Write-CodeLine 'echo $env:COMPUTERNAME'
+    Write-CodeLine '[Environment]::GetEnvironmentVariable("PATH", "Machine")   # machine-level'
+    Write-CodeLine '[Environment]::GetEnvironmentVariable("PATH", "User")      # user-level'
+    Write-Host ""
+    Write-Host "  List all env vars:" -ForegroundColor DarkGray
+    Write-CodeLine 'Get-ChildItem Env:                                            # all vars'
+    Write-CodeLine 'Get-ChildItem Env: | Sort-Object Name                         # sorted'
+    Write-CodeLine 'Get-ChildItem Env: | Where-Object { $_.Name -like "*path*" }  # filtered'
+}
+
 # Other commands
 function Show-Other-Help {
     Write-Host "Other useful commands:" -ForegroundColor Yellow
@@ -615,6 +671,15 @@ function Show-CSharp-Help {
     Write-CodeLine "dotnet run -f net7.0"
     Write-CodeLine "dotnet run *> test.txt                  # Run and capture output to test.txt"
     Write-CodeLine "dotnet test                             # Run tests (from solution dir)"
+
+    Write-Host ""
+    Write-Host "Add NuGet packages:" -ForegroundColor Yellow
+    Write-CodeLine "dotnet add package Newtonsoft.Json                   # Add latest"
+    Write-CodeLine "dotnet add package Newtonsoft.Json --version 13.0.3  # Add specific version"
+    Write-CodeLine "dotnet add package Dapper                            # Example: Dapper (latest)"
+    Write-CodeLine "dotnet add package Serilog --version 3.1.1           # Example: Serilog (pinned)"
+    Write-CodeLine "dotnet list package                                  # List installed packages"
+    Write-CodeLine "dotnet remove package Newtonsoft.Json                # Remove a package"
 }
 
 function Show-CPP-Help {
@@ -670,6 +735,15 @@ function Show-Rust-Help {
     Write-CodeLine "cargo run -- --use-dt=false         # OFF"
 
     Write-Host ""
+    Write-Host "Add packages (crates):" -ForegroundColor Yellow
+    Write-CodeLine "cargo add serde                                 # Add latest"
+    Write-CodeLine "cargo add serde@1.0.197                         # Add specific version"
+    Write-CodeLine "cargo add serde --features derive               # Add with features"
+    Write-CodeLine "cargo add tokio --features full                 # Example: tokio (latest, all features)"
+    Write-CodeLine "cargo add anyhow@1.0.86                         # Example: anyhow (pinned)"
+    Write-CodeLine "cargo remove serde                              # Remove a crate"
+
+    Write-Host ""
     Write-CodeLine '$env:RUSTFLAGS="-Awarnings"         # Allow/suppress all Rust compiler warnings'
 }
 
@@ -690,6 +764,24 @@ function Show-Java-Help {
     Write-Host ""
     Write-CodeLine "javac -d out src\Main.java          # Compile into 'out' directory"
     Write-CodeLine "java -cp out Main                   # Run with explicit classpath"
+
+    Write-Host ""
+    Write-Host "Add packages (Maven):" -ForegroundColor Yellow
+    Write-CodeLine "mvn dependency:get -Dartifact=com.google.gson:gson:LATEST  # Fetch latest"
+    Write-CodeLine "mvn dependency:get -Dartifact=com.google.gson:gson:2.10.1  # Fetch specific version"
+    Write-Host "  Or add directly to pom.xml <dependencies>:" -ForegroundColor DarkGray
+    Write-CodeLine "  <dependency>"
+    Write-CodeLine "    <groupId>com.google.gson</groupId>"
+    Write-CodeLine "    <artifactId>gson</artifactId>"
+    Write-CodeLine "    <version>2.10.1</version>"
+    Write-CodeLine "  </dependency>"
+    Write-Host ""
+    Write-Host "Add packages (Gradle):" -ForegroundColor Yellow
+    Write-Host "  Add to build.gradle dependencies {}:" -ForegroundColor DarkGray
+    Write-CodeLine "  implementation 'com.google.gson:gson:+'        # Latest"
+    Write-CodeLine "  implementation 'com.google.gson:gson:2.10.1'   # Specific version"
+    Write-CodeLine "mvn install                                      # Resolve + build (Maven)"
+    Write-CodeLine "gradle build                                     # Resolve + build (Gradle)"
 }
 
 function Show-Python-Help {
@@ -710,6 +802,16 @@ function Show-Python-Help {
     Write-Host ""
     Write-CodeLine "python -m pip install -r requirements.txt  # Install dependencies"
     Write-CodeLine "python .\main.py *> test.txt        # Run and capture output to test.txt"
+
+    Write-Host ""
+    Write-Host "Add packages:" -ForegroundColor Yellow
+    Write-CodeLine "pip install requests                            # Add latest"
+    Write-CodeLine "pip install requests==2.31.0                    # Add specific version"
+    Write-CodeLine "pip install 'requests>=2.28,<3.0'               # Add with version range"
+    Write-CodeLine "pip install flask numpy pandas                  # Install multiple at once"
+    Write-CodeLine "pip install --upgrade requests                  # Upgrade a package"
+    Write-CodeLine "pip uninstall requests                          # Remove a package"
+    Write-CodeLine "pip freeze > requirements.txt                   # Save installed packages"
 }
 
 function Show-Go-Help {
@@ -728,6 +830,15 @@ function Show-Go-Help {
     Write-CodeLine "go run main.go                      # Run directly"
     Write-CodeLine "go build ./...                      # Build all packages"
     Write-CodeLine "go test ./...                       # Run tests"
+
+    Write-Host ""
+    Write-Host "Add packages:" -ForegroundColor Yellow
+    Write-CodeLine "go get github.com/some/package@latest          # Add latest version"
+    Write-CodeLine "go get github.com/some/package@v1.2.3          # Add specific version"
+    Write-CodeLine "go get github.com/ebitengine/purego@latest"
+    Write-CodeLine "go get github.com/ebitengine/purego@v0.8.2"
+    Write-CodeLine "go get github.com/some/package@none            # Remove a package"
+    Write-CodeLine "go mod tidy                                    # Clean up go.mod / go.sum (removes unused deps)"
 
     Write-Host ""
     Write-Host "With output redirected to test.txt:" -ForegroundColor Yellow
@@ -756,6 +867,17 @@ function Show-JS-Help {
     Write-Host "Then:" -ForegroundColor Yellow
     Write-CodeLine "npm run start"
     Write-CodeLine "npm start"
+
+    Write-Host ""
+    Write-Host "Add packages:" -ForegroundColor Yellow
+    Write-CodeLine "npm install some-package                       # Add latest"
+    Write-CodeLine "npm install some-package@1.2.3                 # Add specific version"
+    Write-CodeLine "npm install --save-dev some-package            # Add as dev dependency"
+    Write-CodeLine "npm install --save-dev some-package@1.2.3      # Dev dep, specific version"
+    Write-CodeLine "npm install axios                              # Example: axios (latest)"
+    Write-CodeLine "npm install axios@1.6.0                        # Example: axios (pinned)"
+    Write-CodeLine "npm uninstall some-package                     # Remove a package"
+    Write-CodeLine "npm uninstall --save-dev some-package          # Remove a dev dependency"
 }
 
 function Show-TS-Help {
@@ -780,6 +902,17 @@ function Show-TS-Help {
     Write-CodeLine "npm start      # runs node dist/main.js"
     Write-CodeLine "# Dev mode (no separate build step):"
     Write-CodeLine "npm run dev"
+
+    Write-Host ""
+    Write-Host "Add packages:" -ForegroundColor Yellow
+    Write-CodeLine "npm install some-package                         # Add latest"
+    Write-CodeLine "npm install some-package@1.2.3                   # Add specific version"
+    Write-CodeLine "npm install --save-dev @types/some-package       # Add type definitions"
+    Write-CodeLine "npm install --save-dev @types/some-package@1.2.3 # Pinned type definitions"
+    Write-CodeLine "npm install axios                                # Example: axios (latest)"
+    Write-CodeLine "npm install --save-dev @types/node@20.0.0        # Example: pinned @types/node"
+    Write-CodeLine "npm uninstall some-package                       # Remove a package"
+    Write-CodeLine "npm uninstall --save-dev @types/some-package     # Remove type definitions"
 }
 
 # Main argument handling
@@ -817,6 +950,7 @@ switch ($normalizedLanguage) {
     'gitgrep'    { Show-GitGrep-Help }
     'ripgrep'    { Show-RipGrep-Help }
     'scripts'    { Show-Scripts-Help }
+    'env'        { Show-Env-Help }
     'other'      { Show-Other-Help }
     'paths'      { Show-Paths-Help }
 
