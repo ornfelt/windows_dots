@@ -860,7 +860,6 @@ function Show-JS-Help {
     Write-Host ""
     Write-Host "Do this:" -ForegroundColor Yellow
     Write-CodeLine "node main.js"
-    Write-Host ""
     Write-Host "Or:" -ForegroundColor Yellow
     Write-CodeLine "npm init -y"
     Write-CodeLine '  # fix package.json (add "start" script, etc.)' -CommandColor DarkGray
