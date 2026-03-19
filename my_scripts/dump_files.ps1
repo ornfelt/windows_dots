@@ -22,6 +22,25 @@ param(
 # Recursive + full paths in headers:
 # .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders" "C:/temp/shader_dump.txt" $true $true
 
+# Help/usage if first arg looks like help
+if ($InputDir -match '^(?i:help)$' -or $InputDir -in '-', '-h', '--help') {
+    Write-Host "Usage: .\dump_files.ps1 <InputDir> [OutputFile] [Recursive] [UseFullPaths]"
+    Write-Host ""
+    Write-Host "Example usage:"
+    Write-Host "  Only required arg (non-recursive, file names only, output to dumped_files.txt in current dir)"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders/gl`""
+    Write-Host ""
+    Write-Host "  Specify output file:"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders/gl`" `"C:/temp/shader_dump.txt`""
+    Write-Host ""
+    Write-Host "  Recursive:"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders`" `"C:/temp/shader_dump.txt`" `$true"
+    Write-Host ""
+    Write-Host "  Recursive + full paths in headers:"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders`" `"C:/temp/shader_dump.txt`" `$true `$true"
+    exit 0
+}
+
 # Hard-coded toggle: when $true, prints metadata header at top of dump file
 $IncludeMetadataHeader = $false
 
