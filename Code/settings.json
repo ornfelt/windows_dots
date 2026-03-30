@@ -1,5 +1,5 @@
 {
-    "workbench.colorTheme": "Default Dark Modern",
+    "workbench.colorTheme": "Dark Modern",
     "vim.vimrc.enable": true,
     "editor.lineNumbers": "on",
     "vim.useSystemClipboard": true,
