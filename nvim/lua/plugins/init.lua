@@ -28,7 +28,7 @@ return {
   require("plugins.treesj"),
 
   -- Nice to have
-  require("plugins.nvim-colorizer"),
+  --require("plugins.nvim-colorizer"),
   require("plugins.gitgraph"),
   require("plugins.trouble"),
   require("plugins.actions-preview"),
