@@ -108,6 +108,20 @@ if myconfig.is_plugin_installed('chatgpt') then
   require("chatgpt").setup({
     openai_api_key = os.getenv("OPENAI_API_KEY"),
   })
+
+  -- Monkey patch fix: Guard vim.fn.bufwinid against nil.
+  -- The error originates deep in nui's _open_window where it calls
+  -- vim.fn.bufwinid(component.bufnr) with a nil bufnr. Since vim.fn is a Lua table,
+  -- we can shadow bufwinid with this guarded version:
+  local _orig_bufwinid = vim.fn.bufwinid
+  ---@diagnostic disable-next-line: duplicate-set-field
+  vim.fn.bufwinid = function(bufnr)
+    if type(bufnr) ~= "number" and type(bufnr) ~= "string" then
+      vim.notify("[nui] bufwinid got nil bufnr, returning -1", vim.log.levels.DEBUG)
+      return -1
+    end
+    return _orig_bufwinid(bufnr)
+  end
 end
 
 if myconfig.is_plugin_installed('gp') then
