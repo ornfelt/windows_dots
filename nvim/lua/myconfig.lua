@@ -372,6 +372,47 @@ vim.api.nvim_create_user_command('ToggleUseCustomStatusline', ToggleUseCustomSta
 -- cmd ToggleUseCustomLspForSql: ToggleUseCustomLspForSql
 vim.api.nvim_create_user_command('ToggleUseCustomLspForSql', ToggleUseCustomLspForSql, {})
 
+-- Dynamic ai keybind mode
+function M.get_ai_mode()
+  local mode = read_config("AiMode", "gp"):lower()
+  if mode ~= "chatgpt" and mode ~= "gp" then return "gp" end
+  return mode
+end
+
+local function CycleAiMode()
+  if not file_exists(config_file_path) then return end
+
+  local modes = { "chatgpt", "gp" }
+  local current = read_config("AiMode", "gp"):lower()
+  local current_index = nil
+  for i, m in ipairs(modes) do
+    if m == current then current_index = i; break end
+  end
+  local next_index = (current_index or 0) % #modes + 1
+  local new_mode = modes[next_index]
+
+  local lines = {}
+  local updated = false
+  for line in io.lines(config_file_path) do
+    if line:match("^AiMode:") then
+      table.insert(lines, "AiMode: " .. new_mode)
+      updated = true
+    else
+      table.insert(lines, line)
+    end
+  end
+  if not updated then table.insert(lines, "AiMode: " .. new_mode) end
+
+  local file = io.open(config_file_path, "w")
+  for _, line in ipairs(lines) do file:write(line .. "\n") end
+  file:close()
+
+  print("AiMode switched to: " .. new_mode)
+end
+
+-- cmd CycleAiMode: CycleAiMode
+vim.api.nvim_create_user_command('CycleAiMode', CycleAiMode, {})
+
 -- Dynamic filepicker selection
 local FilePicker = {
   FZF = "fzf",
