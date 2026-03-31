@@ -88,13 +88,29 @@ function M.get_conf_dir()
   end
 end
 
--- Customized config (for fun)
-local config_file_path = my_notes_path .. "scripts/files/nvim_config.txt"
-
 local function file_exists(path)
   local f = io.open(path, "r")
   if f then f:close(); return true end
   return false
+end
+
+-- Customized config (for fun)
+--local config_file_path = my_notes_path .. "scripts/files/nvim_config.txt"
+-- Use config from localappdata but sync from notes path:
+-- see:
+-- lua print(vim.fn.stdpath("data"))
+local nvim_data_dir = M.normalize_path(vim.fn.stdpath("data"))
+local config_file_path = nvim_data_dir .. "/nvim_config.txt"
+-- If not present in the nvim data dir, try to copy it from my_notes_path
+local source_config = my_notes_path .. "scripts/files/nvim_config.txt"
+if not file_exists(config_file_path) and file_exists(source_config) then
+  local src = io.open(source_config, "rb")
+  local dst = io.open(config_file_path, "wb")
+  if src and dst then
+    dst:write(src:read("*a"))
+    src:close()
+    dst:close()
+  end
 end
 
 local function print_config_contents()
