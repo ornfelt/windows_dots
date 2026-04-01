@@ -173,15 +173,15 @@ elseif ($wowCppMatch) {
     # print vcpkg alternative
     $vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
     $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
-    Write-Host "alternative cmake with vcpkg (uses real GLM):" -ForegroundColor DarkCyan
+    Write-Host "alternative cmake with vcpkg (uses real GLM):" -ForegroundColor DarkBlue
     if (Test-Path $vcpkgPrimary) {
-        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=OFF -DCMAKE_BUILD_TYPE=$BuildType" -ForegroundColor DarkCyan
+        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=OFF -DCMAKE_BUILD_TYPE=$BuildType" -ForegroundColor DarkBlue
     }
     elseif (Test-Path $vcpkgSecondary) {
-        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=OFF -DCMAKE_BUILD_TYPE=$BuildType" -ForegroundColor DarkCyan
+        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=OFF -DCMAKE_BUILD_TYPE=$BuildType" -ForegroundColor DarkBlue
     }
     else {
-        Write-Host "(no vcpkg toolchain found at expected paths)" -ForegroundColor DarkCyan
+        Write-Host "(no vcpkg toolchain found at expected paths)" -ForegroundColor DarkBlue
     }
 
     # Default: no vcpkg, custom GLM
