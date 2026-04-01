@@ -169,32 +169,31 @@ elseif ($tcMatch) {
 }
 elseif ($wowCppMatch) {
     $null = Test-CMakeLists -Context 'my_web_wow c++ (expecting CMakeLists.txt in current directory)'
-    # Windows / vcpkg toolchain case
-    $vcpkgPrimary   = 'C:/Users/jonas/Code2/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake'
+
+    # print vcpkg alternative
+    $vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
     $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
-
-    # -DENABLE_CUSTOM_OPT_FLAGS=ON
-
+    Write-Host "alternative cmake with vcpkg (uses real GLM):" -ForegroundColor DarkCyan
     if (Test-Path $vcpkgPrimary) {
-        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DCMAKE_BUILD_TYPE=$BuildType"
+        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=OFF -DCMAKE_BUILD_TYPE=$BuildType" -ForegroundColor DarkCyan
     }
     elseif (Test-Path $vcpkgSecondary) {
-        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DCMAKE_BUILD_TYPE=$BuildType"
+        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=OFF -DCMAKE_BUILD_TYPE=$BuildType" -ForegroundColor DarkCyan
     }
     else {
-        $main = "cmake -B build -S . -DCMAKE_BUILD_TYPE=$BuildType"
+        Write-Host "(no vcpkg toolchain found at expected paths)" -ForegroundColor DarkCyan
     }
 
+    # Default: no vcpkg, custom GLM
+    $main = "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DCMAKE_BUILD_TYPE=$BuildType"
     Run-Or-Print $main
 
     if ($OnlyPrint) {
         Write-Output ""
-        Write-Output "alternative cmake command without vcpkg:"
-        Write-Output 'cmake -B build -S . -DCMAKE_BUILD_TYPE=Release'
         Write-Output "without compiler optimization flags:"
-        Write-Output 'cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=OFF'
+        Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=OFF -DCMAKE_BUILD_TYPE=$BuildType"
         Write-Output "without custom glm (use real installed glm):"
-        Write-Output 'cmake -B build -S . -DUSE_CUSTOM_GLM=OFF'
+        Write-Output "cmake -B build -S . -DUSE_CUSTOM_GLM=OFF -DCMAKE_BUILD_TYPE=$BuildType"
     }
 }
 elseif ($cwd -imatch 'openjk') {
