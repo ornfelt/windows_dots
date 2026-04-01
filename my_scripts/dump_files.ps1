@@ -9,7 +9,10 @@ param(
     [bool]$Recursive = $false,
 
     [Parameter(Mandatory = $false, Position = 3)]
-    [bool]$UseFullPaths = $false
+    [bool]$UseFullPaths = $false,
+
+    [Parameter(Mandatory = $false, Position = 4)]
+    [string[]]$Extensions = @()
 )
 
 # Example usage:
@@ -21,10 +24,16 @@ param(
 # .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders" "C:/temp/shader_dump.txt" $true
 # Recursive + full paths in headers:
 # .\dump_files.ps1 "$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders" "C:/temp/shader_dump.txt" $true $true
+# Filter by extension:
+# .\dump_files.ps1 "$Env:code_root_dir/Code2/Wow/tools/my_wow/c++/my_web_wow/src" "C:/temp/dump.txt" $true $false @(".cpp", ".h")
+# Use cwd and only .cs files:
+# .\dump_files.ps1 . -Extensions ".cs"
+# cpp example:
+# .\dump_files.ps1 "$Env:code_root_dir/Code2/Wow/tools/my_wow/c++/my_web_wow/src" -Extensions @(".cpp", ".c", ".h", ".hpp")
 
 # Help/usage if first arg looks like help
 if ($InputDir -match '^(?i:help)$' -or $InputDir -in '-', '-h', '--help') {
-    Write-Host "Usage: .\dump_files.ps1 <InputDir> [OutputFile] [Recursive] [UseFullPaths]"
+    Write-Host "Usage: .\dump_files.ps1 <InputDir> [OutputFile] [Recursive] [UseFullPaths] [Extensions]"
     Write-Host ""
     Write-Host "Example usage:"
     Write-Host "  Only required arg (non-recursive, file names only, output to dumped_files.txt in current dir)"
@@ -38,6 +47,9 @@ if ($InputDir -match '^(?i:help)$' -or $InputDir -in '-', '-h', '--help') {
     Write-Host ""
     Write-Host "  Recursive + full paths in headers:"
     Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/space/cs/BlackholeGfx/shaders`" `"C:/temp/shader_dump.txt`" `$true `$true"
+    Write-Host ""
+    Write-Host "  Filter by extension:"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/myproject`" `"C:/temp/dump.txt`" `$true `$false @(`".cpp`", `".h`")"
     exit 0
 }
 
@@ -69,6 +81,12 @@ if ($Recursive) {
 }
 else {
     $files = Get-ChildItem -LiteralPath $resolvedInputDir -File | Sort-Object Name
+}
+
+# Filter by extension if specified (normalise to lowercase with leading dot)
+if ($Extensions.Count -gt 0) {
+    $normalizedExts = $Extensions | ForEach-Object { if ($_ -notmatch '^\.' ) { ".$_" } else { $_ } } | ForEach-Object { $_.ToLower() }
+    $files = $files | Where-Object { $normalizedExts -contains $_.Extension.ToLower() }
 }
 
 # Build output
