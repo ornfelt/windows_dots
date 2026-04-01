@@ -50,6 +50,21 @@ if ($InputDir -match '^(?i:help)$' -or $InputDir -in '-', '-h', '--help') {
     Write-Host ""
     Write-Host "  Filter by extension:"
     Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/myproject`" `"C:/temp/dump.txt`" `$true `$false @(`".cpp`", `".h`")"
+    Write-Host ""
+    Write-Host "  Use cwd and only .cs files:"
+    Write-Host "    .\dump_files.ps1 . -Extensions `".cs`""
+    Write-Host ""
+    Write-Host "  C++ files (named params):"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/Wow/tools/my_wow/c++/my_web_wow/src`" -Extensions @(`".cpp`", `".c`", `".h`", `".hpp`")"
+    Write-Host ""
+    Write-Host "  Recursive + named params:"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/myproject`" -OutputFile `"C:/temp/dump.txt`" -Recursive `$true"
+    Write-Host ""
+    Write-Host "  Recursive + extension filter (named params):"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/myproject`" -OutputFile `"C:/temp/dump.txt`" -Recursive `$true -Extensions @(`".cpp`", `".h`")"
+    Write-Host ""
+    Write-Host "  Recursive + full paths + extension filter (named params):"
+    Write-Host "    .\dump_files.ps1 `"`$Env:code_root_dir/Code2/C++/myproject`" -OutputFile `"C:/temp/dump.txt`" -Recursive `$true -UseFullPaths `$true -Extensions @(`".cpp`", `".h`")"
     exit 0
 }
 
