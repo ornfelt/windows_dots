@@ -176,10 +176,10 @@ elseif ($wowCppMatch) {
     # -DENABLE_CUSTOM_OPT_FLAGS=ON
 
     if (Test-Path $vcpkgPrimary) {
-        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DCMAKE_BUILD_TYPE=$BuildType"
+        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DCMAKE_BUILD_TYPE=$BuildType"
     }
     elseif (Test-Path $vcpkgSecondary) {
-        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DCMAKE_BUILD_TYPE=$BuildType"
+        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DCMAKE_BUILD_TYPE=$BuildType"
     }
     else {
         $main = "cmake -B build -S . -DCMAKE_BUILD_TYPE=$BuildType"
@@ -193,6 +193,8 @@ elseif ($wowCppMatch) {
         Write-Output 'cmake -B build -S . -DCMAKE_BUILD_TYPE=Release'
         Write-Output "without compiler optimization flags:"
         Write-Output 'cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=OFF'
+        Write-Output "without custom glm (use real installed glm):"
+        Write-Output 'cmake -B build -S . -DUSE_CUSTOM_GLM=OFF'
     }
 }
 elseif ($cwd -imatch 'openjk') {
