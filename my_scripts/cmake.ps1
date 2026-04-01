@@ -173,11 +173,13 @@ elseif ($wowCppMatch) {
     $vcpkgPrimary   = 'C:/Users/jonas/Code2/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake'
     $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
 
+    # -DENABLE_CUSTOM_OPT_FLAGS=ON
+
     if (Test-Path $vcpkgPrimary) {
-        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DCMAKE_BUILD_TYPE=$BuildType"
+        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DCMAKE_BUILD_TYPE=$BuildType"
     }
     elseif (Test-Path $vcpkgSecondary) {
-        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DCMAKE_BUILD_TYPE=$BuildType"
+        $main = "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DCMAKE_BUILD_TYPE=$BuildType"
     }
     else {
         $main = "cmake -B build -S . -DCMAKE_BUILD_TYPE=$BuildType"
@@ -189,6 +191,8 @@ elseif ($wowCppMatch) {
         Write-Output ""
         Write-Output "alternative cmake command without vcpkg:"
         Write-Output 'cmake -B build -S . -DCMAKE_BUILD_TYPE=Release'
+        Write-Output "without compiler optimization flags:"
+        Write-Output 'cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=OFF'
     }
 }
 elseif ($cwd -imatch 'openjk') {
