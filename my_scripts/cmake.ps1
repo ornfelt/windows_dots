@@ -200,6 +200,10 @@ elseif ($wowCppMatch) {
         Write-Output ""
         Write-Output "without custom glm (use real installed glm):"
         Write-Output "cmake -B build -S . -DUSE_CUSTOM_GLM=OFF -DCMAKE_BUILD_TYPE=$BuildType"
+
+        Write-Output ""
+        Write-Output "with debug timing and custom threadpool:"
+        Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=ON -DUSE_CUSTOM_THREADPOOL=ON -DCMAKE_BUILD_TYPE=$BuildType"
     }
 }
 elseif ($cwd -imatch 'openjk') {
@@ -356,9 +360,22 @@ elseif ($cwd -ilike '*wc_clean_mcnk*' -or $cwd -ilike '*wc_clean_m2*') {
     $null = Test-CMakeLists -ParentDir -Context "$proj (expecting CMakeLists.txt one level up)"
 
     # Use parent dir (so run from build/ or any subdir)
-    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF -DLIBWOW_DLL=OFF"
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF -DLIBWOW_DLL=OFF -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=OFF -DENABLE_MEMORY=OFF"
     $alts = @(
-        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=ON -DLIBWOW_DLL=ON"
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=ON -DLIBWOW_DLL=ON -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=OFF -DENABLE_MEMORY=OFF",
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=ON -DLIBWOW_DLL=ON -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=ON -DENABLE_MEMORY=ON"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+elseif ($cwd -ilike '*wc_clean_new*') {
+    $null = Test-CMakeLists -ParentDir -Context "wc_clean_new (expecting CMakeLists.txt one level up)"
+
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=OFF -DENABLE_MEMORY=OFF -DENABLE_WANDER=ON"
+    $alts = @(
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=ON -DENABLE_MEMORY=OFF -DENABLE_WANDER=ON",
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=ON -DENABLE_MEMORY=ON -DENABLE_WANDER=OFF"
     )
 
     Run-Or-Print $main
