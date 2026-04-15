@@ -185,7 +185,7 @@ elseif ($wowCppMatch) {
     }
 
     # Default: no vcpkg, custom GLM
-    $main = "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DUSE_ASYNC=ON -DCMAKE_BUILD_TYPE=$BuildType"
+    $main = "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DUSE_ASYNC=ON -DENABLE_WANDER=ON -DCMAKE_BUILD_TYPE=$BuildType"
     Run-Or-Print $main
 
     if ($OnlyPrint) {
@@ -196,6 +196,10 @@ elseif ($wowCppMatch) {
         Write-Output ""
         Write-Output "without async:"
         Write-Output "cmake -B build -S . -DUSE_ASYNC=OFF -DCMAKE_BUILD_TYPE=$BuildType"
+
+        Write-Output ""
+        Write-Output "without wandering/navigation:"
+        Write-Output "cmake -B build -S . -DENABLE_WANDER=OFF -DCMAKE_BUILD_TYPE=$BuildType"
 
         Write-Output ""
         Write-Output "without custom glm (use real installed glm):"
