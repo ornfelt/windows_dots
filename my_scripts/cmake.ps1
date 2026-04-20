@@ -81,6 +81,7 @@ if (-not [string]::IsNullOrWhiteSpace($Arg)) {
 
     Write-Host "If needed, run:" -ForegroundColor Blue
     Write-Host 'make -j$([Environment]::ProcessorCount)' -ForegroundColor Blue
+    Write-Output ""
 }
 
 # build type helper
@@ -103,7 +104,7 @@ $cwd = (Get-Location).Path
 function Run-Or-Print {
     param([string]$Cmd)
     if ($OnlyPrint) {
-        Write-Output $Cmd
+        Write-Host $Cmd -ForegroundColor Cyan
     } else {
         Write-Host "Executing: $Cmd" -ForegroundColor Cyan
         Invoke-Expression $Cmd
@@ -184,56 +185,48 @@ elseif ($tcMatch) {
 elseif ($wowCppMatch) {
     $null = Test-CMakeLists -Context 'my_web_wow c++ (expecting CMakeLists.txt in current directory)'
 
+    # Base flags shared by all configurations
+    $base = "-DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=OFF -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
+
     # print vcpkg alternative
     $vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
     $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
+    Write-Output ""
     Write-Host "alternative cmake with vcpkg (uses real GLM):" -ForegroundColor DarkBlue
     if (Test-Path $vcpkgPrimary) {
-        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType" -ForegroundColor DarkBlue
+        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON $base" -ForegroundColor DarkBlue
     }
     elseif (Test-Path $vcpkgSecondary) {
-        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType" -ForegroundColor DarkBlue
+        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON $base" -ForegroundColor DarkBlue
     }
     else {
         Write-Host "(no vcpkg toolchain found at expected paths)" -ForegroundColor DarkBlue
     }
+    Write-Output ""
 
     # Default: no vcpkg, custom GLM
-    $main = "cmake -B build -S . -DUSE_VCPKG=OFF -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
+    $main = "cmake -B build -S . -DUSE_VCPKG=OFF $base"
     Run-Or-Print $main
 
     if ($OnlyPrint) {
-        Write-Output ""
-            Write-Output "without compiler optimization flags:"
-            Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=OFF -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
+        $variants = [ordered]@{
+            "without compiler optimization flags" = $base -replace 'ENABLE_CUSTOM_OPT_FLAGS=ON',  'ENABLE_CUSTOM_OPT_FLAGS=OFF'
+            "without async"                       = $base -replace 'USE_ASYNC=ON',                'USE_ASYNC=OFF'
+            "without wandering/navigation"        = $base -replace 'ENABLE_WANDER=ON',            'ENABLE_WANDER=OFF'
+            "without custom glm"                  = $base -replace 'USE_CUSTOM_GLM=ON',           'USE_CUSTOM_GLM=OFF'
+            "with sdl2"                           = $base -replace 'USE_SDL2=OFF',                'USE_SDL2=ON'
+            "without imgui"                       = $base -replace 'USE_IMGUI=ON',                'USE_IMGUI=OFF'
+            "with performance profiling"          = $base -replace 'WITH_PERFORMANCE=OFF',        'WITH_PERFORMANCE=ON'
+            "with debug timing and custom threadpool" = $base `
+                                                    -replace 'WITH_DEBUG_TIMING=OFF',             'WITH_DEBUG_TIMING=ON' `
+                                                    -replace 'USE_CUSTOM_THREADPOOL=OFF',         'USE_CUSTOM_THREADPOOL=ON'
+        }
 
+        foreach ($label in $variants.Keys) {
             Write-Output ""
-            Write-Output "without async:"
-            Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=OFF -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
-
-            Write-Output ""
-            Write-Output "without wandering/navigation:"
-            Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=OFF -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
-
-            Write-Output ""
-            Write-Output "without custom glm:"
-            Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=OFF -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
-
-            Write-Output ""
-            Write-Output "without sdl2 (use glfw):"
-            Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=OFF -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
-
-            Write-Output ""
-            Write-Output "without imgui:"
-            Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=OFF -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
-
-            Write-Output ""
-            Write-Output "with performance profiling:"
-            Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=ON -DCMAKE_BUILD_TYPE=$BuildType"
-
-            Write-Output ""
-            Write-Output "with debug timing and custom threadpool:"
-            Write-Output "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=ON -DUSE_CUSTOM_THREADPOOL=ON -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=ON -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
+            Write-Output "${label}:"
+            Write-Output "cmake -B build -S . -DUSE_VCPKG=OFF $($variants[$label])"
+        }
     }
 }
 elseif ($cwd -imatch 'openjk') {
