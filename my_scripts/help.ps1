@@ -578,9 +578,21 @@ function Show-Paths-Help {
     Write-Host "Common config paths:" -ForegroundColor Yellow
     Write-Host ""
 
-    # print the literal $env:… strings
+    # print the literal $env:... strings
     Write-Host "nvim config path:" -ForegroundColor DarkGray
     Write-Host '$Env:localappdata/nvim/init.lua' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim data dir (stdpath(""data"")):" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/nvim-data' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "lazy.nvim plugin location:" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/nvim-data/lazy' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim built-in package manager path (0.12+):" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/nvim-data/site/pack' -ForegroundColor Green
     Write-Host ""
 
     Write-Host "wezterm config path:" -ForegroundColor DarkGray

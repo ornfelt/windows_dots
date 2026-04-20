@@ -52,7 +52,7 @@ function Test-PathContainsInOrder {
 
 $matched = $false
 
-# code2 -> my_web_wow -> go
+# code2 -> go -> my_web_wow
 if (Test-PathContainsInOrder @("code2", "go", "my_web_wow")) {
     Write-Header "Go (my_web_wow)"
     Write-Label  "use this:"
@@ -70,16 +70,76 @@ if (Test-PathContainsInOrder @("code2", "go", "my_web_wow")) {
     $matched = $true
 }
 
-# code2 -> my_web_wow -> rust
+# code2 -> go -> tbc
+elseif (Test-PathContainsInOrder @("code2", "go", "tbc")) {
+    Write-Header "Go (tbc)"
+    Write-Label  "use this:"
+    Write-Cmd    "go build"
+    Write-Label  "or:"
+    Write-Cmd    'go build; ./my_wow.exe *> test.txt'
+    Write-Label  "or:"
+    Write-Alt    "go run ."
+    $matched = $true
+}
+
+# code2 -> rust -> my_web_wow
 elseif (Test-PathContainsInOrder @("code2", "rust", "my_web_wow")) {
     Write-Header "Rust (my_web_wow)"
-    Write-Label  "use this:"
     Write-Cmd    "cargo build --features use_async"
-    Write-Host   ""
     Write-Cmd    "cargo build"
-    Write-Alt    "cargo run"
+    Write-Host   ""
+    Write-Cmd    "cargo run"
+    Write-Cmd    "cargo run --features use_async"
+    Write-Cmd    "cargo run --features with_imgui"
+    Write-Cmd    'cargo run --features "with_imgui use_async"'
     Write-Alt    "cargo run --release"
     Write-Extra  'cargo run --release *> test.txt'
+    Write-Host   ""
+    Write-Label  "override expansion (default from server/env):"
+    Write-Cmd    "cargo run --features with_imgui -- --expansion tbc"
+    Write-Host   ""
+    Write-Label  "specific map key (default expansion):"
+    Write-Cmd    "cargo run -- --map orgrimmar"
+    Write-Cmd    "cargo run -- --map ragnaros"
+    Write-Host   ""
+    Write-Label  "both map and expansion:"
+    Write-Cmd    "cargo run -- --map dragonblight --expansion wotlk"
+    Write-Cmd    "cargo run -- --map darkshire --expansion classic"
+    Write-Cmd    "cargo run -- --map ragnaros --expansion classic"
+    $matched = $true
+}
+
+# code2 -> rust -> tbc
+elseif (Test-PathContainsInOrder @("code2", "rust", "tbc")) {
+    Write-Header "Rust (tbc)"
+    Write-Cmd    "cargo build --features use_sound"
+    Write-Cmd    'cargo build --features "use_sound threadsafe"'
+    Write-Label  "or without features:"
+    Write-Cmd    "cargo build"
+    Write-Label  "disable all defaults, enable explicitly:"
+    Write-Cmd    "cargo build --no-default-features --features threadsafe"
+    Write-Host   ""
+    Write-Label  "redirect output:"
+    Write-Extra  'cargo build *> test.txt'
+    Write-Extra  'cargo run *> test.txt'
+    Write-Extra  'cargo run --release *> test.txt'
+    Write-Host   ""
+    Write-Label  "backtrace:"
+    Write-Alt    "RUST_BACKTRACE=1 cargo run"
+    Write-Alt    "RUST_BACKTRACE=full cargo run"
+    Write-Host   ""
+    Write-Label  "dt flag (default ON):"
+    Write-Cmd    "cargo run --"
+    Write-Cmd    "cargo run -- --use-dt"
+    Write-Cmd    "cargo run -- --no-use-dt"
+    Write-Cmd    "cargo run -- --use-dt=false"
+    Write-Host   ""
+    Write-Label  "with map:"
+    Write-Cmd    "cargo run av"
+    Write-Cmd    "cargo run help"
+    Write-Cmd    "cargo run -- --map wsg"
+    Write-Cmd    "cargo run -- nagrandarena --use-dt=false"
+    Write-Cmd    "cargo run -- --map ab --no-use-dt"
     $matched = $true
 }
 
