@@ -11,6 +11,8 @@ param(
 # .\cmake.ps1 onlyprint  # detect path and PRINT commands (no execution)
 # .\cmake.ps1 r/release  # RUN in Release mode
 # .\cmake.ps1 r foo      # RUN in Release mode and PRINT commands (no execution)
+# .\cmake.ps1 rd         # RUN in RelWithDebInfo mode
+# .\cmake.ps1 rwdi foo   # RUN in RelWithDebInfo mode and PRINT commands
 
 function Show-Help {
 @"
@@ -28,6 +30,9 @@ Usage:
 
   .\cmake.ps1 r foo
       Release mode + PRINT-ONLY (because a second arg exists).
+
+  .\cmake.ps1 rd | rwdi | relwithdebinfo
+      Run in RelWithDebInfo mode.
 
   .\cmake.ps1 h | help | -h | --help
       Show this help.
@@ -51,12 +56,20 @@ if (
 # Print-only unless argument is "r" or "release" (case-insensitive)
 $OnlyPrint = $null
 $Release = $false
+$RelWithDebInfo = $false
 
 if (-not [string]::IsNullOrWhiteSpace($Arg)) {
     $arg_lc = $Arg.ToLowerInvariant()
 
     if ($arg_lc -eq 'r' -or $arg_lc -eq 'release') {
         $Release = $true
+        # If there's also another arg, enable print-only too
+        if (-not [string]::IsNullOrWhiteSpace($Arg2)) {
+            $OnlyPrint = 'true'
+        }
+    }
+    elseif ($arg_lc -eq 'rwdi' -or $arg_lc -eq 'rd' -or $arg_lc -eq 'relwithdebinfo') {
+        $RelWithDebInfo = $true
         # If there's also another arg, enable print-only too
         if (-not [string]::IsNullOrWhiteSpace($Arg2)) {
             $OnlyPrint = 'true'
@@ -73,6 +86,7 @@ if (-not [string]::IsNullOrWhiteSpace($Arg)) {
 # build type helper
 $BuildType = 'Debug'
 if ($Release) { $BuildType = 'Release' }
+elseif ($RelWithDebInfo) { $BuildType = 'RelWithDebInfo' }
 
 # Debug print
 if ($OnlyPrint) {
@@ -185,7 +199,7 @@ elseif ($wowCppMatch) {
     }
 
     # Default: no vcpkg, custom GLM
-    $main = "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=OFF -DUSE_ASYNC=ON -DENABLE_WANDER=ON -DCMAKE_BUILD_TYPE=$BuildType"
+    $main = "cmake -B build -S . -DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=OFF -DUSE_IMGUI=ON -DUSE_ASYNC=ON -DENABLE_WANDER=ON -DCMAKE_BUILD_TYPE=$BuildType"
     Run-Or-Print $main
 
     if ($OnlyPrint) {
@@ -208,6 +222,10 @@ elseif ($wowCppMatch) {
         Write-Output ""
         Write-Output "with sdl2:"
         Write-Output "cmake -B build -S . -DUSE_SDL2=ON -DCMAKE_BUILD_TYPE=$BuildType"
+
+        Write-Output ""
+        Write-Output "without imgui:"
+        Write-Output "cmake -B build -S . -DUSE_IMGUI=OFF -DCMAKE_BUILD_TYPE=$BuildType"
 
         Write-Output ""
         Write-Output "with debug timing and custom threadpool:"

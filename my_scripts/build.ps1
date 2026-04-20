@@ -57,9 +57,16 @@ if (Test-PathContainsInOrder @("code2", "go", "my_web_wow")) {
     Write-Header "Go (my_web_wow)"
     Write-Label  "use this:"
     Write-Cmd    "go build -tags async"
-    Write-Host   ""
+    Write-Label  "or:"
+    Write-Cmd    'go build -tags "async cimgui"'
+    Write-Label  "or:"
     Write-Cmd    "go build"
+    Write-Label  "or:"
     Write-Alt    "go run ."
+    Write-Label  "or:"
+    Write-Alt    "./build.ps1"
+    Write-Label  "or:"
+    Write-Cmd    "rm my_web_wow.exe; go build -tags async; ./my_web_wow.exe"
     $matched = $true
 }
 
