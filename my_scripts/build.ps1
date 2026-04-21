@@ -60,6 +60,12 @@ if (Test-PathContainsInOrder @("code2", "go", "my_web_wow")) {
     Write-Label  "or:"
     Write-Cmd    'go build -tags "async cimgui"'
     Write-Label  "or:"
+    Write-Cmd    "go build -tags with_performance"
+    Write-Label  "or:"
+    Write-Cmd    'go build -tags "async with_performance"'
+    Write-Label  "or:"
+    Write-Cmd    'go build -tags "async cimgui with_performance"'
+    Write-Label  "or:"
     Write-Cmd    "go build"
     Write-Label  "or:"
     Write-Alt    "go run ."
@@ -86,12 +92,15 @@ elseif (Test-PathContainsInOrder @("code2", "go", "tbc")) {
 elseif (Test-PathContainsInOrder @("code2", "rust", "my_web_wow")) {
     Write-Header "Rust (my_web_wow)"
     Write-Cmd    "cargo build --features use_async"
+    Write-Cmd    "cargo build --features with_performance"
     Write-Cmd    "cargo build"
     Write-Host   ""
     Write-Cmd    "cargo run"
     Write-Cmd    "cargo run --features use_async"
     Write-Cmd    "cargo run --features with_imgui"
+    Write-Cmd    "cargo run --features with_performance"
     Write-Cmd    'cargo run --features "with_imgui use_async"'
+    Write-Cmd    'cargo run --features "with_imgui use_async with_performance"'
     Write-Alt    "cargo run --release"
     Write-Extra  'cargo run --release *> test.txt'
     Write-Host   ""
