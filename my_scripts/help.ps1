@@ -685,6 +685,13 @@ function Show-CSharp-Help {
     Write-CodeLine "dotnet test                             # Run tests (from solution dir)"
 
     Write-Host ""
+    Write-Host "EF Core tools:" -ForegroundColor Yellow
+    Write-CodeLine "dotnet ef --version                     # Check installed dotnet-ef version"
+    Write-CodeLine "dotnet tool uninstall -g dotnet-ef      # Uninstall global dotnet-ef tool"
+    Write-CodeLine "dotnet tool install -g dotnet-ef --version 8.*   # Install EF tool for .NET 8"
+    Write-CodeLine "dotnet tool install -g dotnet-ef --version 9.*   # Install EF tool for .NET 9"
+
+    Write-Host ""
     Write-Host "Add NuGet packages:" -ForegroundColor Yellow
     Write-CodeLine "dotnet add package Newtonsoft.Json                   # Add latest"
     Write-CodeLine "dotnet add package Newtonsoft.Json --version 13.0.3  # Add specific version"
