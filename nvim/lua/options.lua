@@ -223,7 +223,7 @@ if USE_NVIM_ROOTER then
     once = true,
     callback = function()
       local directory = vim.fs.root(0, '.git') or '.'
-      vim.cmd.cd(directory)
+      vim.cmd.cd(vim.fn.fnameescape(directory))
     end,
   })
 end
