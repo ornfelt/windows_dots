@@ -404,6 +404,17 @@ elseif ($cwd -ilike '*wc_clean_new*') {
     Run-Or-Print $main
     Print-Alternatives $alts
 }
+elseif ($cwd -ilike '*gfx_dll*gfx*') {
+    $null = Test-CMakeLists -ParentDir -Context 'gfx_dll/gfx (expecting CMakeLists.txt one level up)'
+
+    $main = "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType -DGFX_ENABLE_GLFW_WIN32=ON"
+    $alts = @(
+        "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType -DGFX_ENABLE_GLFW_WIN32=OFF"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
 else {
     # Default fallback
     #$null = Test-CMakeLists -ParentDir
