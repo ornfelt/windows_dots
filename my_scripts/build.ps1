@@ -2,6 +2,11 @@
 # see:
 # {my_notes_path}/scripts/build_script_desc.txt
 
+param(
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$FilterArgs
+)
+
 $cwd     = (Get-Location).Path.ToLower()
 $cwdFull = (Get-Location).Path
 
@@ -26,6 +31,22 @@ function Write-SubHeader($text) {
     Write-Host "  --- $text ---" -ForegroundColor White
 }
 
+function Resolve-Filters {
+    param([string[]]$RawArgs)
+    if (-not $RawArgs -or $RawArgs.Count -eq 0) { return @() }
+    $result = @()
+    foreach ($a in $RawArgs) {
+        if ($null -eq $a) { continue }
+        foreach ($p in ($a -split '[,\s]+' | Where-Object { $_ })) {
+            $result += $p.ToLower()
+        }
+    }
+    return $result
+}
+
+$Filters = Resolve-Filters -RawArgs $FilterArgs
+
+
 # Path matching helpers
 
 function Test-PathContainsInOrder {
@@ -49,7 +70,7 @@ function Get-CommentSyntax {
                  '.kt', '.swift', '.php' } {
             return @{ Single = '//'; MultiStart = '/*'; MultiEnd = '*/' }
         }
-        '.py'  { return @{ Single = '#';  MultiStart = $null;    MultiEnd = $null  } }
+        '.py'  { return @{ Single = '#';  MultiStart = '"""';    MultiEnd = '"""'  } }
         '.rb'  { return @{ Single = '#';  MultiStart = '=begin'; MultiEnd = '=end' } }
         '.sh'  { return @{ Single = '#';  MultiStart = $null;    MultiEnd = $null  } }
         '.ps1' { return @{ Single = '#';  MultiStart = '<#';     MultiEnd = '#>'   } }
@@ -282,7 +303,8 @@ function Show-ProjectMulti {
     param(
         [string]$HeaderText,
         [string]$EnvVarName,
-        [string[]]$RelativePaths
+        [string[]]$RelativePaths,
+        [string[]]$Filters
     )
 
     Write-Header $HeaderText
@@ -293,7 +315,26 @@ function Show-ProjectMulti {
         return
     }
 
-    foreach ($rel in $RelativePaths) {
+    $selected = $RelativePaths
+    if ($Filters -and $Filters.Count -gt 0) {
+        $selected = @()
+        foreach ($rel in $RelativePaths) {
+            $leaf = (Split-Path -Leaf $rel).ToLower()
+            foreach ($f in $Filters) {
+                if ($leaf.Contains($f)) { $selected += $rel; break }
+            }
+        }
+        if ($selected.Count -eq 0) {
+            Write-Warn "  [!] No files matched filter(s): $($Filters -join ', ')"
+            Write-Label "Available:"
+            foreach ($rel in $RelativePaths) {
+                Write-Host "      $(Split-Path -Leaf $rel)" -ForegroundColor DarkYellow
+            }
+            return
+        }
+    }
+
+    foreach ($rel in $selected) {
         $fullPath = $root
         foreach ($part in ($rel -split '[/\\]' | Where-Object { $_ })) {
             $fullPath = Join-Path $fullPath $part
@@ -382,7 +423,8 @@ elseif (Test-PathContainsInOrder @("code2", "gfx", "wc_testing_go")) {
                           'Code2/General/gfx/wc_testing_go/m2_app.go',
                           'Code2/General/gfx/wc_testing_go/wdl_app.go',
                           'Code2/General/gfx/wc_testing_go/wmo_app.go'
-                      )
+                      ) `
+                      -Filters $Filters
     $matched = $true
 }
 
@@ -395,7 +437,8 @@ elseif (Test-PathContainsInOrder @("code2", "gfx", "wc_testing_py")) {
                           'Code2/General/gfx/wc_testing_py/m2_app.py',
                           'Code2/General/gfx/wc_testing_py/wdl_app.py',
                           'Code2/General/gfx/wc_testing_py/wmo_app.py'
-                      )
+                      ) `
+                      -Filters $Filters
     $matched = $true
 }
 
@@ -408,7 +451,8 @@ elseif (Test-PathContainsInOrder @("code2", "gfx", "wc_testing_rs")) {
                           'Code2/General/gfx/wc_testing_rs/src/m2_app.rs',
                           'Code2/General/gfx/wc_testing_rs/src/wdl_app.rs',
                           'Code2/General/gfx/wc_testing_rs/src/wmo_app.rs'
-                      )
+                      ) `
+                      -Filters $Filters
     $matched = $true
 }
 
@@ -421,7 +465,36 @@ elseif (Test-PathContainsInOrder @("code2", "gfx", "wc_testing")) {
                           'Code2/General/gfx/wc_testing/M2App.cs',
                           'Code2/General/gfx/wc_testing/WdlApp.cs',
                           'Code2/General/gfx/wc_testing/WmoApp.cs'
-                      )
+                      ) `
+                      -Filters $Filters
+    $matched = $true
+}
+
+# my_notes -> scripts -> live_plotext / live_termplot (same file set)
+elseif ((Test-PathContainsInOrder @("my_notes", "scripts", "live_plotext")) -or
+        (Test-PathContainsInOrder @("my_notes", "scripts", "live_termplot"))) {
+
+    if (Test-PathContainsInOrder @("my_notes", "scripts", "live_plotext")) {
+        $folder = 'live_plotext'
+    } else {
+        $folder = 'live_termplot'
+    }
+
+    $liveFiles = @(
+        'live_address.py',
+        'live_audit.py',
+        'live_filejobs.py',
+        'live_general.py',
+        'live_orders.py',
+        'live_pending.py',
+        'live_useractionlog.py'
+    )
+    $relPaths = $liveFiles | ForEach-Object { "notes/svea/scripts/stats/$folder/$_" }
+
+    Show-ProjectMulti -HeaderText $folder `
+                      -EnvVarName 'my_notes_path' `
+                      -RelativePaths $relPaths `
+                      -Filters $Filters
     $matched = $true
 }
 
