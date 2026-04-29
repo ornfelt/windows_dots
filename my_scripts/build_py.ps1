@@ -5,4 +5,6 @@ if ([string]::IsNullOrWhiteSpace($notes)) {
     exit 1
 }
 
-python "$notes/scripts/build.py"
+#python "$notes/scripts/build.py"
+# Forward all script arguments to python
+python "$notes/scripts/build.py" @args
