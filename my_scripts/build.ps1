@@ -472,12 +472,22 @@ elseif (Test-PathContainsInOrder @("code2", "gfx", "wc_testing")) {
 
 # my_notes -> scripts -> live_plotext / live_termplot (same file set)
 elseif ((Test-PathContainsInOrder @("my_notes", "scripts", "live_plotext")) -or
-        (Test-PathContainsInOrder @("my_notes", "scripts", "live_termplot"))) {
+        (Test-PathContainsInOrder @("my_notes", "scripts", "live_termplot")) -or
+        (Test-PathContainsInOrder @("downloads", "live_plotext")) -or
+        (Test-PathContainsInOrder @("downloads", "live_termplot"))) {
 
-    if (Test-PathContainsInOrder @("my_notes", "scripts", "live_plotext")) {
+    if (Test-PathContainsInOrder @("live_plotext")) {
         $folder = 'live_plotext'
     } else {
         $folder = 'live_termplot'
+    }
+
+    if (Test-PathContainsInOrder @("my_notes", "scripts")) {
+        $envName = 'my_notes_path'
+        $prefix  = "notes/svea/scripts/stats/$folder"
+    } else {
+        if ($isLinux) { $envName = 'HOME' } else { $envName = 'USERPROFILE' }
+        $prefix = "Downloads/$folder"
     }
 
     $liveFiles = @(
@@ -489,10 +499,11 @@ elseif ((Test-PathContainsInOrder @("my_notes", "scripts", "live_plotext")) -or
         'live_pending.py',
         'live_useractionlog.py'
     )
-    $relPaths = $liveFiles | ForEach-Object { "notes/svea/scripts/stats/$folder/$_" }
+
+    $relPaths = $liveFiles | ForEach-Object { "$prefix/$_" }
 
     Show-ProjectMulti -HeaderText $folder `
-                      -EnvVarName 'my_notes_path' `
+                      -EnvVarName $envName `
                       -RelativePaths $relPaths `
                       -Filters $Filters
     $matched = $true
