@@ -15,10 +15,26 @@ $isLinux = $IsLinux -or ($PSVersionTable.Platform -eq 'Unix')
 # Output helpers
 
 function Write-Label($text) { Write-Host "  $text" -ForegroundColor DarkGray }
-function Write-Cmd  ($text) { Write-Host "  $text" -ForegroundColor Cyan     }
+#function Write-Cmd  ($text) { Write-Host "  $text" -ForegroundColor Cyan     }
 function Write-Alt  ($text) { Write-Host "  $text" -ForegroundColor Magenta  }
 function Write-Extra($text) { Write-Host "  $text" -ForegroundColor Blue     }
 function Write-Warn ($text) { Write-Host $text    -ForegroundColor DarkYellow }
+
+# Adjust env vars for linux
+function Convert-CmdTextForPlatform {
+    param([string]$Text)
+
+    if ($isLinux) {
+        return ($Text -replace '(?i)\$env:', '$')
+    }
+
+    return $Text
+}
+
+function Write-Cmd($text) {
+    $text = Convert-CmdTextForPlatform $text
+    Write-Host "  $text" -ForegroundColor Cyan
+}
 
 function Write-Header($text) {
     Write-Host ""
