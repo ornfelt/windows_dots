@@ -666,6 +666,86 @@ elseif (Test-PathContainsInOrder @("my_notes", "latest-orders-ts")) {
     $matched = $true
 }
 
+# code2 -> gfx -> render_exported_m2_gfx_go
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_m2_gfx_go")) {
+    Show-Project -HeaderText 'Render Exported M2 GFX (Go)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_m2_gfx_go/main.go'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_m2_gfx_py
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_m2_gfx_py")) {
+    Show-Project -HeaderText 'Render Exported M2 GFX (Python)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_m2_gfx_py/main.py'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_m2_gfx_rs
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_m2_gfx_rs")) {
+    Show-Project -HeaderText 'Render Exported M2 GFX (Rust)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_m2_gfx_rs/src/main.rs'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_m2_gfx
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_m2_gfx")) {
+    Show-Project -HeaderText 'Render Exported M2 GFX (C#)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_m2_gfx/Program.cs'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_m2
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_m2")) {
+    Show-Project -HeaderText 'Render Exported M2 (C#)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_m2/Program.cs'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_wmo_gfx_go
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_wmo_gfx_go")) {
+    Show-Project -HeaderText 'Render Exported WMO GFX (Go)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_wmo_gfx_go/main.go'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_wmo_gfx_py
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_wmo_gfx_py")) {
+    Show-Project -HeaderText 'Render Exported WMO GFX (Python)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_wmo_gfx_py/main.py'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_wmo_gfx_rs
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_wmo_gfx_rs")) {
+    Show-Project -HeaderText 'Render Exported WMO GFX (Rust)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_wmo_gfx_rs/src/main.rs'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_wmo_gfx
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_wmo_gfx")) {
+    Show-Project -HeaderText 'Render Exported WMO GFX (C#)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_wmo_gfx/Program.cs'
+    $matched = $true
+}
+
+# code2 -> gfx -> render_exported_wmo
+elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_wmo")) {
+    Show-Project -HeaderText 'Render Exported WMO (C#)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/render_exported_wmo/Program.cs'
+    $matched = $true
+}
+
 # Fallback: check files in current directory
 else {
     $files = Get-ChildItem -Name -ErrorAction SilentlyContinue
