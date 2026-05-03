@@ -1,7 +1,19 @@
 require('dbg_log').log_file(debug.getinfo(1, 'S').source)
 
-require("config.lazy")
-require("lazy_plugins")
+--require("config.lazy")
+--require("lazy_plugins")
+--local USE_LAZY = true
+local USE_LAZY = false
+
+vim.g.my_use_lazy = USE_LAZY
+
+if USE_LAZY then
+  require("config.lazy")
+  require("lazy_plugins")
+else
+  require("pack_plugins")
+end
+
 require('options')
 
 local myconfig = require('myconfig')
