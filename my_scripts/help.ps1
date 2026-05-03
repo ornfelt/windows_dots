@@ -81,6 +81,10 @@ function Write-CodeLine {
     }
 }
 
+function Write-CleanWarning {
+    Write-Host "Be careful: below commands might remove generated folders recursively from the current directory." -ForegroundColor DarkYellow
+}
+
 # IMPORTANT: When no arg (or unknown arg), print ONLY the available args and nothing else.
 function Show-Args {
     $args = @(
@@ -408,6 +412,7 @@ function Show-Scripts-Help {
     Write-CommandWithDescription ".wcell" "cd into wcell dir"                 'Cyan'
     Write-CommandWithDescription ".playermap" "cd into playermap dir and run" 'Cyan'
     Write-CommandWithDescription ".mangos" "cd into mangos dir"               'Cyan'
+    Write-CommandWithDescription ".mwd"   "my_wow_docs: cd_and_print"         'Cyan'
 
     Write-Host ""
     Write-Host "  Run / launcher helpers:" -ForegroundColor DarkGray
@@ -441,11 +446,20 @@ function Show-Scripts-Help {
     Write-CommandWithDescription ".network_devices_ping" "ping common network devices"         'Cyan'
 
     Write-Host ""
+    Write-Host "  Search / inspect / dump helpers:" -ForegroundColor DarkGray
+    Write-CommandWithDescription ".search_conf" "search local config"                         'Cyan'
+    Write-CommandWithDescription ".dump_files"  "dump files"                                  'Cyan'
+
+    Write-Host ""
     Write-Host "  Build / tools / maintenance:" -ForegroundColor DarkGray
     Write-CommandWithDescription ".cmake"   "helper script for cmake"                          'Cyan'
+    Write-CommandWithDescription ".build"   "helper script for building"                       'Cyan'
+    Write-CommandWithDescription ".build_py" "helper script for building"                      'Cyan'
     Write-CommandWithDescription ".git_push"  "helper script for git push"                     'Cyan'
     Write-CommandWithDescription ".git_pull"  "helper script for git pull"                     'Cyan'
     Write-CommandWithDescription ".git_ignore" "helper script for git ignore"                  'Cyan'
+    Write-CommandWithDescription ".copy_git_msg" "copy N-latest commit msg"                    'Cyan'
+    Write-CommandWithDescription ".diff_shader_git" "run diff_shader_git py script"            'Cyan'
     Write-CommandWithDescription ".gen_plant" "generate PlantUML image"                        'Cyan'
     Write-CommandWithDescription ".gen_merm"  "generate Mermaid image"                         'Cyan'
     Write-CommandWithDescription ".acore_update"  "update acore repo"                          'Cyan'
@@ -652,6 +666,12 @@ function Show-C-Help {
     Write-CodeLine "./main  # Run binary"
     Write-Host ""
     Write-CodeLine "gcc -g -O0 -Wall -Wextra -std=c17 -o main_debug main.c  # Debug build"
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CleanWarning
+    Write-CodeLine 'Remove-Item -Force main,main.exe,main_debug,main_debug.exe,*.o,*.obj,*.pdb,*.ilk,*.exp,*.lib -ErrorAction SilentlyContinue'
+    Write-CodeLine 'Remove-Item -Recurse -Force build,bin,obj,out -ErrorAction SilentlyContinue'
 }
 
 function Show-CSharp-Help {
@@ -699,6 +719,14 @@ function Show-CSharp-Help {
     Write-CodeLine "dotnet add package Serilog --version 3.1.1           # Example: Serilog (pinned)"
     Write-CodeLine "dotnet list package                                  # List installed packages"
     Write-CodeLine "dotnet remove package Newtonsoft.Json                # Remove a package"
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CodeLine "dotnet clean                                      # Clean build outputs known to MSBuild"
+    Write-CodeLine "dotnet clean -c Release                           # Clean Release outputs"
+    Write-CodeLine "dotnet clean MySolution.sln                       # Clean solution"
+    Write-CleanWarning
+    Write-CodeLine 'Get-ChildItem -Recurse -Directory -Include bin,obj | Remove-Item -Recurse -Force  # Hard-delete all bin/obj dirs'
 }
 
 function Show-CPP-Help {
@@ -716,6 +744,15 @@ function Show-CPP-Help {
     Write-CodeLine "./main  # Run binary"
     Write-Host ""
     Write-CodeLine "g++ -g -O0 -Wall -Wextra -std=c++20 -o main_debug main.cpp  # Debug build"
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CodeLine "cmake --build build --target clean    # Clean CMake build dir, if supported by generator"
+    Write-CodeLine "ninja -C build clean                  # Clean Ninja build dir"
+    Write-CodeLine "make clean                            # Clean Makefile project, if target exists"
+    Write-CleanWarning
+    Write-CodeLine 'Remove-Item -Force main,main.exe,main_debug,main_debug.exe,*.o,*.obj,*.pdb,*.ilk,*.exp,*.lib -ErrorAction SilentlyContinue'
+    Write-CodeLine 'Remove-Item -Recurse -Force build,bin,obj,out,cmake-build-debug,cmake-build-release -ErrorAction SilentlyContinue'
 }
 
 function Show-Rust-Help {
@@ -764,6 +801,14 @@ function Show-Rust-Help {
 
     Write-Host ""
     Write-CodeLine '$env:RUSTFLAGS="-Awarnings"         # Allow/suppress all Rust compiler warnings'
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CodeLine "cargo clean                         # Remove Cargo build artifacts, usually target/"
+    Write-CodeLine "cargo clean --release               # Clean release artifacts"
+    Write-CodeLine "cargo clean -p my_crate             # Clean one package in a workspace"
+    Write-CleanWarning
+    Write-CodeLine 'Remove-Item -Recurse -Force target -ErrorAction SilentlyContinue  # Hard-delete target/'
 }
 
 function Show-Java-Help {
@@ -801,6 +846,16 @@ function Show-Java-Help {
     Write-CodeLine "  implementation 'com.google.gson:gson:2.10.1'   # Specific version"
     Write-CodeLine "mvn install                                      # Resolve + build (Maven)"
     Write-CodeLine "gradle build                                     # Resolve + build (Gradle)"
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CodeLine "mvn clean                            # Maven: remove target/"
+    Write-CodeLine "mvn clean install                    # Maven: clean then build/install"
+    Write-CodeLine "gradle clean                         # Gradle: remove build/"
+    Write-CodeLine ".\gradlew clean                      # Gradle wrapper on Windows"
+    Write-CodeLine "./gradlew clean                      # Gradle wrapper on Linux/macOS"
+    Write-CleanWarning
+    Write-CodeLine 'Remove-Item -Recurse -Force target,build,out -ErrorAction SilentlyContinue  # Hard-delete common Java output dirs'
 }
 
 function Show-Python-Help {
@@ -831,6 +886,13 @@ function Show-Python-Help {
     Write-CodeLine "pip install --upgrade requests                  # Upgrade a package"
     Write-CodeLine "pip uninstall requests                          # Remove a package"
     Write-CodeLine "pip freeze > requirements.txt                   # Save installed packages"
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CleanWarning
+    Write-CodeLine 'Get-ChildItem -Recurse -Directory -Include __pycache__,.pytest_cache,.mypy_cache,.ruff_cache,build,dist | Remove-Item -Recurse -Force'
+    Write-CodeLine 'Get-ChildItem -Recurse -Directory -Filter "*.egg-info" | Remove-Item -Recurse -Force'
+    Write-CodeLine 'Get-ChildItem -Recurse -File -Include *.pyc,*.pyo | Remove-Item -Force'
 }
 
 function Show-Go-Help {
@@ -863,6 +925,17 @@ function Show-Go-Help {
     Write-CodeLine "go get github.com/ebitengine/purego@v0.8.2"
     Write-CodeLine "go get github.com/some/package@none            # Remove a package"
     Write-CodeLine "go mod tidy                                    # Clean up go.mod / go.sum (removes unused deps)"
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CodeLine "go clean ./...                       # Clean package build artifacts"
+    Write-CodeLine "go clean -cache                      # Remove Go build cache"
+    Write-CodeLine "go clean -testcache                  # Expire Go test cache"
+    Write-CodeLine "go clean -modcache                   # Remove downloaded module cache"
+    Write-CodeLine "go clean -cache -testcache ./...     # Common local clean"
+    Write-CleanWarning
+    Write-CodeLine 'Remove-Item -Force .\*.exe -ErrorAction SilentlyContinue  # Remove local Windows binaries'
+    Write-CodeLine 'Remove-Item -Force .\my_wow,.\main -ErrorAction SilentlyContinue  # Remove common local Linux/macOS binaries'
 }
 
 function Show-JS-Help {
@@ -896,6 +969,14 @@ function Show-JS-Help {
     Write-CodeLine "npm install axios@1.6.0                        # Example: axios (pinned)"
     Write-CodeLine "npm uninstall some-package                     # Remove a package"
     Write-CodeLine "npm uninstall --save-dev some-package          # Remove a dev dependency"
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CodeLine "npm ci                              # Clean install from package-lock.json; removes node_modules first"
+    Write-CodeLine "npm run clean                       # Project-specific clean script, if package.json has one"
+    Write-CodeLine "npx rimraf dist build coverage .next .nuxt .vite .turbo .cache  # Remove common generated dirs"
+    Write-CleanWarning
+    Write-CodeLine 'Remove-Item -Recurse -Force node_modules,dist,build,coverage,.next,.nuxt,.vite,.turbo,.cache -ErrorAction SilentlyContinue'
 }
 
 function Show-TS-Help {
@@ -931,6 +1012,16 @@ function Show-TS-Help {
     Write-CodeLine "npm install --save-dev @types/node@20.0.0        # Example: pinned @types/node"
     Write-CodeLine "npm uninstall some-package                       # Remove a package"
     Write-CodeLine "npm uninstall --save-dev @types/some-package     # Remove type definitions"
+
+    Write-Host ""
+    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+    Write-CodeLine "npm ci                              # Clean install from package-lock.json; removes node_modules first"
+    Write-CodeLine "npm run clean                       # Project-specific clean script, if package.json has one"
+    Write-CodeLine "npx tsc --build --clean             # Clean TypeScript project references / incremental build info"
+    Write-CodeLine "npx rimraf dist build coverage .tsbuildinfo .next .nuxt .vite .turbo .cache"
+    Write-CleanWarning
+    Write-CodeLine 'Remove-Item -Recurse -Force node_modules,dist,build,coverage,.next,.nuxt,.vite,.turbo,.cache -ErrorAction SilentlyContinue'
+    Write-CodeLine 'Remove-Item -Force *.tsbuildinfo -ErrorAction SilentlyContinue'
 }
 
 # Main argument handling
