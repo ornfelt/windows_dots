@@ -82,7 +82,7 @@ function Write-CodeLine {
 }
 
 function Write-CleanWarning {
-    Write-Host "Be careful: below commands might remove generated folders recursively from the current directory." -ForegroundColor DarkYellow
+    Write-Host "Be careful: below command(s) hard-delete generated files/folders from the current directory." -ForegroundColor DarkYellow
 }
 
 # IMPORTANT: When no arg (or unknown arg), print ONLY the available args and nothing else.
