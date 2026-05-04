@@ -118,3 +118,4 @@ yazi/cd_ps_profile_path.ps1
 yazi/copy_path.ps1
 # yazi temp/backup files like *.toml-<digits>
 yazi/*.toml-*
+nvim/init_bundle.lua

@@ -609,12 +609,56 @@ function Show-Paths-Help {
     Write-Host '$Env:localappdata/nvim-data/site/pack' -ForegroundColor Green
     Write-Host ""
 
+    Write-Host "nvim built-in package manager opt path (0.12+):" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/nvim-data/site/pack/core/opt' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim pack lockfile:" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/nvim/nvim-pack-lock.json' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "lazy.nvim lockfile:" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/nvim/lazy-lock.json' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim debug lua usage log:" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/Temp/nvim/lua_file_usage.log' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim lsp servers log:" -ForegroundColor DarkGray
+    Write-Host 'C:/local/lsp_servers.txt' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim custom config file:" -ForegroundColor DarkGray
+    Write-Host '$Env:localappdata/nvim-data/nvim_config.txt' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim custom config backup/source from my_notes_path:" -ForegroundColor DarkGray
+    Write-Host '$Env:my_notes_path/scripts/files/nvim_config.txt' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim py_exec scripts dir:" -ForegroundColor DarkGray
+    Write-Host '$Env:code_root_dir/Code2/Python/my_py/scripts/' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "nvim sessions dir:" -ForegroundColor DarkGray
+    Write-Host '$Env:userprofile/.vim/sessions/' -ForegroundColor Green
+    Write-Host ""
+
     Write-Host "wezterm config path:" -ForegroundColor DarkGray
     Write-Host '$Env:userprofile/.wezterm.lua' -ForegroundColor Green
     Write-Host ""
 
     Write-Host "wezterm session manager path:" -ForegroundColor DarkGray
     Write-Host '$Env:userprofile/.wezterm/wezterm-session-manager/session-manager.lua' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "wezterm session file:" -ForegroundColor DarkGray
+    Write-Host '$Env:userprofile/.wezterm/wezterm-session-manager/wezterm_state_coding.json' -ForegroundColor Green
+    Write-Host ""
+
+    Write-Host "wezterm debug log file:" -ForegroundColor DarkGray
+    Write-Host '$Env:userprofile/wez_test.txt' -ForegroundColor Green
     Write-Host ""
 
     Write-Host "alacritty config path:" -ForegroundColor DarkGray

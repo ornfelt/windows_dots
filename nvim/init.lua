@@ -19,8 +19,8 @@ require('options')
 local myconfig = require('myconfig')
 
 -- Note: lazy loading below technically works but is 
--- a bit annoying since some autocmds aren't 
--- applied to the opened file unless reloaded...
+-- a bit annoying since some autocmds aren't currently 
+-- applied to the opened file unless it's reloaded...
 local LAZY_LOAD = false
 
 -- eager loading
