@@ -762,6 +762,54 @@ elseif (Test-PathContainsInOrder @("code2", "gfx", "render_exported_wmo")) {
     $matched = $true
 }
 
+# code2 -> gfx -> wc_clean_new_go
+elseif (Test-PathContainsInOrder @("code2", "gfx", "wc_clean_new_go")) {
+    Show-Project -HeaderText 'WC Clean New (Go)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/wc_clean_new_go/main.go'
+    $matched = $true
+}
+
+# code2 -> gfx -> wc_clean_new_cs
+elseif (Test-PathContainsInOrder @("code2", "gfx", "wc_clean_new_cs")) {
+    Show-Project -HeaderText 'WC Clean New (C#)' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/wc_clean_new_cs/Program.cs'
+    $matched = $true
+}
+
+# code2 -> space -> BlackholeGfx
+elseif (Test-PathContainsInOrder @("code2", "space", "blackholegfx")) {
+    Show-Project -HeaderText 'Blackhole GFX' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/C++/space/cs/BlackholeGfx/Program.cs'
+    $matched = $true
+}
+
+# code2 -> space -> SolarSystemGfx
+elseif (Test-PathContainsInOrder @("code2", "space", "solarsystemgfx")) {
+    Show-Project -HeaderText 'Solar System GFX' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/C++/space/cs/SolarSystemGfx/Program.cs'
+    $matched = $true
+}
+
+# code2 -> gfx -> wow-rs-gfx
+elseif (Test-PathContainsInOrder @("code2", "gfx", "wow-rs-gfx")) {
+    Show-Project -HeaderText 'wow-rs-gfx' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/wow-rs-gfx/src/main.rs'
+    $matched = $true
+}
+
+# code2 -> gfx -> wow-rs
+elseif (Test-PathContainsInOrder @("code2", "gfx", "wow-rs")) {
+    Show-Project -HeaderText 'wow-rs' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/wow-rs/src/main.rs'
+    $matched = $true
+}
+
 # Fallback: check files in current directory
 else {
     $files = Get-ChildItem -Name -ErrorAction SilentlyContinue
