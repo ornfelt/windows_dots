@@ -810,6 +810,22 @@ elseif (Test-PathContainsInOrder @("code2", "gfx", "wow-rs")) {
     $matched = $true
 }
 
+# code2 -> gfx -> lrc
+elseif (Test-PathContainsInOrder @("code2", "gfx", "lrc")) {
+    Show-Project -HeaderText 'LRC GFX' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/lrc/gfx/lrc_gfx.py'
+    $matched = $true
+}
+
+# code2 -> gfx -> double_slit
+elseif (Test-PathContainsInOrder @("code2", "gfx", "double_slit")) {
+    Show-Project -HeaderText 'Double Slit' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/gfx/double_slit/Program.cs'
+    $matched = $true
+}
+
 # Fallback: check files in current directory
 else {
     $files = Get-ChildItem -Name -ErrorAction SilentlyContinue
