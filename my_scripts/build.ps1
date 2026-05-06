@@ -826,6 +826,22 @@ elseif (Test-PathContainsInOrder @("code2", "gfx", "double_slit")) {
     $matched = $true
 }
 
+# code2 -> general -> find-all-custom-types
+elseif (Test-PathContainsInOrder @("code2", "general", "find-all-custom-types")) {
+    Show-Project -HeaderText 'Find All Custom Types' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/utils/treesitter/find-all-custom-types/analyze-csharp.ts'
+    $matched = $true
+}
+
+# code2 -> general -> find-custom-types
+elseif (Test-PathContainsInOrder @("code2", "general", "find-custom-types")) {
+    Show-Project -HeaderText 'Find Custom Types' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/utils/treesitter/find-custom-types/find-custom-types.ts'
+    $matched = $true
+}
+
 # Fallback: check files in current directory
 else {
     $files = Get-ChildItem -Name -ErrorAction SilentlyContinue
