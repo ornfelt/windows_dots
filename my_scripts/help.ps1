@@ -455,6 +455,7 @@ function Show-Scripts-Help {
     Write-CommandWithDescription ".cmake"   "helper script for cmake"                          'Cyan'
     Write-CommandWithDescription ".build"   "helper script for building"                       'Cyan'
     Write-CommandWithDescription ".build_py" "helper script for building"                      'Cyan'
+    Write-CommandWithDescription ".pkg"      "helper script for packages"                      'Cyan'
     Write-CommandWithDescription ".git_push"  "helper script for git push"                     'Cyan'
     Write-CommandWithDescription ".git_pull"  "helper script for git pull"                     'Cyan'
     Write-CommandWithDescription ".git_ignore" "helper script for git ignore"                  'Cyan'
