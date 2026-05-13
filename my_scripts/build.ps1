@@ -842,6 +842,22 @@ elseif (Test-PathContainsInOrder @("code2", "general", "find-custom-types")) {
     $matched = $true
 }
 
+# code2 -> general -> gen-skeleton
+elseif (Test-PathContainsInOrder @("code2", "general", "gen-skeleton")) {
+    Show-Project -HeaderText 'Gen Skeleton' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/utils/treesitter/gen-skeleton/gen-skeleton.ts'
+    $matched = $true
+}
+
+# code2 -> general -> FlowDocGen
+elseif (Test-PathContainsInOrder @("code2", "general", "flowdocgen")) {
+    Show-Project -HeaderText 'FlowDocGen' `
+                 -EnvVarName 'code_root_dir' `
+                 -RelativePath 'Code2/General/utils/FlowDocGen/Program.cs'
+    $matched = $true
+}
+
 # Fallback: check files in current directory
 else {
     $files = Get-ChildItem -Name -ErrorAction SilentlyContinue
