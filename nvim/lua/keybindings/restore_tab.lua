@@ -7,25 +7,31 @@ local function buf_is_modified(buf)
     and vim.api.nvim_get_option_value("modified", { buf = buf })
 end
 
-local function current_tab_has_modified_buffers()
-  local tabpage = vim.api.nvim_get_current_tabpage()
-  local windows = vim.api.nvim_tabpage_list_wins(tabpage)
-
-  for _, win in ipairs(windows) do
-    local buf = vim.api.nvim_win_get_buf(win)
+local function any_buffer_is_modified()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if buf_is_modified(buf) then
-      return true
+      return true, buf
     end
   end
 
-  return false
+  return false, nil
 end
 
 local function save_and_close_tab()
   local tab_count = vim.fn.tabpagenr('$')
 
-  if current_tab_has_modified_buffers() and tab_count <= 1 then
-    vim.notify("Tab has unsaved changes. Save first or use :q! manually.", vim.log.levels.WARN)
+  local has_modified, modified_buf = any_buffer_is_modified()
+
+  if has_modified and modified_buf ~= nil and tab_count <= 1 then
+    local name = vim.api.nvim_buf_get_name(modified_buf)
+    if name == "" then
+      name = "[No Name]"
+    end
+
+    vim.notify(
+      "There are unsaved changes in: " .. name .. ". Save first or use :q! manually.",
+      vim.log.levels.WARN
+    )
     return
   end
 
