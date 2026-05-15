@@ -26,7 +26,112 @@ Import-Module PSFzf
 # Make FZF be case insensitive
 $env:_PSFZF_FZF_DEFAULT_OPTS = '-i'
 #Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory 'Ctrl+r'
-Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+
+# alt 1: PSFzf with built-in provider
+#Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+Set-PsFzfOption -PSReadlineChordProvider 'Alt+t'
+Set-PsFzfOption -PSReadlineChordReverseHistory 'Ctrl+r'
+
+# alt 2: custom normalizing, but slow due to Get-ChildItem recursion 
+function Test-IsHomeDirPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    return $Path -match 'se-.*-01'
+}
+
+function Convert-DisplayPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    # Remove PowerShell provider prefix if present
+    $Path = $Path -replace '^Microsoft\.PowerShell\.Core\\FileSystem::', ''
+
+    # Normalize mapped home-directory path to H:
+    $Path = $Path -replace '^.*se-.*-01', 'H:'
+
+    # Replace backslashes with forward slashes
+    $Path = $Path -replace '\\', '/'
+
+    # Collapse duplicate forward slashes
+    $Path = $Path -replace '/+', '/'
+
+    return $Path
+}
+
+function Get-FuzzyFileCandidates {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Root
+    )
+
+    $ignoredDirs = @('.git', 'bin', 'obj', 'build')
+
+    Get-ChildItem -LiteralPath $Root -Force -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.PSIsContainer) {
+            if ($ignoredDirs -contains $_.Name) {
+                return
+            }
+
+            $_.FullName
+            Get-FuzzyFileCandidates -Root $_.FullName
+        }
+        else {
+            $_.FullName
+        }
+    }
+}
+
+function Invoke-FuzzyProviderNormalized {
+    $currentPath = (Get-Location).ProviderPath
+    $isHomeDir = Test-IsHomeDirPath $currentPath
+
+    $selected = Get-FuzzyFileCandidates -Root $currentPath |
+        ForEach-Object {
+            if ($isHomeDir) {
+                Convert-DisplayPath $_
+            }
+            else {
+                $_
+            }
+        } |
+        fzf --prompt "Files> "
+
+    if ([string]::IsNullOrWhiteSpace($selected)) {
+        return
+    }
+
+    # Quote paths with spaces
+    if ($selected -match '\s') {
+        $selected = '"' + $selected.Replace('"', '\"') + '"'
+    }
+
+    [Microsoft.PowerShell.PSConsoleReadLine]::Insert($selected)
+}
+
+Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
+    Invoke-FuzzyProviderNormalized
+}
+
+# alt 3: plain fzf
+Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
+    $selected = fzf --prompt "Files> "
+
+    if ([string]::IsNullOrWhiteSpace($selected)) {
+        return
+    }
+
+    # Quote paths with spaces
+    if ($selected -match '\s') {
+        $selected = '"' + $selected.Replace('"', '\"') + '"'
+    }
+
+    [Microsoft.PowerShell.PSConsoleReadLine]::Insert($selected)
+}
 
 Set-PSReadLineKeyHandler -Chord 'Alt+c' -ScriptBlock {
     Invoke-FuzzySetLocation
