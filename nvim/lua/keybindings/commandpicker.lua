@@ -5,6 +5,8 @@ local commands = {
   { label = "PackerUpdate", cmd = "PackerUpdate" },
   { label = "PackerLoad", cmd = "PackerLoad" },
   { label = "PackerSync", cmd = "PackerSync" },
+  -- Built-in vim.pack
+  { label = "VimPackUpdate", cmd = "lua vim.pack.update()" },
   -- Lazy
   { label = "Lazy", cmd = "Lazy" },
   -- Markview
@@ -33,6 +35,9 @@ local commands = {
   { label = "Config - ToggleUseCustomLspForSql", cmd = "ToggleUseCustomLspForSql" },
   { label = "Config - PrintConfig", cmd = "PrintConfig" },
   { label = "Llama", cmd = "Llm" },
+  { label = "LlamaStream", cmd = "LlmStream" },
+  { label = "Ollama", cmd = "Ollama" },
+  { label = "OllamaStream", cmd = "OllamaStream" },
   { label = "SkeletonCopy", cmd = "SkeletonCopy" },
   { label = "SkeletonCopy with comments", cmd = "SkeletonCopy!" },
   { label = "FindCustomTypes", cmd = "FindCustomTypes" },
