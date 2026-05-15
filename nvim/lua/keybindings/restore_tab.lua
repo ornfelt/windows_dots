@@ -24,7 +24,7 @@ end
 local function save_and_close_tab()
   local tab_count = vim.fn.tabpagenr('$')
 
-  if current_tab_has_modified_buffers() then
+  if current_tab_has_modified_buffers() and tab_count <= 1 then
     vim.notify("Tab has unsaved changes. Save first or use :q! manually.", vim.log.levels.WARN)
     return
   end
