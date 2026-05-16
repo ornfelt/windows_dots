@@ -213,7 +213,7 @@ $aliases = @(
     ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".mangos_update",
     ".cmake", ".cmangos_update", ".mw", ".mww", ".mwr", ".list_colors", ".list_std_colors",
     ".list_all_colors", ".git_ignore", ".help", ".mwd", ".search_conf", ".dump_files",
-    ".diff_shader_git", ".build", ".build_py", ".pkg", ".proc", ".copy_git_msg"
+    ".diff_shader_git", ".build", ".build_py", ".pkg", ".proc", ".copy_git_msg", ".sln"
 )
 
 foreach ($alias in $aliases) {
