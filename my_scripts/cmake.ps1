@@ -415,6 +415,54 @@ elseif ($cwd -ilike '*gfx_dll*gfx*') {
     Run-Or-Print $main
     Print-Alternatives $alts
 }
+elseif (($cwd -imatch 'GptGen') -and ($cwd -imatch 'cpp')) {
+    $null = Test-CMakeLists -ParentDir -Context 'GptGen cpp (expecting CMakeLists.txt one level up)'
+
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=OFF -DBUILD_TESTS=ON"
+
+    Run-Or-Print $main
+
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "alternative cmake commands:"
+
+        Write-Output ""
+        Write-Output "AppConfig disabled:"
+        Write-Output "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=OFF -DUSE_VCPKG=OFF -DBUILD_TESTS=ON"
+
+        $vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
+
+        Write-Output ""
+        Write-Output "with vcpkg:"
+        if (Test-Path $vcpkgPrimary) {
+            Write-Output "cmake .. -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+        elseif (Test-Path $vcpkgSecondary) {
+            Write-Output "cmake .. -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+        else {
+            Write-Output "(no vcpkg toolchain found at expected paths)"
+            Write-Output "cmake .. -DCMAKE_TOOLCHAIN_FILE=`"C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+
+        Write-Output ""
+        Write-Output "from project dir instead of build dir:"
+        Write-Output "cmake -B build -S . -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=OFF -DBUILD_TESTS=ON"
+
+        Write-Output ""
+        Write-Output "from project dir with vcpkg:"
+        if (Test-Path $vcpkgPrimary) {
+            Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+        elseif (Test-Path $vcpkgSecondary) {
+            Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+        else {
+            Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+    }
+}
 else {
     # Default fallback
     #$null = Test-CMakeLists -ParentDir
