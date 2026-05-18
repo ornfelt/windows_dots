@@ -1,0 +1,476 @@
+param(
+    [Parameter(Position=0)]
+    [string]$Arg,
+
+    [Parameter(Position=1)]
+    [string]$Arg2
+)
+
+# Usage:
+# .\cmake.ps1            # detect path and RUN the chosen cmake
+# .\cmake.ps1 onlyprint  # detect path and PRINT commands (no execution)
+# .\cmake.ps1 r/release  # RUN in Release mode
+# .\cmake.ps1 r foo      # RUN in Release mode and PRINT commands (no execution)
+# .\cmake.ps1 rd         # RUN in RelWithDebInfo mode
+# .\cmake.ps1 rwdi foo   # RUN in RelWithDebInfo mode and PRINT commands
+
+function Show-Help {
+@"
+cmake.ps1 - context-aware cmake helper
+
+Usage:
+  .\cmake.ps1
+      Detect path and RUN the chosen cmake command.
+
+  .\cmake.ps1 onlyprint
+      Detect path and PRINT commands (no execution).
+
+  .\cmake.ps1 r | release
+      Run in Release mode.
+
+  .\cmake.ps1 r foo
+      Release mode + PRINT-ONLY (because a second arg exists).
+
+  .\cmake.ps1 rd | rwdi | relwithdebinfo
+      Run in RelWithDebInfo mode.
+
+  .\cmake.ps1 h | help | -h | --help
+      Show this help.
+
+Notes:
+  - BuildType defaults to Debug unless you pass r/release.
+  - The script chooses a cmake command based on your current working directory.
+"@ | Write-Output
+}
+
+# Help check (case-insensitive). Accept in Arg or Arg2.
+$helpTokens = @('h', 'help', '-h', '--help')
+if (
+    (-not [string]::IsNullOrWhiteSpace($Arg)  -and $helpTokens -contains $Arg.ToLowerInvariant()) -or
+    (-not [string]::IsNullOrWhiteSpace($Arg2) -and $helpTokens -contains $Arg2.ToLowerInvariant())
+) {
+    Show-Help
+    exit 0
+}
+
+# Print-only unless argument is "r" or "release" (case-insensitive)
+$OnlyPrint = $null
+$Release = $false
+$RelWithDebInfo = $false
+
+if (-not [string]::IsNullOrWhiteSpace($Arg)) {
+    $arg_lc = $Arg.ToLowerInvariant()
+
+    if ($arg_lc -eq 'r' -or $arg_lc -eq 'release') {
+        $Release = $true
+        # If there's also another arg, enable print-only too
+        if (-not [string]::IsNullOrWhiteSpace($Arg2)) {
+            $OnlyPrint = 'true'
+        }
+    }
+    elseif ($arg_lc -eq 'rwdi' -or $arg_lc -eq 'rd' -or $arg_lc -eq 'relwithdebinfo') {
+        $RelWithDebInfo = $true
+        # If there's also another arg, enable print-only too
+        if (-not [string]::IsNullOrWhiteSpace($Arg2)) {
+            $OnlyPrint = 'true'
+        }
+    }
+    else {
+        $OnlyPrint = 'true'
+    }
+
+    Write-Host "If needed, run:" -ForegroundColor Blue
+    Write-Host 'make -j$([Environment]::ProcessorCount)' -ForegroundColor Blue
+    Write-Output ""
+}
+
+# build type helper
+$BuildType = 'Debug'
+if ($Release) { $BuildType = 'Release' }
+elseif ($RelWithDebInfo) { $BuildType = 'RelWithDebInfo' }
+
+# Debug print
+if ($OnlyPrint) {
+    Write-Host ("[OnlyPrint]=ON  [BuildType]={0}" -f $BuildType) -ForegroundColor Magenta
+}
+else {
+    Write-Host ("[OnlyPrint]=OFF  [BuildType]={0}" -f $BuildType) -ForegroundColor Magenta
+}
+
+# Note: most of the cmake commands are only tested on linux
+
+$cwd = (Get-Location).Path
+
+function Run-Or-Print {
+    param([string]$Cmd)
+    if ($OnlyPrint) {
+        Write-Host $Cmd -ForegroundColor Cyan
+    } else {
+        Write-Host "Executing: $Cmd" -ForegroundColor Cyan
+        Invoke-Expression $Cmd
+    }
+}
+
+# Helper: print a block of alternatives nicely
+function Print-Alternatives {
+    param([string[]]$Lines)
+    if ($OnlyPrint -and $Lines.Count -gt 0) {
+        Write-Output ""
+        Write-Output "alternative cmake commands:"
+        foreach ($l in $Lines) {
+            Write-Output $l
+            Write-Output ""
+        }
+    }
+}
+
+function Test-CMakeLists {
+    param(
+        [switch]$ParentDir, # if set: check parent; else: current dir
+        [string]$Context = '' # optional label for nicer messages
+    )
+
+    $base = (Get-Location).Path
+    if ($ParentDir) { $base = Split-Path -Path $base -Parent }
+
+    $cmakePath = Join-Path $base 'CMakeLists.txt'
+
+    if (Test-Path -LiteralPath $cmakePath) {
+        return $cmakePath
+    }
+
+    # Not found: inform + force print-only
+    if ([string]::IsNullOrWhiteSpace($Context)) { $Context = 'this project' }
+
+    Write-Host "CMakeLists.txt not found at: $cmakePath - $Context" -ForegroundColor Yellow
+    if ($ParentDir) { 
+        Write-Host "Maybe try:`n-> mkdir build; cd build`nThen try again!" -ForegroundColor Yellow
+    }
+    Write-Host "Switching to PRINT-ONLY mode." -ForegroundColor Yellow
+    Write-Host ""
+    $script:OnlyPrint = 'true'
+
+    return $null
+}
+
+# Make string checks case-insensitive (can use -imatch to be more explicit)
+$azMatch = $cwd -match 'azerothcore'
+$tcMatch = $cwd -match 'trinitycore'
+$wowCppMatch = ($cwd -match 'my_web_wow') -and ($cwd -match 'c\+\+')
+
+if ($azMatch) {
+    $null = Test-CMakeLists -ParentDir -Context 'azerothcore (expecting CMakeLists.txt one level up)'
+    # linux-specific...
+    $main = 'cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/acore/ -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static -DWITH_COREDEBUG=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo'
+    $alts = @(
+        'cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/acore/ -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static -DWITH_COREDEBUG=1 -DCMAKE_BUILD_TYPE=Debug',
+        'cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/acore/ -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static -DWITH_COREDEBUG=0 -DCMAKE_BUILD_TYPE=Release'
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+elseif ($tcMatch) {
+    $null = Test-CMakeLists -ParentDir -Context 'trinitycore (expecting CMakeLists.txt one level up)'
+    # linux-specific...
+    $main = 'cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/tcore/ -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static -DWITH_COREDEBUG=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo'
+    $alts = @(
+        'cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/tcore/ -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static -DWITH_COREDEBUG=1 -DCMAKE_BUILD_TYPE=Debug',
+        'cmake ../ -DCMAKE_INSTALL_PREFIX=$HOME/tcore/ -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DWITH_WARNINGS=1 -DTOOLS_BUILD=all -DSCRIPTS=static -DMODULES=static -DWITH_COREDEBUG=0 -DCMAKE_BUILD_TYPE=Release'
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+elseif ($wowCppMatch) {
+    $null = Test-CMakeLists -Context 'my_web_wow c++ (expecting CMakeLists.txt in current directory)'
+
+    # Base flags shared by all configurations
+    $base = "-DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=OFF -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
+
+    # print vcpkg alternative
+    $vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
+    $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
+    Write-Output ""
+    Write-Host "alternative cmake with vcpkg (uses real GLM):" -ForegroundColor DarkBlue
+    if (Test-Path $vcpkgPrimary) {
+        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DUSE_VCPKG=ON $base" -ForegroundColor DarkBlue
+    }
+    elseif (Test-Path $vcpkgSecondary) {
+        Write-Host "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DUSE_VCPKG=ON $base" -ForegroundColor DarkBlue
+    }
+    else {
+        Write-Host "(no vcpkg toolchain found at expected paths)" -ForegroundColor DarkBlue
+    }
+    Write-Output ""
+
+    # Default: no vcpkg, custom GLM
+    $main = "cmake -B build -S . -DUSE_VCPKG=OFF $base"
+    Run-Or-Print $main
+
+    if ($OnlyPrint) {
+        $variants = [ordered]@{
+            "without compiler optimization flags" = $base -replace 'ENABLE_CUSTOM_OPT_FLAGS=ON',  'ENABLE_CUSTOM_OPT_FLAGS=OFF'
+            "without async"                       = $base -replace 'USE_ASYNC=ON',                'USE_ASYNC=OFF'
+            "without wandering/navigation"        = $base -replace 'ENABLE_WANDER=ON',            'ENABLE_WANDER=OFF'
+            "without custom glm"                  = $base -replace 'USE_CUSTOM_GLM=ON',           'USE_CUSTOM_GLM=OFF'
+            "with sdl2"                           = $base -replace 'USE_SDL2=OFF',                'USE_SDL2=ON'
+            "without imgui"                       = $base -replace 'USE_IMGUI=ON',                'USE_IMGUI=OFF'
+            "with performance profiling"          = $base -replace 'WITH_PERFORMANCE=OFF',        'WITH_PERFORMANCE=ON'
+            "with debug timing and custom threadpool" = $base `
+                                                    -replace 'WITH_DEBUG_TIMING=OFF',             'WITH_DEBUG_TIMING=ON' `
+                                                    -replace 'USE_CUSTOM_THREADPOOL=OFF',         'USE_CUSTOM_THREADPOOL=ON'
+        }
+
+        foreach ($label in $variants.Keys) {
+            Write-Output ""
+            Write-Output "${label}:"
+            Write-Output "cmake -B build -S . -DUSE_VCPKG=OFF $($variants[$label])"
+        }
+    }
+}
+elseif ($cwd -imatch 'openjk') {
+    $null = Test-CMakeLists -ParentDir -Context 'openjk (expecting CMakeLists.txt one level up)'
+    # linux-specific...
+    $main = 'cmake -DCMAKE_INSTALL_PREFIX=$HOME/.local/share/openjk -DCMAKE_BUILD_TYPE=RelWithDebInfo ..'
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'jediknightgalaxies') {
+    $null = Test-CMakeLists -ParentDir -Context 'jediknightgalaxies (expecting CMakeLists.txt one level up)'
+    # linux-specific...
+    $main = 'cmake -DCMAKE_INSTALL_PREFIX=$HOME/Downloads/ja_data -DCMAKE_BUILD_TYPE=RelWithDebInfo ..'
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'stk-code') {
+    $null = Test-CMakeLists -ParentDir -Context 'stk-code (expecting CMakeLists.txt one level up)'
+    $main = 'cmake .. -DCMAKE_BUILD_TYPE=Release -DNO_SHADERC=on'
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'dhewm3') {
+    $main = 'cmake ../neo/'
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'blpconverter') {
+    $null = Test-CMakeLists -ParentDir -Context 'blpconverter (expecting CMakeLists.txt one level up)'
+    $main = 'cmake .. -DWITH_LIBRARY=YES'
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'stormlib') {
+    $null = Test-CMakeLists -ParentDir -Context 'stormlib (expecting CMakeLists.txt one level up)'
+    $main = 'cmake .. -DBUILD_SHARED_LIBS=ON'
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'mangos-classic') {
+    $null = Test-CMakeLists -ParentDir -Context 'mangos-classic (expecting CMakeLists.txt one level up)'
+    # linux-specific...
+    $main = 'cmake .. -DCMAKE_INSTALL_PREFIX=~/cmangos/run -DBUILD_EXTRACTORS=ON -DPCH=1 -DDEBUG=0 -DBUILD_PLAYERBOTS=ON'
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'mangos-tbc') {
+    $null = Test-CMakeLists -ParentDir -Context 'mangos-tbc (expecting CMakeLists.txt one level up)'
+    # linux-specific...
+    $main = 'cmake -S .. -B ./ -DCMAKE_INSTALL_PREFIX=~/cmangos-tbc/run -DBUILD_EXTRACTORS=ON -DPCH=1 -DDEBUG=0 -DBUILD_PLAYERBOTS=ON -DCMAKE_BUILD_TYPE=Release'
+    $alts = @(
+        'cmake -S .. -B ./ -DCMAKE_INSTALL_PREFIX=~/cmangos-tbc/run -DBUILD_EXTRACTORS=ON -DPCH=1 -DDEBUG=1 -DBUILD_PLAYERBOTS=ON -DCMAKE_BUILD_TYPE=Debug'
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "alternative cmake command with clang:"
+        Write-Output 'cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ ...'
+    }
+}
+elseif ($cwd -imatch 'core') {
+    $null = Test-CMakeLists -ParentDir -Context 'vmangos(core) (expecting CMakeLists.txt one level up)'
+    # linux-specific...
+    $main = 'cmake .. -DDEBUG=0 -DSUPPORTED_CLIENT_BUILD=5875 -DUSE_EXTRACTORS=1 -DCMAKE_INSTALL_PREFIX=$HOME/vmangos'
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'server') {
+    $null = Test-CMakeLists -ParentDir -Context 'mangoszero(server) (expecting CMakeLists.txt one level up)'
+    # linux-specific...
+    $main = 'cmake -S .. -B ./ -DBUILD_MANGOSD=1 -DBUILD_REALMD=1 -DBUILD_TOOLS=1 -DUSE_STORMLIB=1 -DSCRIPT_LIB_ELUNA=0 -DSCRIPT_LIB_SD3=1 -DPLAYERBOTS=1 -DPCH=1 -DCMAKE_INSTALL_PREFIX=$HOME/mangoszero/run'
+
+    Run-Or-Print $main
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "alternative cmake command with eluna:"
+        Write-Output 'cmake -S .. -B ./ -DBUILD_MANGOSD=1 -DBUILD_REALMD=1 -DBUILD_TOOLS=1 -DUSE_STORMLIB=1 -DSCRIPT_LIB_ELUNA=1 -DSCRIPT_LIB_SD3=1 -DPLAYERBOTS=1 -DPCH=1 -DCMAKE_INSTALL_PREFIX=$HOME/mangoszero/run'
+    }
+}
+elseif (($cwd -match 'tbc') -and ($cwd -match 'c\+\+')) {
+    $null = Test-CMakeLists -ParentDir -Context 'my_wow tbc c++ (expecting CMakeLists.txt one level up)'
+    $main = "cmake .. -DUSE_SDL2=ON -DUSE_SOUND=ON -DUSE_NAMIGATOR=OFF -DUSE_STOPWATCH_DT=ON -DCMAKE_BUILD_TYPE=$BuildType"
+    $alts = @(
+        "cmake .. -DUSE_SDL2=OFF -DUSE_SOUND=ON -DUSE_NAMIGATOR=ON -DUSE_STOPWATCH_DT=OFF -DCMAKE_BUILD_TYPE=$BuildType"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+elseif ($cwd -imatch 'neovim') {
+    $null = Test-CMakeLists -Context 'neovim (expecting CMakeLists.txt in current directory)'
+
+    Write-Output "Do the following:"
+    Write-Output "git checkout stable"
+    Write-Output "make CMAKE_BUILD_TYPE={Release / RelWithDebInfo}"
+    Write-Output "sudo make install"
+}
+elseif ($cwd -imatch 'ioq3') {
+    $null = Test-CMakeLists -Context 'ioq3 (expecting CMakeLists.txt in current directory)'
+
+    $main = "cmake -S . -B build -G `"Visual Studio 17 2022`"; cmake --build build --config $BuildType"
+    $alts = @(
+        "cmake -S . -B build -G `"Visual Studio 17 2022`"; cmake --build build --config $BuildType"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+elseif ($cwd -imatch 'torchless') {
+    $null = Test-CMakeLists -ParentDir -Context 'torchless (expecting CMakeLists.txt one level up)'
+    $main = 'cmake .. -DCMAKE_BUILD_TYPE=Release'
+
+    Run-Or-Print $main
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "compile command:"
+        Write-Output "cmake .. -DCMAKE_BUILD_TYPE=Release; cmake --build ."
+        Write-Output "On windows, run cmake, then build in vs:"
+        Write-Output ".\*.slnx"
+    }
+}
+elseif ($cwd -imatch 'ollama') {
+    # linux-specific...
+    $null = Test-CMakeLists -Context 'ollama (expecting CMakeLists.txt in current directory)'
+
+    $main = "cmake -B build; cmake --build build -j $([Environment]::ProcessorCount)"
+    Run-Or-Print $main
+}
+elseif ($cwd -imatch 'llama\.cpp') {
+    # linux-specific...
+    $null = Test-CMakeLists -Context 'llama.cpp (expecting CMakeLists.txt in current directory)'
+
+    $main = "cmake -B build; cmake --build build --config Release -j $([Environment]::ProcessorCount)"
+    Run-Or-Print $main
+
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "cmake -B build; cmake --build build --config $BuildType -j $([Environment]::ProcessorCount)"
+    }
+}
+elseif ($cwd -imatch 'wc_simple') {
+    $null = Test-CMakeLists -ParentDir -Context 'wc_simple (expecting CMakeLists.txt one level up)'
+
+    # Use parent dir (so run from build/ or any subdir)
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF"
+    $alts = @(
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=ON"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+# wildcard matching (no regex):
+elseif ($cwd -ilike '*wc_clean_mcnk*' -or $cwd -ilike '*wc_clean_m2*') {
+    $proj = if ($cwd -ilike '*wc_clean_mcnk*') { 'wc_clean_mcnk' } else { 'wc_clean_m2' }
+# regex match
+#elseif ($cwd -imatch '(?<proj>wc_clean_mcnk|wc_clean_m2)') {
+#    $proj = $Matches['proj']
+    $null = Test-CMakeLists -ParentDir -Context "$proj (expecting CMakeLists.txt one level up)"
+
+    # Use parent dir (so run from build/ or any subdir)
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=OFF -DLIBWOW_DLL=OFF -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=OFF -DENABLE_MEMORY=OFF"
+    $alts = @(
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=ON -DLIBWOW_DLL=ON -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=OFF -DENABLE_MEMORY=OFF",
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DGFX_DLL=ON -DLIBWOW_DLL=ON -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=ON -DENABLE_MEMORY=ON"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+elseif ($cwd -ilike '*wc_clean_new*') {
+    $null = Test-CMakeLists -ParentDir -Context "wc_clean_new (expecting CMakeLists.txt one level up)"
+
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=OFF -DENABLE_MEMORY=OFF -DENABLE_WANDER=ON"
+    $alts = @(
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=ON -DENABLE_MEMORY=OFF -DENABLE_WANDER=ON",
+        "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DENABLE_DEBUG_RENDERING=ON -DENABLE_PERFORMANCE=ON -DENABLE_MEMORY=ON -DENABLE_WANDER=OFF"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+elseif ($cwd -ilike '*gfx_dll*gfx*') {
+    $null = Test-CMakeLists -ParentDir -Context 'gfx_dll/gfx (expecting CMakeLists.txt one level up)'
+
+    $main = "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType -DGFX_ENABLE_GLFW_WIN32=ON"
+    $alts = @(
+        "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType -DGFX_ENABLE_GLFW_WIN32=OFF"
+    )
+
+    Run-Or-Print $main
+    Print-Alternatives $alts
+}
+elseif (($cwd -imatch 'GptGen') -and ($cwd -imatch 'cpp')) {
+    $null = Test-CMakeLists -ParentDir -Context 'GptGen cpp (expecting CMakeLists.txt one level up)'
+
+    $main = "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=OFF -DBUILD_TESTS=ON"
+
+    Run-Or-Print $main
+
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "alternative cmake commands:"
+
+        Write-Output ""
+        Write-Output "AppConfig disabled:"
+        Write-Output "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=OFF -DUSE_VCPKG=OFF -DBUILD_TESTS=ON"
+
+        $vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
+
+        Write-Output ""
+        Write-Output "with vcpkg:"
+        if (Test-Path $vcpkgPrimary) {
+            Write-Output "cmake .. -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+        elseif (Test-Path $vcpkgSecondary) {
+            Write-Output "cmake .. -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+        else {
+            Write-Output "(no vcpkg toolchain found at expected paths)"
+            Write-Output "cmake .. -DCMAKE_TOOLCHAIN_FILE=`"C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+
+        Write-Output ""
+        Write-Output "from project dir instead of build dir:"
+        Write-Output "cmake -B build -S . -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=OFF -DBUILD_TESTS=ON"
+
+        Write-Output ""
+        Write-Output "from project dir with vcpkg:"
+        if (Test-Path $vcpkgPrimary) {
+            Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPrimary`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+        elseif (Test-Path $vcpkgSecondary) {
+            Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgSecondary`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+        else {
+            Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=ON -DUSE_VCPKG=ON -DBUILD_TESTS=ON"
+        }
+    }
+}
+else {
+    # Default fallback
+    #$null = Test-CMakeLists -ParentDir
+    $null = Test-CMakeLists -ParentDir -Context (Split-Path -Leaf (Get-Location))
+
+    Write-Host "No cmake command found for: $cwd" -ForegroundColor DarkYellow
+    Write-Host "Using default cmake command..." -ForegroundColor DarkYellow
+    $main = "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType"
+    Run-Or-Print $main
+}
+
