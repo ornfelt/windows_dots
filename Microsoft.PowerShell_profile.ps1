@@ -113,9 +113,9 @@ function Invoke-FuzzyProviderNormalized {
     [Microsoft.PowerShell.PSConsoleReadLine]::Insert($selected)
 }
 
-Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
-    Invoke-FuzzyProviderNormalized
-}
+#Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
+#    Invoke-FuzzyProviderNormalized
+#}
 
 # alt 3: plain fzf
 Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
