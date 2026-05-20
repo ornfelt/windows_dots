@@ -123,7 +123,7 @@ function Test-CMakeLists {
         Write-Host "Then run the command again!" -ForegroundColor DarkYellow
     }
     Write-Host "Switching to PRINT-ONLY mode." -ForegroundColor DarkYellow
-    Write-Output ""
+    Write-Host ""
     $script:OnlyPrint = $true
     return $false
 }
