@@ -269,6 +269,27 @@ local function get_local_ipv4(debug)
   return "127.0.0.1"
 end
 
+-- Resolve an endpoint URL from a user override.
+-- nil/empty/whitespace/"local" (case-insensitive) -> use get_local_ipv4() + default port/path
+-- contains '/' -> use as-is (full url)
+-- otherwise -> treat as host/ip, combine with default port/path
+local function resolve_url(override, default_port, default_path)
+  if type(override) == "string" then
+    override = override:match("^%s*(.-)%s*$")
+  end
+
+  if not override or override == "" or override:lower() == "local" then
+    local ip = get_local_ipv4()
+    return ("http://%s:%d%s"):format(ip, default_port, default_path)
+  end
+
+  if override:find("/", 1, true) then
+    return override
+  end
+
+  return ("http://%s:%d%s"):format(override, default_port, default_path)
+end
+
 local function get_llm_text(decoded_response)
   if not decoded_response then
     return nil
@@ -306,12 +327,16 @@ local function llm()
 
   --local url = "http://127.0.0.1:8080/completion"
   --local url = "http://localhost:8080/completion"
-  --local url = ("http://localhost:8080/v1/completions") -- for my custom local llamacpp-like API
-  local ip = get_local_ipv4()
+  --local url = "http://localhost:8080/v1/completions" -- for my custom local llamacpp-like API
+  --local ip = get_local_ipv4()
+  --if should_debug_print then
+  --  print("local ip: " .. ip)
+  --end
+  --local url = ("http://%s:8080/completion"):format(ip)
+  local url = resolve_url(myconfig.get_llama_url_override(), 8080, "/completion")
   if should_debug_print then
-    print("local ip: " .. ip)
+    print("llm url: " .. url)
   end
-  local url = ("http://%s:8080/completion"):format(ip)
 
   local buffer_content = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
 
@@ -355,12 +380,16 @@ local function ollama(model_override)
   local should_debug_print = myconfig.should_debug_print()
 
   --local url = "http://127.0.0.1:11434/api/generate"
-  local url = "http://localhost:11434/api/generate"
+  --local url = "http://localhost:11434/api/generate"
   --local ip = get_local_ipv4()
   --if should_debug_print then
   --  print("local ip: " .. ip)
   --end
   --local url = ("http://%s:11434/api/generate"):format(ip)
+  local url = resolve_url(myconfig.get_ollama_url_override(), 11434, "/api/generate")
+  if should_debug_print then
+    print("ollama url: " .. url)
+  end
 
   local buffer_content = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
 
@@ -444,11 +473,15 @@ local function llm_stream()
   local should_debug_print = myconfig.should_debug_print()
 
   --local url = ("http://localhost:8080/v1/completions") -- for my custom local llamacpp-like API
-  local ip = get_local_ipv4()
+  --local ip = get_local_ipv4()
+  --if should_debug_print then
+  --  print("local ip: " .. ip)
+  --end
+  --local url = ("http://%s:8080/completion"):format(ip)
+  local url = resolve_url(myconfig.get_llama_url_override(), 8080, "/completion")
   if should_debug_print then
-    print("local ip: " .. ip)
+    print("llm_stream url: " .. url)
   end
-  local url = ("http://%s:8080/completion"):format(ip)
 
   local buffer_content = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
 
@@ -519,12 +552,16 @@ local function ollama_stream(model_override)
   local should_debug_print = myconfig.should_debug_print()
 
   --local url = "http://127.0.0.1:11434/api/generate"
-  local url = "http://localhost:11434/api/generate"
+  --local url = "http://localhost:11434/api/generate"
   --local ip = get_local_ipv4()
   --if should_debug_print then
   --  print("local ip: " .. ip)
   --end
   --local url = ("http://%s:11434/api/generate"):format(ip)
+  local url = resolve_url(myconfig.get_ollama_url_override(), 11434, "/api/generate")
+  if should_debug_print then
+    print("ollama_stream url: " .. url)
+  end
 
   local buffer_content = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
 

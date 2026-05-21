@@ -35,6 +35,8 @@ local commands = {
   { label = "Config - ToggleUseFilePickerForCommands", cmd = "ToggleUseFilePickerForCommands" },
   { label = "Config - ToggleUseCustomStatusline", cmd = "ToggleUseCustomStatusline" },
   { label = "Config - ToggleUseCustomLspForSql", cmd = "ToggleUseCustomLspForSql" },
+  { label = "Config - SetLlamaUrl", cmd = "SetLlamaUrl" },
+  { label = "Config - SetOllamaUrl", cmd = "SetOllamaUrl" },
   { label = "Config - PrintConfig", cmd = "PrintConfig" },
   { label = "Llama", cmd = "Llm" },
   { label = "LlamaStream", cmd = "LlmStream" },
