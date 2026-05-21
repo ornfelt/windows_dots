@@ -554,7 +554,8 @@ if (-not $matched) {
             'live_general.py',
             'live_orders.py',
             'live_pending.py',
-            'live_useractionlog.py'
+            'live_useractionlog.py',
+            'live_gpt_stats.py'
         )
 
         $relPaths = $liveFiles | ForEach-Object { "$prefix/$_" }
