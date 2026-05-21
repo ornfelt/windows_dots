@@ -6,7 +6,9 @@ local commands = {
   { label = "PackerLoad", cmd = "PackerLoad" },
   { label = "PackerSync", cmd = "PackerSync" },
   -- Built-in vim.pack
+  { label = "VimPackGet", cmd = "lua print(vim.inspect(vim.pack.get()))" },
   { label = "VimPackUpdate", cmd = "lua vim.pack.update()" },
+  { label = "VimPackStatus", cmd = "VimPackStatus" },
   -- Lazy
   { label = "Lazy", cmd = "Lazy" },
   -- Markview
@@ -246,6 +248,9 @@ local selections_to_print = {
   ["PrintConfig"] = true,
   ["FileInfo"] = true,
   ["LocalIP"] = true,
+  ["VimPackUpdate"] = true,
+  ["VimPackStatus"] = true,
+  ["VimPackGet"] = true,
 }
 
 local myconfig = require("myconfig")
