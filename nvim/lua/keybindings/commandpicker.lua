@@ -250,7 +250,6 @@ local selections_to_print = {
   ["PrintConfig"] = true,
   ["FileInfo"] = true,
   ["LocalIP"] = true,
-  ["VimPackUpdate"] = true,
   ["VimPackStatus"] = true,
   ["VimPackGet"] = true,
 }
