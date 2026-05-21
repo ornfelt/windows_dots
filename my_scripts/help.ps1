@@ -128,13 +128,16 @@ function Show-Git-Help {
     Write-Host "git log --graph --decorate" -ForegroundColor Blue
 
     Write-Host "# Generate diff showing changes from latest commit:" -ForegroundColor DarkGray
-    Write-Host "git show HEAD | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+    #Write-Host "git show HEAD | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+    Write-Host "git show HEAD --output=latest_changes.diff" -ForegroundColor Blue
 
     Write-Host "# Generate diff showing changes from second latest commit (use HEAD^^ for third etc.):" -ForegroundColor DarkGray
-    Write-Host "git show HEAD^ | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+    #Write-Host "git show HEAD^ | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+    Write-Host "git show HEAD^ --output=latest_changes.diff" -ForegroundColor Blue
 
     Write-Host "# Generate diff for specified commit id, filtering on specific file type:" -ForegroundColor DarkGray
-    Write-Host "git show c7aa908 -- '*.go' | Set-Content -Encoding UTF8 go_fixes.diff" -ForegroundColor Blue
+    #Write-Host "git show c7aa908 -- '*.go' | Set-Content -Encoding UTF8 go_fixes.diff" -ForegroundColor Blue
+    Write-Host "git show c7aa908 --output=go_fixes.diff -- '*.go'" -ForegroundColor Blue
 
     Write-Host "# Generate diff between specific commit and now, filtering on specific file types:" -ForegroundColor DarkGray
     Write-Host "git diff cbceb5a..HEAD -- '**/*.java' '*.cs' > new_java_cs_changes.diff" -ForegroundColor Blue
