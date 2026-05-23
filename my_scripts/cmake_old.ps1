@@ -463,6 +463,36 @@ elseif (($cwd -imatch 'GptGen') -and ($cwd -imatch 'cpp')) {
         }
     }
 }
+elseif ($cwd -ilike '*utils*llama3_api*') {
+    $null = Test-CMakeLists -ParentDir -Context 'utils/llama3_api (expecting CMakeLists.txt one level up)'
+
+    $base = "-DCMAKE_BUILD_TYPE=$BuildType -DUSE_DROGON=OFF -DUSE_VCPKG=OFF -DUSE_WIN_H=OFF -DUSE_PCRE=OFF"
+
+    $main = "cmake .. $base"
+
+    Run-Or-Print $main
+
+    if ($OnlyPrint) {
+        Write-Output ""
+        Write-Output "alternative cmake commands:"
+
+        Write-Output ""
+        Write-Output "with Drogon:"
+        Write-Output "cmake .. $($base -replace 'USE_DROGON=OFF', 'USE_DROGON=ON')"
+
+        Write-Output ""
+        Write-Output "with vcpkg:"
+        Write-Output "cmake .. $($base -replace 'USE_VCPKG=OFF', 'USE_VCPKG=ON')"
+
+        Write-Output ""
+        Write-Output "with win.h shim:"
+        Write-Output "cmake .. $($base -replace 'USE_WIN_H=OFF', 'USE_WIN_H=ON')"
+
+        Write-Output ""
+        Write-Output "with PCRE:"
+        Write-Output "cmake .. $($base -replace 'USE_PCRE=OFF', 'USE_PCRE=ON')"
+    }
+}
 else {
     # Default fallback
     #$null = Test-CMakeLists -ParentDir
