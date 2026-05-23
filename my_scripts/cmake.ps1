@@ -177,7 +177,16 @@ function Ensure-CMakeDetected {
         $label = if ([string]::IsNullOrWhiteSpace($Context)) { 'this project' } else { $Context }
         Write-Host ""
         Write-Host "CMakeLists.txt not found in current or parent directory - $label" -ForegroundColor Yellow
+        #Write-Host "Maybe try:`n-> mkdir build; cd build`nThen try again!" -ForegroundColor Yellow
+        #Write-Host "Switching to PRINT-ONLY mode." -ForegroundColor Yellow
+        #Write-Host ""
+        #$script:OnlyPrint = 'true'
+        ## Best-guess prefix for the warned printout:
+        #return @{ Prefix = 'cmake ..'; Location = 'parent' }
         exit 1
+    }
+    if ($d.Location -eq 'current') {
+        Write-Host "Tip: mkdir build; cd build  (out-of-source alternative)" -ForegroundColor DarkGray
     }
     return $d
 }
