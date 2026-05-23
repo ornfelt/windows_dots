@@ -158,6 +158,9 @@ $azMatch = $cwd -match 'azerothcore'
 $tcMatch = $cwd -match 'trinitycore'
 $wowCppMatch = ($cwd -match 'my_web_wow') -and ($cwd -match 'c\+\+')
 
+$vcpkgPrimary = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
+$vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
+
 if ($azMatch) {
     $null = Test-CMakeLists -ParentDir -Context 'azerothcore (expecting CMakeLists.txt one level up)'
     # linux-specific...
@@ -189,8 +192,6 @@ elseif ($wowCppMatch) {
     $base = "-DENABLE_CUSTOM_OPT_FLAGS=ON -DUSE_ASYNC=ON -DWITH_DEBUG_TIMING=OFF -DUSE_CUSTOM_THREADPOOL=OFF -DENABLE_WANDER=ON -DUSE_CUSTOM_GLM=ON -DUSE_SDL2=OFF -DUSE_IMGUI=ON -DWITH_PERFORMANCE=OFF -DCMAKE_BUILD_TYPE=$BuildType"
 
     # print vcpkg alternative
-    $vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
-    $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
     Write-Output ""
     Write-Host "alternative cmake with vcpkg (uses real GLM):" -ForegroundColor DarkBlue
     if (Test-Path $vcpkgPrimary) {
@@ -430,9 +431,6 @@ elseif (($cwd -imatch 'GptGen') -and ($cwd -imatch 'cpp')) {
         Write-Output "AppConfig disabled:"
         Write-Output "cmake .. -DCMAKE_BUILD_TYPE=$BuildType -DUSE_APPCONFIG=OFF -DUSE_VCPKG=OFF -DBUILD_TESTS=ON"
 
-        $vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        $vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
-
         Write-Output ""
         Write-Output "with vcpkg:"
         if (Test-Path $vcpkgPrimary) {
@@ -491,6 +489,27 @@ elseif ($cwd -ilike '*utils*llama3_api*') {
         Write-Output ""
         Write-Output "with PCRE:"
         Write-Output "cmake .. $($base -replace 'USE_PCRE=OFF', 'USE_PCRE=ON')"
+
+        $vcpkgPath = $null
+        if (Test-Path -LiteralPath $vcpkgPrimary) {
+            $vcpkgPath = $vcpkgPrimary
+        }
+        elseif (Test-Path -LiteralPath $vcpkgSecondary) {
+            $vcpkgPath = $vcpkgSecondary
+        }
+
+        Write-Output ""
+        Write-Output "from project dir with vcpkg:"
+
+        if ($vcpkgPath) {
+            Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPath`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_VCPKG=ON"
+                Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPath`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_VCPKG=ON -DUSE_DROGON=ON"
+        }
+        else {
+            Write-Output "(no vcpkg toolchain found at expected paths)"
+                Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_VCPKG=ON"
+                Write-Output "cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=`"C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`" -DCMAKE_BUILD_TYPE=$BuildType -DUSE_VCPKG=ON -DUSE_DROGON=ON"
+        }
     }
 }
 else {
@@ -503,4 +522,3 @@ else {
     $main = "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType"
     Run-Or-Print $main
 }
-
