@@ -1,37 +1,40 @@
 param(
-    [string]$Arg = "",
-    [string]$Arg2 = ""
+    [Parameter(Position=0)]
+    [string]$Arg,
+
+    [Parameter(Position=1)]
+    [string]$Arg2
 )
 
-# Usage:
-# .\cmake.ps1            # detect path and RUN the chosen cmake
-# .\cmake.ps1 onlyprint  # detect path and PRINT commands (no execution)
-# .\cmake.ps1 r/release  # RUN in Release mode
-# .\cmake.ps1 r foo      # RUN in Release mode and PRINT commands (no execution)
-# .\cmake.ps1 rd         # RUN in RelWithDebInfo mode
-# .\cmake.ps1 rwdi foo   # RUN in RelWithDebInfo mode and PRINT commands
+# cmake.ps1 - data-driven cmake helper.
 #
-# Project definitions live in $Env:my_notes_path\scripts\cmake-projects.json
-# (shared with cmake.sh).
+# Patterns are loaded from:  $Env:my_notes_path/scripts/cmake_patterns.json
+#
+# Usage:
+#   .\cmake.ps1                 detect path and RUN the chosen cmake
+#   .\cmake.ps1 onlyprint       detect path and PRINT commands (no execution)
+#   .\cmake.ps1 r | release     RUN in Release mode
+#   .\cmake.ps1 r foo           Release mode and PRINT-ONLY
+#   .\cmake.ps1 rd | rwdi       RUN in RelWithDebInfo mode
+#   .\cmake.ps1 h | --help      show help
 
-# Help check (case-insensitive)
-$helpTokens = @("h", "help", "-h", "--help")
-if ($helpTokens -contains $Arg.ToLower() -or $helpTokens -contains $Arg2.ToLower()) {
-    @"
-cmake.ps1 - context-aware cmake helper
+# ---------- Help ----------
+function Show-Help {
+@"
+cmake.ps1 - data-driven cmake helper
 
 Usage:
   .\cmake.ps1
-      Detect path and RUN the chosen cmake command.
+      Detect path, pick a pattern, RUN the cmake command.
 
   .\cmake.ps1 onlyprint
-      Detect path and PRINT commands (no execution).
+      Detect path, pick a pattern, PRINT commands only.
 
   .\cmake.ps1 r | release
-      Run in Release mode.
+      Run in Release mode (sets BuildType=Release).
 
   .\cmake.ps1 r foo
-      Release mode + PRINT-ONLY (because a second arg exists).
+      Release mode + PRINT-ONLY (any second arg flips to print-only).
 
   .\cmake.ps1 rd | rwdi | relwithdebinfo
       Run in RelWithDebInfo mode.
@@ -40,331 +43,317 @@ Usage:
       Show this help.
 
 Notes:
-  - BuildType defaults to Debug unless you pass r/release.
-  - Project definitions live in:
-      `$Env:my_notes_path\scripts\cmake-projects.json
+  - BuildType defaults to Debug unless r/release or rd/rwdi is passed.
+  - The script picks a cmake template based on the current working directory
+    by matching keywords from cmake_patterns.json (ordered substring match,
+    case-insensitive).
+  - The cmake invocation prefix is auto-detected:
+        ./CMakeLists.txt  -> 'cmake -B build -S . ...'
+        ../CMakeLists.txt -> 'cmake .. ...'
+        neither           -> warn + force PRINT-ONLY
 "@ | Write-Output
+}
+
+$helpTokens = @('h','help','-h','--help')
+if (
+    (-not [string]::IsNullOrWhiteSpace($Arg)  -and $helpTokens -contains $Arg.ToLowerInvariant()) -or
+    (-not [string]::IsNullOrWhiteSpace($Arg2) -and $helpTokens -contains $Arg2.ToLowerInvariant())
+) {
+    Show-Help
     exit 0
 }
 
-# Print-only unless argument is "r" or "release" (case-insensitive)
-$OnlyPrint = $null
-$Release = $null
-$RelWithDebInfo = $null
-$argLc = $Arg.ToLower()
+# ---------- Arg parsing (same behavior as before) ----------
+$OnlyPrint      = $null
+$Release        = $false
+$RelWithDebInfo = $false
 
-if ($Arg) {
-    if ($argLc -eq "r" -or $argLc -eq "release") {
+if (-not [string]::IsNullOrWhiteSpace($Arg)) {
+    $arg_lc = $Arg.ToLowerInvariant()
+
+    if ($arg_lc -eq 'r' -or $arg_lc -eq 'release') {
         $Release = $true
-        if ($Arg2) { $OnlyPrint = $true }
+        if (-not [string]::IsNullOrWhiteSpace($Arg2)) { $OnlyPrint = 'true' }
     }
-    elseif ($argLc -eq "rwdi" -or $argLc -eq "rd" -or $argLc -eq "relwithdebinfo") {
+    elseif ($arg_lc -eq 'rwdi' -or $arg_lc -eq 'rd' -or $arg_lc -eq 'relwithdebinfo') {
         $RelWithDebInfo = $true
-        if ($Arg2) { $OnlyPrint = $true }
+        if (-not [string]::IsNullOrWhiteSpace($Arg2)) { $OnlyPrint = 'true' }
     }
     else {
-        $OnlyPrint = $true
+        $OnlyPrint = 'true'
     }
 
     Write-Host "If needed, run:" -ForegroundColor Blue
-    Write-Host "make -j`$(nproc)" -ForegroundColor Blue
+    Write-Host 'make -j$([Environment]::ProcessorCount)' -ForegroundColor Blue
     Write-Output ""
 }
 
-# build type helper
-$BuildType = "Debug"
-if ($Release)        { $BuildType = "Release" }
-if ($RelWithDebInfo) { $BuildType = "RelWithDebInfo" }
+$BuildType = 'Debug'
+if     ($Release)        { $BuildType = 'Release' }
+elseif ($RelWithDebInfo) { $BuildType = 'RelWithDebInfo' }
 
-# Debug print
 if ($OnlyPrint) {
-    Write-Host "[OnlyPrint]=ON  [BuildType]=$BuildType"  -ForegroundColor Magenta
+    Write-Host ("[OnlyPrint]=ON  [BuildType]={0}" -f $BuildType) -ForegroundColor Magenta
 } else {
-    Write-Host "[OnlyPrint]=OFF  [BuildType]=$BuildType" -ForegroundColor Magenta
+    Write-Host ("[OnlyPrint]=OFF  [BuildType]={0}" -f $BuildType) -ForegroundColor Magenta
 }
 
-# get current working dir
-$cwd = (Get-Location).Path
-$lc = $cwd.ToLower()
+# ---------- vcpkg toolchain paths (hard-coded) ----------
+$vcpkgPrimary   = "$Env:code_root_dir/C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
+$vcpkgSecondary = 'C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake'
 
-function Run-Or-Print($cmd) {
-    if ($OnlyPrint) {
-        Write-Host $cmd -ForegroundColor Cyan
-    } else {
-        Write-Host "Executing: $cmd" -ForegroundColor Cyan
-        Invoke-Expression $cmd
-    }
-}
-
-function Print-Alternatives($alts) {
-    if ($OnlyPrint -and $alts.Count -gt 0) {
-        Write-Output ""
-        Write-Output "alternative cmake commands:"
-        foreach ($l in $alts) {
-            Write-Output $l
-            Write-Output ""
-        }
-    }
-}
-
-function Test-CMakeLists {
-    param(
-        [ValidateSet("current","parent")] [string]$Where = "current",
-        [string]$Context = "this project"
-    )
-    $base = if ($Where -eq "parent") { Split-Path -Parent $cwd } else { $cwd }
-    $cmakePath = Join-Path $base "CMakeLists.txt"
-    if (Test-Path $cmakePath) { return $true }
-
-    Write-Host "CMakeLists.txt not found at: $cmakePath - $Context" -ForegroundColor DarkYellow
-    if ($Where -eq "parent") {
-        Write-Host "Maybe try:" -ForegroundColor DarkYellow
-        Write-Host "-> mkdir build; cd build" -ForegroundColor DarkYellow
-        Write-Host "Then run the command again!" -ForegroundColor DarkYellow
-    }
-    Write-Host "Switching to PRINT-ONLY mode." -ForegroundColor DarkYellow
-    Write-Host ""
-    $script:OnlyPrint = $true
-    return $false
-}
-
-# JSON-driven dispatch
-
-# Detect platform so the shared JSON can be filtered.
-$Platform = if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) { 'windows' } else { 'linux' }
-
-# vcpkg path detection (Windows-relevant).
 function Get-VcpkgPath {
-    $primary = $null
-    if ($Env:code_root_dir) {
-        $primary = Join-Path $Env:code_root_dir "C++/diablo_devilutionX/vcpkg/scripts/buildsystems/vcpkg.cmake"
-    }
-    $secondary = "C:/local/bin/vcpkg/scripts/buildsystems/vcpkg.cmake"
-
-    if ($primary -and (Test-Path $primary))  { return $primary }
-    if (Test-Path $secondary)                 { return $secondary }
+    if (Test-Path -LiteralPath $vcpkgPrimary)   { return $vcpkgPrimary }
+    if (Test-Path -LiteralPath $vcpkgSecondary) { return $vcpkgSecondary }
     return $null
 }
 
-# Substitute {BuildType}, {VCPKG}, {BASE}, {NPROC} tokens.
-function Expand-Tokens([string]$text, [string]$base = "", [string]$vcpkg = "", [int]$nproc = 0) {
-    if ($null -eq $text) { return "" }
-    $out = $text
-    $out = $out.Replace('{BuildType}', $BuildType)
-    $out = $out.Replace('{VCPKG}',     $vcpkg)
-    $out = $out.Replace('{BASE}',      $base)
-    $out = $out.Replace('{NPROC}',     "$nproc")
-    return $out
+# ---------- Load patterns JSON ----------
+$notesPath = $Env:my_notes_path
+if ([string]::IsNullOrWhiteSpace($notesPath)) {
+    $notesPath = $PSScriptRoot
+    Write-Host "Warning: `$Env:my_notes_path is not set. Falling back to script directory: $notesPath" -ForegroundColor Yellow
+}
+$patternsFile = Join-Path $notesPath 'scripts/cmake_patterns.json'
+
+if (-not (Test-Path -LiteralPath $patternsFile)) {
+    Write-Host "Patterns file not found: $patternsFile" -ForegroundColor Red
+    exit 1
 }
 
-# Item-level platform filter (used for extras / alternatives / instructions / pre_main_text items).
-function Test-ItemPlatform($item, [string]$plat) {
-    if ($null -eq $item) { return $false }
-    if ($item -is [string]) { return $true }
-    if (-not ($item.PSObject.Properties.Name -contains 'platform')) { return $true }
-    if (-not $item.platform) { return $true }
-    return ($item.platform -eq $plat)
+try {
+    $config = Get-Content -Raw -LiteralPath $patternsFile | ConvertFrom-Json
+} catch {
+    Write-Host "Failed to parse $patternsFile : $_" -ForegroundColor Red
+    exit 1
 }
 
-# Project-level match: optional platform AND match.all/.any against lowercased $cwd.
-function Test-ProjectMatch($proj, [string]$lcCwd, [string]$plat) {
-    if ($proj.PSObject.Properties.Name -contains 'platform' -and $proj.platform) {
-        if ($proj.platform -ne $plat) { return $false }
-    }
-    $m = $proj.match
-    if (-not $m) { return $false }
+# ---------- Path matching ----------
+$cwd      = (Get-Location).Path
+$cwdLower = $cwd.ToLower()
 
-    $hasAll = $false; $hasAny = $false
-    if ($m.PSObject.Properties.Name -contains 'all' -and $m.all -and $m.all.Count -gt 0) { $hasAll = $true }
-    if ($m.PSObject.Properties.Name -contains 'any' -and $m.any -and $m.any.Count -gt 0) { $hasAny = $true }
-    if (-not ($hasAll -or $hasAny)) { return $false }
-
-    if ($hasAll) {
-        foreach ($needle in $m.all) {
-            if ($lcCwd.IndexOf($needle.ToLower()) -lt 0) { return $false }
-        }
-    }
-    if ($hasAny) {
-        $ok = $false
-        foreach ($needle in $m.any) {
-            if ($lcCwd.IndexOf($needle.ToLower()) -ge 0) { $ok = $true; break }
-        }
-        if (-not $ok) { return $false }
+function Test-PathContainsInOrder {
+    param([string[]]$keywords)
+    if ($null -eq $keywords -or $keywords.Count -eq 0) { return $false }
+    $pos = 0
+    foreach ($kw in $keywords) {
+        $idx = $cwdLower.IndexOf($kw.ToLower(), $pos)
+        if ($idx -lt 0) { return $false }
+        $pos = $idx + $kw.Length
     }
     return $true
 }
 
-function Write-MaybeColored([string]$text, $color) {
-    if ($color) { Write-Host $text -ForegroundColor $color } else { Write-Output $text }
+function Test-PatternMatches {
+    param($pattern)
+    $kw = $pattern.keywords
+    if ($null -eq $kw -or $kw.Count -eq 0) { return $false }
+
+    # Single group: array of strings.   Multi-group: array of arrays.
+    if ($kw[0] -is [string]) {
+        return Test-PathContainsInOrder $kw
+    }
+    foreach ($group in $kw) {
+        if (Test-PathContainsInOrder $group) { return $true }
+    }
+    return $false
 }
 
-function Invoke-Project($proj) {
-    # cmakelists check
-    if ($proj.PSObject.Properties.Name -contains 'cmakelists_check' -and $proj.cmakelists_check) {
-        Test-CMakeLists -Where $proj.cmakelists_check -Context $proj.context | Out-Null
+# ---------- CMake prefix auto-detection ----------
+function Detect-CMakePrefix {
+    if (Test-Path -LiteralPath './CMakeLists.txt') {
+        return @{ Prefix = 'cmake -B build -S .'; Location = 'current' }
     }
-
-    # Compute tokens
-    $vcpkg = Get-VcpkgPath
-    $nproc = [Environment]::ProcessorCount
-    $base = ""
-    if ($proj.PSObject.Properties.Name -contains 'base_flags' -and $proj.base_flags) {
-        $base = Expand-Tokens -text $proj.base_flags -vcpkg $vcpkg -nproc $nproc
+    if (Test-Path -LiteralPath '../CMakeLists.txt') {
+        return @{ Prefix = 'cmake ..';            Location = 'parent'  }
     }
+    return @{ Prefix = $null; Location = 'none' }
+}
 
-    # pre_main_vcpkg block (filtered by its own platform tag)
-    if ($proj.PSObject.Properties.Name -contains 'pre_main_vcpkg' -and $proj.pre_main_vcpkg) {
-        $pmv = $proj.pre_main_vcpkg
-        $pmvPlat = if ($pmv.PSObject.Properties.Name -contains 'platform' -and $pmv.platform) { $pmv.platform } else { 'any' }
-        if ($pmvPlat -eq 'any' -or $pmvPlat -eq $Platform) {
-            Write-Output ""
-            if ($pmv.header) { Write-MaybeColored $pmv.header $pmv.header_color }
-            if ($vcpkg) {
-                $cmd = Expand-Tokens -text $pmv.command_template -base $base -vcpkg $vcpkg -nproc $nproc
-                Write-MaybeColored $cmd $pmv.command_color
-            } else {
-                $missing = if ($pmv.missing_text) { $pmv.missing_text } else { "(no vcpkg toolchain found at expected paths)" }
-                Write-MaybeColored $missing $pmv.command_color
-            }
-            Write-Output ""
+function Ensure-CMakeDetected {
+    param([string]$Context)
+    $d = Detect-CMakePrefix
+    if ($d.Location -eq 'none') {
+        $label = if ([string]::IsNullOrWhiteSpace($Context)) { 'this project' } else { $Context }
+        Write-Host ""
+        Write-Host "CMakeLists.txt not found in current or parent directory - $label" -ForegroundColor Yellow
+        exit 1
+    }
+    return $d
+}
+
+# ---------- Substitution & flag formatting ----------
+function Substitute-Tokens {
+    param([string]$Value)
+    if ([string]::IsNullOrEmpty($Value)) { return $Value }
+    $r = $Value -replace '@BuildType', $BuildType
+    $r = $r     -replace '\{NPROC\}',  ([string][Environment]::ProcessorCount)
+    return $r
+}
+
+function Get-MergedFlags {
+    # Returns an [ordered] hashtable: base + toggles (toggles override).
+    param($base, $toggles)
+    $merged = [ordered]@{}
+    if ($null -ne $base) {
+        foreach ($p in $base.PSObject.Properties) {
+            $merged[$p.Name] = $p.Value
         }
     }
-
-    # pre_main_text array (simple platform-tagged colored notes)
-    if ($proj.PSObject.Properties.Name -contains 'pre_main_text' -and $proj.pre_main_text) {
-        foreach ($item in $proj.pre_main_text) {
-            if (-not (Test-ItemPlatform $item $Platform)) { continue }
-            Write-Output ""
-            $t = Expand-Tokens -text $item.text -base $base -vcpkg $vcpkg -nproc $nproc
-            Write-MaybeColored $t $item.color
-            Write-Output ""
+    if ($null -ne $toggles) {
+        foreach ($p in $toggles.PSObject.Properties) {
+            $merged[$p.Name] = $p.Value
         }
     }
+    return $merged
+}
 
-    # instructions short-circuit main (used by neovim)
-    if ($proj.PSObject.Properties.Name -contains 'instructions' -and $proj.instructions) {
-        foreach ($item in $proj.instructions) {
-            if ($item -is [string]) {
-                Write-Output (Expand-Tokens -text $item -base $base -vcpkg $vcpkg -nproc $nproc)
-            } else {
-                if (-not (Test-ItemPlatform $item $Platform)) { continue }
-                # PS1 implements no `if` predicates; items with `if` are skipped here.
-                if ($item.PSObject.Properties.Name -contains 'if' -and $item.if) { continue }
-                Write-Output (Expand-Tokens -text $item.text -base $base -vcpkg $vcpkg -nproc $nproc)
-            }
+function Convert-FlagsToString {
+    param($flagsOrderedDict)
+    $parts = @()
+    foreach ($key in $flagsOrderedDict.Keys) {
+        $val = Substitute-Tokens ([string]$flagsOrderedDict[$key])
+        $parts += "-D$key=$val"
+    }
+    return ($parts -join ' ')
+}
+
+function Run-Or-Print {
+    param([string]$Cmd)
+    if ($OnlyPrint) {
+        Write-Host $Cmd -ForegroundColor Cyan
+    } else {
+        Write-Host "Executing: $Cmd" -ForegroundColor Cyan
+        Invoke-Expression $Cmd
+    }
+}
+
+function Print-OnlyPrintExtras {
+    param($extras)
+    if (-not $OnlyPrint -or $null -eq $extras) { return }
+    foreach ($extra in $extras) {
+        Write-Output ""
+        if ($extra.PSObject.Properties.Name -contains 'label' -and $extra.label) {
+            Write-Output $extra.label
+        }
+        if ($extra.PSObject.Properties.Name -contains 'command' -and $extra.command) {
+            Write-Output (Substitute-Tokens $extra.command)
+        }
+        if ($extra.PSObject.Properties.Name -contains 'lines' -and $extra.lines) {
+            foreach ($l in $extra.lines) { Write-Output (Substitute-Tokens $l) }
+        }
+    }
+}
+
+# ---------- Per-pattern dispatch ----------
+function Invoke-Pattern {
+    param($pattern)
+
+    $ctx = if ($pattern.context_name) { $pattern.context_name } else { 'pattern' }
+
+    # 1) Instructions-only entries (e.g. neovim)
+    if ($pattern.PSObject.Properties.Name -contains 'instructions' -and $null -ne $pattern.instructions) {
+        foreach ($line in $pattern.instructions) {
+            Write-Output (Substitute-Tokens $line)
+        }
+        if ($pattern.PSObject.Properties.Name -contains 'only_print_extras') {
+            Print-OnlyPrintExtras $pattern.only_print_extras
         }
         return
     }
 
-    # main (with platform override)
-    $mainCmd = ""
-    $mainKey = "main_$Platform"
-    if ($proj.PSObject.Properties.Name -contains $mainKey -and $proj.$mainKey) {
-        $mainCmd = $proj.$mainKey
-    }
-    elseif ($proj.PSObject.Properties.Name -contains 'main' -and $proj.main) {
-        $mainCmd = $proj.main
-    }
-    if ($mainCmd) {
-        Run-Or-Print (Expand-Tokens -text $mainCmd -base $base -vcpkg $vcpkg -nproc $nproc)
-    }
+    # 2) Custom-command entries (e.g. ioq3, ollama, dhewm3, llama.cpp)
+    if ($pattern.PSObject.Properties.Name -contains 'custom_command' `
+        -and -not [string]::IsNullOrWhiteSpace($pattern.custom_command)) {
 
-    # alternatives (items may be strings OR {platform, command} objects)
-    if ($proj.PSObject.Properties.Name -contains 'alternatives' -and $proj.alternatives) {
-        $altsArr = @()
-        foreach ($item in $proj.alternatives) {
-            if ($item -is [string]) {
-                $altsArr += Expand-Tokens -text $item -base $base -vcpkg $vcpkg -nproc $nproc
-            } else {
-                if (-not (Test-ItemPlatform $item $Platform)) { continue }
-                $altsArr += Expand-Tokens -text $item.command -base $base -vcpkg $vcpkg -nproc $nproc
-            }
+        # Still warn if no CMakeLists is around (best-effort, doesn't change command)
+        $null = Ensure-CMakeDetected -Context $ctx
+
+        $cmd = Substitute-Tokens $pattern.custom_command
+        Run-Or-Print $cmd
+
+        if ($pattern.PSObject.Properties.Name -contains 'only_print_extras') {
+            Print-OnlyPrintExtras $pattern.only_print_extras
         }
-        if ($altsArr.Count -gt 0) { Print-Alternatives $altsArr }
+        return
     }
 
-    # extras (OnlyPrint mode only)
-    if ($OnlyPrint -and $proj.PSObject.Properties.Name -contains 'extras' -and $proj.extras) {
-        foreach ($item in $proj.extras) {
-            if (-not (Test-ItemPlatform $item $Platform)) { continue }
-            switch ($item.type) {
-                'blank' { Write-Output "" }
-                'text'  { Write-Output (Expand-Tokens -text $item.text -base $base -vcpkg $vcpkg -nproc $nproc) }
-                'label_then_command' {
-                    if ($item.label) { Write-Output $item.label }
-                    Write-Output (Expand-Tokens -text $item.command -base $base -vcpkg $vcpkg -nproc $nproc)
-                }
-                'label_then_vcpkg_command' {
-                    if ($item.label) { Write-Output $item.label }
-                    if ($vcpkg) {
-                        Write-Output (Expand-Tokens -text $item.command -base $base -vcpkg $vcpkg -nproc $nproc)
-                    } else {
-                        Write-Output "(no vcpkg toolchain found at expected paths)"
-                        if ($item.fallback_command) {
-                            Write-Output (Expand-Tokens -text $item.fallback_command -base $base -vcpkg $vcpkg -nproc $nproc)
-                        }
-                    }
-                }
-            }
+    # 3) Standard base_flags + variants pattern
+    $detect = Ensure-CMakeDetected -Context $ctx
+    $cmakePrefix = $detect.Prefix
+
+    $baseFlags = $pattern.base_flags  # PSCustomObject or $null
+
+    # vcpkg alternative (always printed, before main, in DarkBlue)
+    if ($pattern.PSObject.Properties.Name -contains 'vcpkg_support' -and $pattern.vcpkg_support -eq $true) {
+        Write-Output ""
+        Write-Host "alternative cmake with vcpkg:" -ForegroundColor DarkBlue
+        $vcpkgPath = Get-VcpkgPath
+        if ($null -ne $vcpkgPath) {
+            $vcFlags = Get-MergedFlags $baseFlags $null
+            if ($vcFlags.Contains('USE_VCPKG')) { $vcFlags['USE_VCPKG'] = 'ON' }
+            $vcStr = Convert-FlagsToString $vcFlags
+            Write-Host "$cmakePrefix -DCMAKE_TOOLCHAIN_FILE=`"$vcpkgPath`" $vcStr" -ForegroundColor DarkBlue
+        } else {
+            Write-Host "(no vcpkg toolchain found at expected paths)" -ForegroundColor DarkBlue
+            $vcFlags = Get-MergedFlags $baseFlags $null
+            if ($vcFlags.Contains('USE_VCPKG')) { $vcFlags['USE_VCPKG'] = 'ON' }
+            $vcStr = Convert-FlagsToString $vcFlags
+            Write-Host "$cmakePrefix -DCMAKE_TOOLCHAIN_FILE=`"C:/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`" $vcStr" -ForegroundColor DarkBlue
         }
+        Write-Output ""
     }
 
-    # variants_print_only (used by my_web_wow c++)
-    if ($OnlyPrint -and $base -and $proj.PSObject.Properties.Name -contains 'variants_print_only' -and $proj.variants_print_only) {
-        $vp = $proj.variants_print_only
-        $prefix = Expand-Tokens -text $vp.prefix -base $base -vcpkg $vcpkg -nproc $nproc
-        foreach ($v in $vp.items) {
-            $vbase = $base
-            foreach ($pair in $v.replace) {
-                $vbase = $vbase.Replace($pair[0], $pair[1])
-            }
+    # Main command
+    $mainFlags    = Get-MergedFlags $baseFlags $null
+    $mainFlagsStr = Convert-FlagsToString $mainFlags
+    if ([string]::IsNullOrWhiteSpace($mainFlagsStr)) {
+        $main = $cmakePrefix
+    } else {
+        $main = "$cmakePrefix $mainFlagsStr"
+    }
+    Run-Or-Print $main
+
+    # Variants (OnlyPrint only)
+    if ($OnlyPrint `
+        -and $pattern.PSObject.Properties.Name -contains 'variants' `
+        -and $null -ne $pattern.variants -and $pattern.variants.Count -gt 0) {
+
+        Write-Output ""
+        Write-Output "alternative cmake commands:"
+        foreach ($variant in $pattern.variants) {
             Write-Output ""
-            Write-Output ("{0}:" -f $v.label)
-            Write-Output ("{0}{1}" -f $prefix, $vbase)
+            if ($variant.label) { Write-Output ("{0}:" -f $variant.label) }
+            $vFlags = Get-MergedFlags $baseFlags $variant.toggles
+            $vStr   = Convert-FlagsToString $vFlags
+            if ([string]::IsNullOrWhiteSpace($vStr)) {
+                Write-Output $cmakePrefix
+            } else {
+                Write-Output "$cmakePrefix $vStr"
+            }
         }
     }
-}
 
-# Default fallback when no project matched or the JSON isn't usable.
-function Invoke-DefaultFallback {
-    Test-CMakeLists -Where parent -Context (Split-Path -Leaf $cwd) | Out-Null
-    Write-Host "No cmake command found for: $cwd" -ForegroundColor DarkYellow
-    Write-Host "Using default cmake command..."   -ForegroundColor DarkYellow
-    Run-Or-Print "cmake ../ -DCMAKE_BUILD_TYPE=$BuildType"
-}
-
-# Load JSON and dispatch
-$jsonPath = $null
-if ($Env:my_notes_path) {
-    $jsonPath = Join-Path $Env:my_notes_path "scripts/cmake-projects.json"
-}
-
-if (-not $jsonPath -or -not (Test-Path $jsonPath)) {
-    $jsonPathDisplay = $jsonPath
-    if (-not $jsonPathDisplay) {
-        $jsonPathDisplay = '<$Env:my_notes_path unset>'
+    # only_print_extras
+    if ($pattern.PSObject.Properties.Name -contains 'only_print_extras') {
+        Print-OnlyPrintExtras $pattern.only_print_extras
     }
-
-    Write-Host "Warning: cmake-projects.json not found at: $jsonPathDisplay" -ForegroundColor Yellow
-    Invoke-DefaultFallback
-    exit 0
 }
 
-try {
-    $config = Get-Content -Raw -Path $jsonPath | ConvertFrom-Json
-} catch {
-    Write-Host "Warning: failed to parse $jsonPath`: $_" -ForegroundColor Yellow
-    Invoke-DefaultFallback
-    exit 0
+# ---------- Main loop ----------
+$matched = $false
+foreach ($pattern in $config.patterns) {
+    if (Test-PatternMatches $pattern) {
+        Invoke-Pattern $pattern
+        $matched = $true
+        break
+    }
 }
 
-$matched = $null
-foreach ($proj in $config.projects) {
-    if (Test-ProjectMatch $proj $lc $Platform) { $matched = $proj; break }
-}
-
-if ($matched) {
-    Invoke-Project $matched
-} else {
-    Invoke-DefaultFallback
+if (-not $matched) {
+    $detect = Ensure-CMakeDetected -Context (Split-Path -Leaf $cwd)
+    Write-Host "No cmake pattern found for: $cwd" -ForegroundColor DarkYellow
+    Write-Host "Using default cmake command..." -ForegroundColor DarkYellow
+    $main = "$($detect.Prefix) -DCMAKE_BUILD_TYPE=$BuildType"
+    Run-Or-Print $main
 }
