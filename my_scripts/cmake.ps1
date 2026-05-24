@@ -186,7 +186,7 @@ function Ensure-CMakeDetected {
         exit 1
     }
     if ($d.Location -eq 'current') {
-        Write-Host "Tip: mkdir build; cd build  (out-of-source alternative)" -ForegroundColor DarkGray
+        Write-Host "Alternative: mkdir build; cd build" -ForegroundColor DarkGray
     }
     return $d
 }
