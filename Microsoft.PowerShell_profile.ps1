@@ -214,7 +214,7 @@ $aliases = @(
     ".cmake", ".cmangos_update", ".mw", ".mww", ".mwr", ".list_colors", ".list_std_colors",
     ".list_all_colors", ".git_ignore", ".help", ".mwd", ".search_conf", ".dump_files",
     ".diff_shader_git", ".build", ".build_py", ".pkg", ".proc", ".copy_git_msg", ".sln",
-    ".cmake_old", ".fr_py"
+    ".cmake_old", ".cmake_py", ".fr_py"
 )
 
 foreach ($alias in $aliases) {
