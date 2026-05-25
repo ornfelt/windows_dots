@@ -1,34 +1,44 @@
--- md_sync.lua
--- Copies markdown files into the flask md viewer project and keeps them
--- synced on save. Cross-platform: relies on $code_root_dir and the `git` binary.
+-- Copies markdown files into the md viewer project and keeps them
+-- synced on save. Picks py / ts variant from myconfig (UseTsMdViewer).
 --
 -- Commands:
 --   :MdCopy        Copy current .md file to the viewer project (captures git info if any)
 --   :MdCopyAs      Like MdCopy but choose dest filename (avoids collisions)
 --   :MdUnlink      Remove the current file from the viewer project + metadata
 --   :MdOpen        Open the viewer in browser at this file's page
+--
+-- Background sync (BufWritePost) only fires when md_files/<basename> already
+-- exists - i.e. when you've previously :MdCopy'd that file.
 
 require('dbg_log').log_file(debug.getinfo(1, 'S').source)
 
 local myconfig = require("myconfig")
-local code_root_dir = myconfig.code_root_dir
 
 local M = {}
-
 local uv = vim.uv or vim.loop
 
--- ---------- paths ----------
+-- variant + paths
+local DEFAULT_PORTS = { py = 5000, ts = 5001 }
+
+local function variant()
+  return myconfig.should_use_ts_md_viewer() and "ts" or "py"
+end
+
+local function port()
+  return DEFAULT_PORTS[variant()] or 5000
+end
 
 local function code_root()
-  local v = os.getenv("code_root_dir")
-  if not v or v == "" then return nil end
-  return (v:gsub("\\", "/"))
+  local r = myconfig.code_root_dir
+  if not r or r == "" then return nil end
+  -- myconfig appends a trailing slash; strip so we can safely join below.
+  return (r:gsub("/+$", ""))
 end
 
 local function project_dir()
   local r = code_root()
   if not r then return nil end
-  return r .. "/Code2/General/utils/md/py"
+  return r .. "/Code2/General/utils/md/" .. variant()
 end
 
 local function md_dir()
@@ -46,7 +56,7 @@ local function norm(p)
   return (p:gsub("\\", "/"))
 end
 
--- ---------- io helpers ----------
+-- io helpers
 
 local function read_file(path)
   local f = io.open(path, "rb")
@@ -64,6 +74,12 @@ local function write_file(path, data)
   return true
 end
 
+local function file_exists(path)
+  local f = io.open(path, "rb")
+  if f then f:close(); return true end
+  return false
+end
+
 local function read_json(path)
   local s = read_file(path)
   if not s or s == "" then return {} end
@@ -73,16 +89,14 @@ local function read_json(path)
 end
 
 local function write_json(path, tbl)
-  -- Pretty-printed JSON (vim.json.encode is compact); good enough for a small map.
-  local s = vim.json.encode(tbl)
-  return write_file(path, s)
+  return write_file(path, vim.json.encode(tbl))
 end
 
 local function ensure_dir(path)
   vim.fn.mkdir(path, "p")
 end
 
--- ---------- git ----------
+-- git
 
 local function git(args, cwd)
   local cmd = { "git", "-C", cwd }
@@ -115,7 +129,7 @@ local function get_git_info(file_path)
   }
 end
 
--- ---------- core copy ----------
+-- core
 
 local function is_md(file)
   return vim.fn.fnamemodify(file, ":e"):lower() == "md"
@@ -134,74 +148,68 @@ function M.copy(opts)
   local file = opts.file or vim.fn.expand("%:p")
 
   if not file or file == "" then
-    notify("no file", vim.log.levels.ERROR, silent)
-    return
+    notify("no file", vim.log.levels.ERROR, silent); return
   end
   if not is_md(file) then
-    notify("not a markdown file: " .. file, vim.log.levels.ERROR, silent)
-    return
+    notify("not a markdown file: " .. file, vim.log.levels.ERROR, silent); return
   end
 
   local mdd = md_dir()
   local mf = meta_file()
   if not mdd or not mf then
-    notify("code_root_dir not set", vim.log.levels.ERROR, silent)
-    return
+    notify("code_root_dir not set", vim.log.levels.ERROR, silent); return
   end
   ensure_dir(mdd)
 
   local name = opts.dest_name or vim.fn.fnamemodify(file, ":t")
   local dst = mdd .. "/" .. name
   local nfile = norm(file)
+  local v = variant()
 
   uv.fs_copyfile(file, dst, function(err)
     vim.schedule(function()
       if err then
-        notify("copy failed: " .. tostring(err), vim.log.levels.ERROR, silent)
-        return
+        notify("copy failed: " .. tostring(err), vim.log.levels.ERROR, silent); return
       end
-
-      -- Update metadata.
       local meta = read_json(mf)
       local existing = meta[name] or {}
       local gi = get_git_info(file)
-
       if gi then
-        -- Fresh git info wins, but keep any prior manual_linked flag dropped.
         meta[name] = gi
       else
-        -- No git context: preserve any manual link, just update source_path.
         existing.source_path = nfile
         meta[name] = existing
       end
       write_json(mf, meta)
-      notify("copied: " .. name, vim.log.levels.INFO, silent)
+      notify("copied: " .. name .. "  ->  " .. v, vim.log.levels.INFO, silent)
     end)
   end)
 end
 
---- Background sync: only runs if the file is already tracked AND it's the
---- same source path we tracked. Doesn't re-query git (already in metadata).
+--- Background sync: only runs if md_files/<basename> already exists
+--- (i.e. you previously :MdCopy'd that file). Skips if metadata says the
+--- dest belongs to a different source path, to avoid clobbering.
 local function background_sync()
   local file = norm(vim.fn.expand("%:p"))
   if not file or file == "" or not is_md(file) then return end
 
-  local mf = meta_file()
   local mdd = md_dir()
-  if not mf or not mdd then return end
+  if not mdd then return end
 
-  local meta = read_json(mf)
-  -- Find the entry whose source_path matches this buffer.
-  local match_name = nil
-  for name, entry in pairs(meta) do
-    if entry.source_path and norm(entry.source_path) == file then
-      match_name = name
-      break
-    end
+  local name = vim.fn.fnamemodify(file, ":t")
+  local dst = mdd .. "/" .. name
+
+  -- Primary check: only sync if the file already exists in the project.
+  if not file_exists(dst) then return end
+
+  -- Disambiguation: if metadata says dest belongs to a different source, skip.
+  local mf = meta_file()
+  local meta = mf and read_json(mf) or {}
+  local entry = meta[name]
+  if entry and entry.source_path and norm(entry.source_path) ~= file then
+    return
   end
-  if not match_name then return end
 
-  local dst = mdd .. "/" .. match_name
   uv.fs_copyfile(file, dst, function(_) end) -- silently swallow errors
 end
 
@@ -213,8 +221,7 @@ function M.unlink(opts)
   local mdd = md_dir()
   local mf = meta_file()
   if not mdd or not mf then
-    notify("code_root_dir not set", vim.log.levels.ERROR, silent)
-    return
+    notify("code_root_dir not set", vim.log.levels.ERROR, silent); return
   end
   local dst = mdd .. "/" .. name
   uv.fs_unlink(dst, function(_)
@@ -233,10 +240,9 @@ function M.open_in_browser()
   local file = vim.fn.expand("%:p")
   local name = vim.fn.fnamemodify(file, ":t")
   if not is_md(file) then
-    notify("not a markdown file", vim.log.levels.ERROR)
-    return
+    notify("not a markdown file", vim.log.levels.ERROR); return
   end
-  local url = string.format("http://127.0.0.1:5000/view/%s", name)
+  local url = string.format("http://127.0.0.1:%d/view/%s", port(), name)
   local opener
   if vim.fn.has("mac") == 1 then
     opener = { "open", url }
@@ -251,30 +257,34 @@ end
 function M.setup(user_opts)
   user_opts = user_opts or {}
 
+  -- cmd MdCopy: MdCopy
   vim.api.nvim_create_user_command("MdCopy", function()
     M.copy({ silent = false })
-  end, { desc = "Copy current md file to flask viewer project" })
+  end, { desc = "Copy current md file to viewer project" })
 
+  -- cmd MdCopyAs: MdCopyAs
   vim.api.nvim_create_user_command("MdCopyAs", function(args)
     local name = args.args
     if name == "" then
-      vim.notify("[md] usage: :MdCopyAs <filename.md>", vim.log.levels.ERROR)
-      return
+      vim.notify("[md] usage: :MdCopyAs <filename.md>", vim.log.levels.ERROR); return
     end
     if not name:lower():match("%.md$") then name = name .. ".md" end
     M.copy({ silent = false, dest_name = name })
   end, { desc = "Copy current md file with a chosen destination name", nargs = 1 })
 
+  -- cmd MdUnlink: MdUnlink
   vim.api.nvim_create_user_command("MdUnlink", function()
     M.unlink({ silent = false })
   end, { desc = "Remove current md file from viewer project" })
 
+  -- cmd MdOpen: MdOpen
   vim.api.nvim_create_user_command("MdOpen", function()
     M.open_in_browser()
-  end, { desc = "Open current md file in the flask viewer" })
+  end, { desc = "Open current md file in the viewer" })
 
   if user_opts.auto_sync ~= false then
     local grp = vim.api.nvim_create_augroup("MdSync", { clear = true })
+    -- autocmd *.md: (BufWritePost)
     vim.api.nvim_create_autocmd("BufWritePost", {
       group = grp,
       pattern = "*.md",
