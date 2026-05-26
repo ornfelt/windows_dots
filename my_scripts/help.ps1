@@ -1,6 +1,9 @@
 param(
     [Parameter(Position = 0)]
-    [string]$Language
+    [string]$Language,
+
+    [Parameter(Position = 1)]
+    [string]$Keyword
 )
 
 # Map all aliases -> normalized name
@@ -592,110 +595,135 @@ function Show-Other-Help {
     Write-CodeLine "(gci).Count                                     # count all items (shortest)"
 }
 
+function Show-PathEntry {
+    param(
+        [string]$Label,
+        [string]$Path,
+        [string]$Keyword
+    )
+
+    if ($Keyword) {
+        $k = $Keyword.Trim().ToLower()
+
+        $haystack = "$Label $Path".ToLower()
+
+        if (-not $haystack.Contains($k)) {
+            return
+        }
+    }
+
+    Write-Host "${Label}:" -ForegroundColor DarkGray
+    Write-Host $Path -ForegroundColor Green
+    Write-Host ""
+}
+
 function Show-Paths-Help {
+    param(
+        [string]$Keyword
+    )
+
     Write-Host "Common config paths:" -ForegroundColor Yellow
+    if ($Keyword) {
+        Write-Host "Filtered by keyword: $Keyword" -ForegroundColor DarkGray
+    }
     Write-Host ""
 
-    # print the literal $env:... strings
-    Write-Host "nvim config path:" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/nvim/init.lua' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim config path" `
+        '$Env:localappdata/nvim/init.lua' `
+        $Keyword
 
-    Write-Host "nvim data dir (stdpath(""data"")):" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/nvim-data' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim data dir (stdpath(""data""))" `
+        '$Env:localappdata/nvim-data' `
+        $Keyword
 
-    Write-Host "lazy.nvim plugin location:" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/nvim-data/lazy' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "lazy.nvim plugin location" `
+        '$Env:localappdata/nvim-data/lazy' `
+        $Keyword
 
-    Write-Host "nvim built-in package manager path (0.12+):" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/nvim-data/site/pack' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim built-in package manager path (0.12+)" `
+        '$Env:localappdata/nvim-data/site/pack' `
+        $Keyword
 
-    Write-Host "nvim built-in package manager opt path (0.12+):" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/nvim-data/site/pack/core/opt' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim built-in package manager opt path (0.12+)" `
+        '$Env:localappdata/nvim-data/site/pack/core/opt' `
+        $Keyword
 
-    Write-Host "nvim pack lockfile:" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/nvim/nvim-pack-lock.json' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim pack lockfile" `
+        '$Env:localappdata/nvim/nvim-pack-lock.json' `
+        $Keyword
 
-    Write-Host "lazy.nvim lockfile:" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/nvim/lazy-lock.json' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "lazy.nvim lockfile" `
+        '$Env:localappdata/nvim/lazy-lock.json' `
+        $Keyword
 
-    Write-Host "nvim debug lua usage log:" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/Temp/nvim/lua_file_usage.log' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim debug lua usage log" `
+        '$Env:localappdata/Temp/nvim/lua_file_usage.log' `
+        $Keyword
 
-    Write-Host "nvim lsp servers log:" -ForegroundColor DarkGray
-    Write-Host 'C:/local/lsp_servers.txt' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim lsp servers log" `
+        'C:/local/lsp_servers.txt' `
+        $Keyword
 
-    Write-Host "nvim custom config file:" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/nvim-data/nvim_config.txt' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim custom config file" `
+        '$Env:localappdata/nvim-data/nvim_config.txt' `
+        $Keyword
 
-    Write-Host "nvim custom config backup/source from my_notes_path:" -ForegroundColor DarkGray
-    Write-Host '$Env:my_notes_path/scripts/files/nvim_config.txt' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim custom config backup/source from my_notes_path" `
+        '$Env:my_notes_path/scripts/files/nvim_config.txt' `
+        $Keyword
 
-    Write-Host "nvim py_exec scripts dir:" -ForegroundColor DarkGray
-    Write-Host '$Env:code_root_dir/Code2/Python/my_py/scripts/' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim py_exec scripts dir" `
+        '$Env:code_root_dir/Code2/Python/my_py/scripts/' `
+        $Keyword
 
-    Write-Host "nvim sessions dir:" -ForegroundColor DarkGray
-    Write-Host '$Env:userprofile/.vim/sessions/' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "nvim sessions dir" `
+        '$Env:userprofile/.vim/sessions/' `
+        $Keyword
 
-    Write-Host "wezterm config path:" -ForegroundColor DarkGray
-    Write-Host '$Env:userprofile/.wezterm.lua' -ForegroundColor Green
-    Write-Host ""
+    $vimrc = if (Test-Path -Path "H:\") {
+        "H:\.vimrc"
+    } else {
+        Join-Path $Env:USERPROFILE ".vimrc"
+    }
 
-    Write-Host "wezterm session manager path:" -ForegroundColor DarkGray
-    Write-Host '$Env:userprofile/.wezterm/wezterm-session-manager/session-manager.lua' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "vimrc path" $vimrc $Keyword
 
-    Write-Host "wezterm session file:" -ForegroundColor DarkGray
-    Write-Host '$Env:userprofile/.wezterm/wezterm-session-manager/wezterm_state_coding.json' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "wezterm config path" `
+        '$Env:userprofile/.wezterm.lua' `
+        $Keyword
 
-    Write-Host "wezterm debug log file:" -ForegroundColor DarkGray
-    Write-Host '$Env:userprofile/wez_test.txt' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "wezterm session manager path" `
+        '$Env:userprofile/.wezterm/wezterm-session-manager/session-manager.lua' `
+        $Keyword
 
-    Write-Host "alacritty config path:" -ForegroundColor DarkGray
-    Write-Host '$Env:appdata/alacritty/alacritty.toml' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "wezterm session file" `
+        '$Env:userprofile/.wezterm/wezterm-session-manager/wezterm_state_coding.json' `
+        $Keyword
 
-    Write-Host "lf config path:" -ForegroundColor DarkGray
-    Write-Host '$Env:localappdata/lf/lfrc' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "wezterm debug log file" `
+        '$Env:userprofile/wez_test.txt' `
+        $Keyword
 
-    Write-Host "yazi config path:" -ForegroundColor DarkGray
-    Write-Host '$Env:appdata/yazi/config/keymap.toml' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "alacritty config path" `
+        '$Env:appdata/alacritty/alacritty.toml' `
+        $Keyword
 
-    Write-Host "vs code config path:" -ForegroundColor DarkGray
-    Write-Host '$Env:appdata/Code/User/keybindings.json' -ForegroundColor Green
-    Write-Host ""
+    Show-PathEntry "lf config path" `
+        '$Env:localappdata/lf/lfrc' `
+        $Keyword
 
-    # actual resolved paths:
+    Show-PathEntry "yazi config path" `
+        '$Env:appdata/yazi/config/keymap.toml' `
+        $Keyword
 
-    Write-Host "autohotkey path:" -ForegroundColor DarkGray
+    Show-PathEntry "vs code config path" `
+        '$Env:appdata/Code/User/keybindings.json' `
+        $Keyword
+
     $startupDir  = [System.IO.Path]::Combine($env:APPDATA, "Microsoft\Windows\Start Menu\Programs\Startup")
     $startupPath = Join-Path $startupDir "caps_v2.ahk"
-    Write-Host $startupPath -ForegroundColor Green
-    Write-Host ""
 
-    Write-Host "vimrc path:" -ForegroundColor DarkGray
-    if (Test-Path -Path "H:\") {
-        Write-Host "H:\.vimrc" -ForegroundColor Green
-    } else {
-        $vimrc = Join-Path $Env:USERPROFILE ".vimrc"
-        Write-Host $vimrc -ForegroundColor Green
-    }
+    Show-PathEntry "autohotkey path" $startupPath $Keyword
 }
 
 # Language-specific helpers
@@ -1109,7 +1137,7 @@ switch ($normalizedLanguage) {
     'scripts'    { Show-Scripts-Help }
     'env'        { Show-Env-Help }
     'other'      { Show-Other-Help }
-    'paths'      { Show-Paths-Help }
+    'paths'      { Show-Paths-Help -Keyword $Keyword }
 
     default      { }  # Shouldn't happen
 }
