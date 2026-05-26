@@ -876,10 +876,19 @@ local function read_engine_scripts_file(engine)
     return nil
   end
 
-  local candidates = {
-    code_root_dir .. "/Code2/Sql/my_sql/config/" .. engine .. "_scripts.txt",
-    code_root_dir .. "/Code2/SQL/my_sql/config/" .. engine .. "_scripts.txt",
-  }
+  local is_windows = vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1
+
+  local candidates
+  if is_windows then
+    candidates = {
+      code_root_dir .. "Code2/Sql/my_sql/config/" .. engine .. "_scripts.txt",
+    }
+  else
+    candidates = {
+      code_root_dir .. "Code2/Sql/my_sql/config/" .. engine .. "_scripts.txt",
+      code_root_dir .. "Code2/SQL/my_sql/config/" .. engine .. "_scripts.txt",
+    }
+  end
 
   local file, used_path
   for _, p in ipairs(candidates) do
@@ -891,8 +900,11 @@ local function read_engine_scripts_file(engine)
   end
 
   if not file then
-    print(string.format("Scripts file not found for engine '%s'. Tried:\n  %s\n  %s",
-      engine, candidates[1], candidates[2]))
+    print(string.format(
+      "Scripts file not found for engine '%s'. Tried:\n  %s",
+      engine,
+      table.concat(candidates, "\n  ")
+    ))
     return nil
   end
 
