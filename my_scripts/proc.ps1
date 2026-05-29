@@ -5,6 +5,7 @@
 .DESCRIPTION
     Lists, searches, inspects, kills, counts and exports processes.
     Supports confirmation prompts, partial-name matching and verbose output.
+    Includes chart commands (stats, monitor, tree) via an external Python script.
 
 .EXAMPLE
     .\proc.ps1 list -SortBy CPU -v
@@ -13,6 +14,16 @@
     .\proc.ps1 kill -Id 1234 -Force
     .\proc.ps1 top -Top 15 -SortBy Memory
     .\proc.ps1 export -OutFile procs.csv
+
+    # Chart commands (require Python + psutil)
+    .\proc.ps1 stats
+    .\proc.ps1 stats -Metric Memory -Backend matplotlib -Theme light
+    .\proc.ps1 stats -Chart pie -Metric cpu -Top 20
+    .\proc.ps1 stats -Chart top -Metric Memory -Top 15
+    .\proc.ps1 stats -Chart tree -Metric Memory
+    .\proc.ps1 monitor chrome firefox -Metric cpu -Interval 2
+    .\proc.ps1 monitor -Id 1234,5678 -Metric Memory -Duration 120
+    .\proc.ps1 monitor -Name python node -Backend termplotlib
 #>
 
 [CmdletBinding()]
@@ -22,10 +33,10 @@ param(
     [Parameter(Position = 0)]
     [string]$Action = 'list',
 
-    [Parameter(Position = 1)]
-    [string]$Name,
+    [Parameter(Position = 1, ValueFromRemainingArguments = $true)]
+    [string[]]$NameArgs,
 
-    [int]$Id,
+    [int[]]$Id,
 
     # When killing multiple matches: target every one (still confirmed once).
     [switch]$All,
@@ -40,6 +51,34 @@ param(
 
     [string]$OutFile,
 
+    # --- Chart / stats parameters ---
+
+    # Chart sub-type for the stats command: pie, top, tree (default: pie)
+    [ValidateSet('pie','top','tree')]
+    [string]$Chart = 'pie',
+
+    # Metric for chart commands
+    [ValidateSet('cpu','memory')]
+    [string]$Metric = 'cpu',
+
+    # Charting backend
+    [ValidateSet('plotext','termplotlib','matplotlib')]
+    [string]$Backend = 'plotext',
+
+    # Color theme
+    [ValidateSet('dark','light')]
+    [string]$Theme = 'dark',
+
+    # Sampling interval for monitor (seconds)
+    [double]$Interval = 2.0,
+
+    # Duration for monitor (seconds, 0 = indefinite)
+    [int]$Duration = 0,
+
+    # Plot dimensions
+    [int]$PlotWidth = 100,
+    [int]$PlotHeight = 25,
+
     # -v as a short alias. Named differently than the built-in -Verbose
     # so it doesn't get hijacked by CmdletBinding's common parameters.
     [Alias('v')]
@@ -48,6 +87,12 @@ param(
     [Alias('h')]
     [switch]$Help
 )
+
+# --- Normalise Name from NameArgs ------------------------------------------
+# When the action is NOT 'monitor', $NameArgs[0] is the process name.
+# When the action IS 'monitor', $NameArgs can be multiple names.
+
+$Name = if ($NameArgs -and $NameArgs.Count -gt 0) { $NameArgs[0] } else { '' }
 
 # --- output helpers --------------------------------------------------------
 
@@ -128,14 +173,55 @@ function Stop-OneProcess {
     }
 }
 
+# --- Python chart helpers --------------------------------------------------
+
+function Get-ProcStatsScript {
+    $notesPath = [System.Environment]::GetEnvironmentVariable('my_notes_path')
+    if (-not $notesPath -or [string]::IsNullOrWhiteSpace($notesPath)) {
+        Write-Err "Environment variable 'my_notes_path' is not set."
+        return $null
+    }
+    #$script = Join-Path $notesPath 'scripts' 'stats' 'proc_stats.py'
+    # Join-Path in PowerShell 5.x only takes two positional args (parent 
+    # + child). PS 7+ added variadic support. 
+    $script = Join-Path (Join-Path (Join-Path $notesPath 'scripts') 'stats') 'proc_stats.py'
+    if (-not (Test-Path $script)) {
+        Write-Err "Python script not found: $script"
+        return $null
+    }
+    return $script
+}
+
+function Get-PythonExe {
+    # Try python3 first (Linux / WSL / some Windows), then python.
+    foreach ($cmd in @('python3', 'python', 'py')) {
+        $exe = Get-Command $cmd -ErrorAction SilentlyContinue
+        if ($exe) { return $exe.Source }
+    }
+    Write-Err "Python not found in PATH. Install Python 3 or ensure it is on PATH."
+    return $null
+}
+
+function Invoke-ProcStats {
+    param([string[]]$PyArgs)
+
+    $script = Get-ProcStatsScript
+    if (-not $script) { return }
+    $pyExe = Get-PythonExe
+    if (-not $pyExe) { return }
+
+    Write-Info ("Running: {0} {1} {2}" -f $pyExe, $script, ($PyArgs -join ' '))
+    & $pyExe $script @PyArgs
+}
+
 # --- kill action -----------------------------------------------------------
 
 function Invoke-Kill {
 
     # -Id takes precedence: most precise input wins.
-    if ($Id) {
-        $proc = Get-Process -Id $Id -ErrorAction SilentlyContinue
-        if (-not $proc) { Write-Err "No process with PID $Id."; return }
+    if ($Id -and $Id.Count -eq 1) {
+        $proc = Get-Process -Id $Id[0] -ErrorAction SilentlyContinue
+        if (-not $proc) { Write-Err "No process with PID $($Id[0])."; return }
 
         if (Confirm-Action ("Kill {0} (PID {1})?" -f $proc.ProcessName, $proc.Id)) {
             Stop-OneProcess $proc
@@ -207,6 +293,81 @@ function Invoke-Kill {
     }
 }
 
+# --- stats action ----------------------------------------------------------
+
+function Invoke-Stats {
+    $pyArgs = @()
+
+    # Global flags
+    $pyArgs += '--backend';  $pyArgs += $Backend
+    $pyArgs += '--theme';    $pyArgs += $Theme
+    $pyArgs += '--width';    $pyArgs += $PlotWidth.ToString()
+    $pyArgs += '--height';   $pyArgs += $PlotHeight.ToString()
+
+    # Subcommand
+    $pyArgs += $Chart
+
+    # Subcommand-specific flags
+    $pyArgs += '--metric';  $pyArgs += $Metric
+    $pyArgs += '--top';     $pyArgs += $Top.ToString()
+
+    Invoke-ProcStats $pyArgs
+}
+
+# --- monitor action --------------------------------------------------------
+
+function Invoke-Monitor {
+    $pyArgs = @()
+
+    # Global flags
+    $pyArgs += '--backend';  $pyArgs += $Backend
+    $pyArgs += '--theme';    $pyArgs += $Theme
+    $pyArgs += '--width';    $pyArgs += $PlotWidth.ToString()
+    $pyArgs += '--height';   $pyArgs += $PlotHeight.ToString()
+
+    $pyArgs += 'monitor'
+
+    $pyArgs += '--metric';    $pyArgs += $Metric
+    $pyArgs += '--interval';  $pyArgs += $Interval.ToString()
+    $pyArgs += '--duration';  $pyArgs += $Duration.ToString()
+
+    # PIDs from -Id
+    if ($Id -and $Id.Count -gt 0) {
+        $pyArgs += '--pids'
+        foreach ($pid in $Id) { $pyArgs += $pid.ToString() }
+    }
+
+    # Names: from $NameArgs (all positional args after 'monitor')
+    if ($NameArgs -and $NameArgs.Count -gt 0) {
+        $pyArgs += '--names'
+        foreach ($n in $NameArgs) { $pyArgs += $n }
+    }
+
+    if ((-not $Id -or $Id.Count -eq 0) -and (-not $NameArgs -or $NameArgs.Count -eq 0)) {
+        Write-Err "Provide process name(s) or -Id <pid(s)> for monitor."
+        Write-Host "  Example: proc.ps1 monitor chrome firefox"
+        Write-Host "  Example: proc.ps1 monitor -Id 1234,5678"
+        return
+    }
+
+    Invoke-ProcStats $pyArgs
+}
+
+# --- tree action -----------------------------------------------------------
+
+function Invoke-Tree {
+    $pyArgs = @()
+    $pyArgs += '--backend';  $pyArgs += $Backend
+    $pyArgs += '--theme';    $pyArgs += $Theme
+    $pyArgs += '--width';    $pyArgs += $PlotWidth.ToString()
+    $pyArgs += '--height';   $pyArgs += $PlotHeight.ToString()
+    $pyArgs += 'tree'
+    $pyArgs += '--metric';   $pyArgs += $Metric
+    $pyArgs += '--top';      $pyArgs += $Top.ToString()
+
+    Invoke-ProcStats $pyArgs
+}
+
 # --- help ------------------------------------------------------------------
 
 function Show-Help {
@@ -221,14 +382,39 @@ Usage:
   proc.ps1 top    [-Top N] [-SortBy CPU|Memory] [-v]
   proc.ps1 count  <name>  [-v]
   proc.ps1 export -OutFile out.csv|out.json [-Name pattern]
-  proc.ps1 help        (also: -h, --help, -Help)
 
-Flags:
+Chart commands (require Python + psutil):
+  proc.ps1 stats [-Chart pie|top|tree] [-Metric cpu|memory] [-Top N]
+  proc.ps1 monitor <name1> [name2...] [-Metric cpu|memory] [-Interval N] [-Duration N]
+  proc.ps1 monitor -Id <pid1,pid2> [-Metric cpu|memory]
+  proc.ps1 tree   [-Metric cpu|memory] [-Top N]
+
+Chart flags (shared):
+  -Backend    plotext | termplotlib | matplotlib  (default: plotext)
+  -Theme      dark | light                        (default: dark / gruvbox-dark)
+  -PlotWidth  Plot width in characters            (default: 100)
+  -PlotHeight Plot height in characters           (default: 25)
+  -Metric     cpu | memory                        (default: cpu)
+
+Monitor-specific:
+  -Interval   Sampling interval in seconds        (default: 2)
+  -Duration   Total duration in seconds            (default: 0 = indefinite)
+
+General flags:
   -h / -Help / --help  Show this help
   -v / -VerboseMode    Show extra columns (path, start time, threads, handles)
   -Force               Skip confirmation prompts
   -All                 When killing multiple matches, target every one
   -SortBy              CPU | Memory | Name | Id  (default: Memory)
+
+Examples:
+  proc.ps1 stats                                     # CPU pie chart (plotext, gruvbox dark)
+  proc.ps1 stats -Metric memory -Backend matplotlib  # Memory pie via matplotlib
+  proc.ps1 stats -Chart top -Metric memory -Top 20   # Top 20 by memory
+  proc.ps1 stats -Theme light                        # Light gruvbox theme
+  proc.ps1 monitor chrome firefox                    # Monitor chrome+firefox CPU
+  proc.ps1 monitor -Id 1234,5678 -Metric memory     # Monitor PIDs by memory
+  proc.ps1 tree -Metric memory -Top 20              # Memory resource tree
 "@
 }
 
@@ -243,7 +429,7 @@ if ($Help -or ($Action -and ($helpTokens -contains $Action.ToLower()))) {
     return
 }
 
-$knownActions = @('list','search','kill','info','top','count','export')
+$knownActions = @('list','search','kill','info','top','count','export','stats','monitor','tree')
 if ($knownActions -notcontains $Action.ToLower()) {
     Write-Err "Unknown action: '$Action'"
     Write-Host ""
@@ -271,8 +457,8 @@ switch ($Action.ToLower()) {
     'kill' { Invoke-Kill }
 
     'info' {
-        $procs = if ($Id) {
-            @(Get-Process -Id $Id -ErrorAction SilentlyContinue)
+        $procs = if ($Id -and $Id.Count -eq 1) {
+            @(Get-Process -Id $Id[0] -ErrorAction SilentlyContinue)
         }
         else {
             @(Get-MatchingProcesses -Pattern $Name)
@@ -326,4 +512,8 @@ switch ($Action.ToLower()) {
         }
         Write-Ok "Exported $(@($data).Count) entries to $OutFile."
     }
+
+    'stats'   { Invoke-Stats }
+    'monitor' { Invoke-Monitor }
+    'tree'    { Invoke-Tree }
 }
