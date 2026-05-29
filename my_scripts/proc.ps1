@@ -429,6 +429,23 @@ function Invoke-Tree {
     Invoke-ProcStats $pyArgs
 }
 
+# --- live action -----------------------------------------------------------
+
+function Invoke-Live {
+    $pyArgs = @()
+    $pyArgs += '--backend';   $pyArgs += $Backend
+    $pyArgs += '--theme';     $pyArgs += $Theme
+    $pyArgs += '--width';     $pyArgs += $PlotWidth.ToString()
+    $pyArgs += '--height';    $pyArgs += $PlotHeight.ToString()
+    $pyArgs += 'live'
+    $pyArgs += '--metric';    $pyArgs += $Metric
+    $pyArgs += '--top';       $pyArgs += $Top.ToString()
+    $pyArgs += '--interval';  $pyArgs += $Interval.ToString()
+    $pyArgs += '--duration';  $pyArgs += $Duration.ToString()
+
+    Invoke-ProcStats $pyArgs
+}
+
 # --- help ------------------------------------------------------------------
 
 function Show-Help {
@@ -490,7 +507,7 @@ if ($Help -or ($Action -and ($helpTokens -contains $Action.ToLower()))) {
     return
 }
 
-$knownActions = @('list','search','kill','info','top','count','export','stats','monitor','tree')
+$knownActions = @('list','search','kill','info','top','count','export','stats','monitor','live','tree')
 if ($knownActions -notcontains $Action.ToLower()) {
     Write-Err "Unknown action: '$Action'"
     Write-Host ""
@@ -576,5 +593,6 @@ switch ($Action.ToLower()) {
 
     'stats'   { Invoke-Stats }
     'monitor' { Invoke-Monitor }
+    'live'    { Invoke-Live }
     'tree'    { Invoke-Tree }
 }
