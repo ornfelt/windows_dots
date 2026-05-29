@@ -192,12 +192,73 @@ function Get-ProcStatsScript {
     return $script
 }
 
-function Get-PythonExe {
+function Get-PythonExeOld {
     # Try python3 first (Linux / WSL / some Windows), then python.
     foreach ($cmd in @('python3', 'python', 'py')) {
         $exe = Get-Command $cmd -ErrorAction SilentlyContinue
         if ($exe) { return $exe.Source }
     }
+    Write-Err "Python not found in PATH. Install Python 3 or ensure it is on PATH."
+    return $null
+}
+function Get-PythonExe {
+    $candidates = @(
+        @{ Cmd = "py";      Args = @("-3", "-c", "import sys; print(sys.executable)") }
+        @{ Cmd = "python";  Args = @("-c", "import sys; print(sys.executable)") }
+        @{ Cmd = "python3"; Args = @("-c", "import sys; print(sys.executable)") }
+    )
+
+    foreach ($candidate in $candidates) {
+        $cmd = $candidate.Cmd
+
+        $commands = Get-Command $cmd -All -ErrorAction SilentlyContinue
+        if (-not $commands) {
+            continue
+        }
+
+        foreach ($command in $commands) {
+            $source = $command.Source
+
+            if ([string]::IsNullOrWhiteSpace($source)) {
+                continue
+            }
+
+            # Skip known broken Microsoft Store aliases
+            if ($source -like "*\AppData\Local\Microsoft\WindowsApps\python*.exe") {
+                continue
+            }
+
+            try {
+                $output = & $source @($candidate.Args) 2>$null
+                $exitCode = $LASTEXITCODE
+
+                if ($exitCode -ne 0) {
+                    continue
+                }
+
+                $realExe = ($output | Select-Object -First 1).ToString().Trim()
+
+                if ([string]::IsNullOrWhiteSpace($realExe)) {
+                    continue
+                }
+
+                if (-not (Test-Path $realExe)) {
+                    continue
+                }
+
+                # Final sanity check
+                & $realExe --version *> $null
+
+                if ($LASTEXITCODE -eq 0) {
+                    return $realExe
+                }
+            }
+            catch {
+                continue
+            }
+        }
+    }
+
     Write-Err "Python not found in PATH. Install Python 3 or ensure it is on PATH."
     return $null
 }
