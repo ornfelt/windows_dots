@@ -5,7 +5,35 @@
 .DESCRIPTION
     Lists, searches, inspects, kills, counts and exports processes.
     Supports confirmation prompts, partial-name matching and verbose output.
-    Includes chart commands (stats, monitor, tree) via an external Python script.
+    Includes chart commands (stats, monitor, live, livetop, tree) via an
+    external Python script (proc_stats.py, requires psutil).
+
+    Available actions:
+      list      List all processes (default)
+      search    Find processes by name pattern
+      kill      Kill process(es) by name or PID
+      info      Detailed info for a process
+      top       Show top N processes by CPU or memory
+      count     Count matching processes
+      export    Export process list to CSV or JSON
+
+    Chart actions (require Python + psutil + chart backend):
+      stats     Snapshot pie/bar/tree chart (via -Chart sub-type)
+      monitor   Real-time timeline of specific processes (by name or PID)
+      live      Live-updating top-N bar chart (re-ranked each refresh)
+      livetop   Live timeline of top-N processes over time (line chart with history)
+      tree      Shortcut for stats -Chart tree
+
+    Chart parameters:
+      -Backend    plotext | termplotlib | matplotlib  (default: plotext)
+      -Theme      dark | light                        (default: dark / gruvbox-dark)
+      -Metric     cpu | memory                        (default: cpu)
+      -Top        Number of top processes              (default: 10)
+      -Chart      pie | top | tree  (for stats only)   (default: pie)
+      -PlotWidth  Plot width in characters             (default: 100)
+      -PlotHeight Plot height in characters            (default: 25)
+      -Interval   Sampling interval in seconds         (default: 2; monitor/live/livetop)
+      -Duration   Total duration in seconds            (default: 0 = indefinite; monitor/live/livetop)
 
 .EXAMPLE
     .\proc.ps1 list -SortBy CPU -v
@@ -24,6 +52,9 @@
     .\proc.ps1 monitor chrome firefox -Metric cpu -Interval 2
     .\proc.ps1 monitor -Id 1234,5678 -Metric Memory -Duration 120
     .\proc.ps1 monitor -Name python node -Backend termplotlib
+    .\proc.ps1 live
+    .\proc.ps1 live -Metric Memory -Top 20 -Interval 1
+    .\proc.ps1 live -Duration 60 -Backend termplotlib -Theme light
     .\proc.ps1 livetop
     .\proc.ps1 livetop -Metric Memory -Top 15 -Interval 3
     .\proc.ps1 livetop -Metric cpu -Top 5 -Duration 120 -Backend matplotlib
@@ -486,6 +517,7 @@ Chart commands (require Python + psutil):
   proc.ps1 monitor <name1> [name2...] [-Metric cpu|memory] [-Interval N] [-Duration N]
   proc.ps1 monitor -Id <pid1,pid2> [-Metric cpu|memory]
   proc.ps1 tree   [-Metric cpu|memory] [-Top N]
+  proc.ps1 live    [-Top N] [-Metric cpu|memory] [-Interval N] [-Duration N]
   proc.ps1 livetop [-Top N] [-Metric cpu|memory] [-Interval N] [-Duration N]
 
 Chart flags (shared):
@@ -495,7 +527,7 @@ Chart flags (shared):
   -PlotHeight Plot height in characters           (default: 25)
   -Metric     cpu | memory                        (default: cpu)
 
-Monitor / livetop specific:
+Monitor / live / livetop specific:
   -Interval   Sampling interval in seconds        (default: 2)
   -Duration   Total duration in seconds            (default: 0 = indefinite)
 
@@ -514,6 +546,9 @@ Examples:
   proc.ps1 monitor chrome firefox                    # Monitor chrome+firefox CPU
   proc.ps1 monitor -Id 1234,5678 -Metric memory     # Monitor PIDs by memory
   proc.ps1 tree -Metric memory -Top 20              # Memory resource tree
+  proc.ps1 live                                       # Live top-10 CPU bar chart
+  proc.ps1 live -Metric memory -Top 20               # Live top-20 by memory
+  proc.ps1 live -Interval 1 -Duration 60             # 1s refresh, 60s then stop
   proc.ps1 livetop                                    # Live CPU timeline of top 10
   proc.ps1 livetop -Metric memory -Top 15 -Interval 3 # Memory timeline, top 15
   proc.ps1 livetop -Top 5 -Duration 60                # 60s CPU timeline of top 5
