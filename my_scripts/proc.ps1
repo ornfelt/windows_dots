@@ -24,6 +24,9 @@
     .\proc.ps1 monitor chrome firefox -Metric cpu -Interval 2
     .\proc.ps1 monitor -Id 1234,5678 -Metric Memory -Duration 120
     .\proc.ps1 monitor -Name python node -Backend termplotlib
+    .\proc.ps1 livetop
+    .\proc.ps1 livetop -Metric Memory -Top 15 -Interval 3
+    .\proc.ps1 livetop -Metric cpu -Top 5 -Duration 120 -Backend matplotlib
 #>
 
 [CmdletBinding()]
@@ -446,6 +449,23 @@ function Invoke-Live {
     Invoke-ProcStats $pyArgs
 }
 
+# --- livetop action --------------------------------------------------------
+
+function Invoke-LiveTop {
+    $pyArgs = @()
+    $pyArgs += '--backend';   $pyArgs += $Backend
+    $pyArgs += '--theme';     $pyArgs += $Theme
+    $pyArgs += '--width';     $pyArgs += $PlotWidth.ToString()
+    $pyArgs += '--height';    $pyArgs += $PlotHeight.ToString()
+    $pyArgs += 'livetop'
+    $pyArgs += '--metric';    $pyArgs += $Metric
+    $pyArgs += '--top';       $pyArgs += $Top.ToString()
+    $pyArgs += '--interval';  $pyArgs += $Interval.ToString()
+    $pyArgs += '--duration';  $pyArgs += $Duration.ToString()
+
+    Invoke-ProcStats $pyArgs
+}
+
 # --- help ------------------------------------------------------------------
 
 function Show-Help {
@@ -466,6 +486,7 @@ Chart commands (require Python + psutil):
   proc.ps1 monitor <name1> [name2...] [-Metric cpu|memory] [-Interval N] [-Duration N]
   proc.ps1 monitor -Id <pid1,pid2> [-Metric cpu|memory]
   proc.ps1 tree   [-Metric cpu|memory] [-Top N]
+  proc.ps1 livetop [-Top N] [-Metric cpu|memory] [-Interval N] [-Duration N]
 
 Chart flags (shared):
   -Backend    plotext | termplotlib | matplotlib  (default: plotext)
@@ -474,7 +495,7 @@ Chart flags (shared):
   -PlotHeight Plot height in characters           (default: 25)
   -Metric     cpu | memory                        (default: cpu)
 
-Monitor-specific:
+Monitor / livetop specific:
   -Interval   Sampling interval in seconds        (default: 2)
   -Duration   Total duration in seconds            (default: 0 = indefinite)
 
@@ -493,6 +514,9 @@ Examples:
   proc.ps1 monitor chrome firefox                    # Monitor chrome+firefox CPU
   proc.ps1 monitor -Id 1234,5678 -Metric memory     # Monitor PIDs by memory
   proc.ps1 tree -Metric memory -Top 20              # Memory resource tree
+  proc.ps1 livetop                                    # Live CPU timeline of top 10
+  proc.ps1 livetop -Metric memory -Top 15 -Interval 3 # Memory timeline, top 15
+  proc.ps1 livetop -Top 5 -Duration 60                # 60s CPU timeline of top 5
 "@
 }
 
@@ -507,7 +531,7 @@ if ($Help -or ($Action -and ($helpTokens -contains $Action.ToLower()))) {
     return
 }
 
-$knownActions = @('list','search','kill','info','top','count','export','stats','monitor','live','tree')
+$knownActions = @('list','search','kill','info','top','count','export','stats','monitor','live','livetop','tree')
 if ($knownActions -notcontains $Action.ToLower()) {
     Write-Err "Unknown action: '$Action'"
     Write-Host ""
@@ -594,5 +618,6 @@ switch ($Action.ToLower()) {
     'stats'   { Invoke-Stats }
     'monitor' { Invoke-Monitor }
     'live'    { Invoke-Live }
+    'livetop' { Invoke-LiveTop }
     'tree'    { Invoke-Tree }
 }
