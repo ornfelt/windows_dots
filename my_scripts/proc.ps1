@@ -28,12 +28,12 @@
       -Backend    plotext | termplotlib | matplotlib  (default: plotext)
       -Theme      dark | light                        (default: dark / gruvbox-dark)
       -Metric     cpu | memory                        (default: cpu)
-      -Top        Number of top processes              (default: 10)
-      -Chart      pie | top | tree  (for stats only)   (default: pie)
-      -PlotWidth  Plot width in characters             (default: 100)
-      -PlotHeight Plot height in characters            (default: 25)
-      -Interval   Sampling interval in seconds         (default: 2; monitor/live/livetop)
-      -Duration   Total duration in seconds            (default: 0 = indefinite; monitor/live/livetop)
+      -Top        Number of top processes             (default: 10)
+      -Chart      pie | top | tree  (for stats only)  (default: pie)
+      -PlotWidth  Plot width in characters            (default: 100)
+      -PlotHeight Plot height in characters           (default: 25)
+      -Interval   Sampling interval in seconds        (default: 2; monitor/live/livetop)
+      -Duration   Total duration in seconds           (default: 0 = indefinite; monitor/live/livetop)
 
 .EXAMPLE
     .\proc.ps1 list -SortBy CPU -v
@@ -539,16 +539,16 @@ General flags:
   -SortBy              CPU | Memory | Name | Id  (default: Memory)
 
 Examples:
-  proc.ps1 stats                                     # CPU pie chart (plotext, gruvbox dark)
-  proc.ps1 stats -Metric memory -Backend matplotlib  # Memory pie via matplotlib
-  proc.ps1 stats -Chart top -Metric memory -Top 20   # Top 20 by memory
-  proc.ps1 stats -Theme light                        # Light gruvbox theme
-  proc.ps1 monitor chrome firefox                    # Monitor chrome+firefox CPU
-  proc.ps1 monitor -Id 1234,5678 -Metric memory     # Monitor PIDs by memory
-  proc.ps1 tree -Metric memory -Top 20              # Memory resource tree
+  proc.ps1 stats                                      # CPU pie chart (plotext, gruvbox dark)
+  proc.ps1 stats -Metric memory -Backend matplotlib   # Memory pie via matplotlib
+  proc.ps1 stats -Chart top -Metric memory -Top 20    # Top 20 by memory
+  proc.ps1 stats -Theme light                         # Light gruvbox theme
+  proc.ps1 monitor chrome firefox                     # Monitor chrome+firefox CPU
+  proc.ps1 monitor -Id 1234,5678 -Metric memory       # Monitor PIDs by memory
+  proc.ps1 tree -Metric memory -Top 20                # Memory resource tree
   proc.ps1 live                                       # Live top-10 CPU bar chart
-  proc.ps1 live -Metric memory -Top 20               # Live top-20 by memory
-  proc.ps1 live -Interval 1 -Duration 60             # 1s refresh, 60s then stop
+  proc.ps1 live -Metric memory -Top 20                # Live top-20 by memory
+  proc.ps1 live -Interval 1 -Duration 60              # 1s refresh, 60s then stop
   proc.ps1 livetop                                    # Live CPU timeline of top 10
   proc.ps1 livetop -Metric memory -Top 15 -Interval 3 # Memory timeline, top 15
   proc.ps1 livetop -Top 5 -Duration 60                # 60s CPU timeline of top 5
