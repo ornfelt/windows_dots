@@ -50,6 +50,21 @@ function Get-RelativePathFromCwd($path) {
     }
 }
 
+function Get-LatestVisualStudioYear {
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+
+    if (Test-Path $vswhere) {
+        $latestVersion = & $vswhere -latest -property installationVersion 2>$null
+        if ($latestVersion -match '^(\d+)\.') {
+            # Major version to year: 17 = 2022, 16 = 2019, 15 = 2017
+            $major = [int]$Matches[1]
+            return 2000 + $major + 5
+        }
+    }
+
+    return $null
+}
+
 $hasHelpArg =
     $Args |
     Where-Object { $_ -match '^(?i)(help|-h|--help)$' } |
@@ -61,6 +76,17 @@ if ($hasHelpArg) {
 }
 
 $withChildDirSearch = $Args.Count -gt 0
+
+# Detect latest VS version; if 2022 or below, prefer .sln over .slnx
+$vsYear = Get-LatestVisualStudioYear
+$preferSlnx = ($vsYear -eq $null) -or ($vsYear -gt 2022)
+
+if ($vsYear) {
+    $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath 2>$null
+    Write-Info "Detected Visual Studio $vsYear at: $vsPath"
+} else {
+    Write-Info "Could not detect Visual Studio version (vswhere not found), defaulting to .slnx preference."
+}
 
 $candidates = @()
 
@@ -92,17 +118,12 @@ if ($parent) {
     $candidates += Get-Files (Join-Path $parent "*.sln")
 }
 
-# Remove duplicates, keep first occurrence order
-#$candidates =
-#    $candidates |
-#    Where-Object { $_ } |
-#    Sort-Object FullName -Unique
 # Remove duplicates and prioritize .slnx over .sln
 $candidates =
     $candidates |
     Where-Object { $_ } |
     Sort-Object `
-        @{ Expression = { if ($_.Extension -ieq ".slnx") { 0 } else { 1 } } }, `
+        @{ Expression = { if ($_.Extension -ieq ".slnx") { if ($preferSlnx) { 0 } else { 1 } } else { if ($preferSlnx) { 1 } else { 0 } } } }, `
         FullName `
         -Unique
 
