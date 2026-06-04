@@ -17,10 +17,10 @@ function Write-Usage {
     Write-Host "  open-sln.ps1 any-arg"
     Write-Host ""
     Write-Host "Without args:"
-    Write-Host "  Opens the first .sln/.slnx found in current dir, build dir, or parent dir."
+    Write-Host "  Opens the first .slnx/.sln found in current dir, build dir, or parent dir."
     Write-Host ""
     Write-Host "With any non-help arg:"
-    Write-Host "  Also checks direct child dirs for .sln/.slnx files."
+    Write-Host "  Also checks direct child dirs for .slnx/.sln files."
     Write-Host "  If one is found, opens it."
     Write-Host "  If several are found, prints relative paths instead."
 }
@@ -65,22 +65,22 @@ $withChildDirSearch = $Args.Count -gt 0
 $candidates = @()
 
 # Current dir
-$candidates += Get-Files ".\*.sln"
 $candidates += Get-Files ".\*.slnx"
+$candidates += Get-Files ".\*.sln"
 
 # Build dir
-$candidates += Get-Files ".\build\*.sln"
 $candidates += Get-Files ".\build\*.slnx"
-$candidates += Get-Files ".\Everything\*.sln"
+$candidates += Get-Files ".\build\*.sln"
 $candidates += Get-Files ".\Everything\*.slnx"
+$candidates += Get-Files ".\Everything\*.sln"
 
 # Direct child dirs, only when a non-help arg was provided
 if ($withChildDirSearch) {
     $childDirs = Get-ChildItem -Path "." -Directory -ErrorAction SilentlyContinue
 
     foreach ($dir in $childDirs) {
-        $candidates += Get-Files (Join-Path $dir.FullName "*.sln")
         $candidates += Get-Files (Join-Path $dir.FullName "*.slnx")
+        $candidates += Get-Files (Join-Path $dir.FullName "*.sln")
     }
 }
 
@@ -88,8 +88,8 @@ if ($withChildDirSearch) {
 $parent = Split-Path -Parent (Get-Location).Path
 
 if ($parent) {
-    $candidates += Get-Files (Join-Path $parent "*.sln")
     $candidates += Get-Files (Join-Path $parent "*.slnx")
+    $candidates += Get-Files (Join-Path $parent "*.sln")
 }
 
 # Remove duplicates, keep first occurrence order
@@ -99,7 +99,7 @@ $candidates =
     Sort-Object FullName -Unique
 
 if ($withChildDirSearch -and $candidates.Count -gt 1) {
-    Write-Warn "Several .sln/.slnx files found:"
+    Write-Warn "Several .slnx/.sln files found:"
     foreach ($candidate in $candidates) {
         Write-Host "  $(Get-RelativePathFromCwd $candidate.FullName)"
     }
@@ -118,7 +118,7 @@ if ($solution) {
     Start-Process $solution.FullName
 }
 else {
-    Write-Warn "No .sln or .slnx file found in:"
+    Write-Warn "No .slnx or .sln file found in:"
     Write-Warn "  $(Get-Location)"
     Write-Warn "  $(Join-Path (Get-Location) 'build')"
 
