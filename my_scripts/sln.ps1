@@ -93,10 +93,18 @@ if ($parent) {
 }
 
 # Remove duplicates, keep first occurrence order
+#$candidates =
+#    $candidates |
+#    Where-Object { $_ } |
+#    Sort-Object FullName -Unique
+# Remove duplicates and prioritize .slnx over .sln
 $candidates =
     $candidates |
     Where-Object { $_ } |
-    Sort-Object FullName -Unique
+    Sort-Object `
+        @{ Expression = { if ($_.Extension -ieq ".slnx") { 0 } else { 1 } } }, `
+        FullName `
+        -Unique
 
 if ($withChildDirSearch -and $candidates.Count -gt 1) {
     Write-Warn "Several .slnx/.sln files found:"
