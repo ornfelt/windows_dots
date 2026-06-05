@@ -781,6 +781,16 @@ function Show-CSharp-Help {
     Write-CodeLine "dotnet test                             # Run tests (from solution dir)"
 
     Write-Host ""
+    Write-Host "Solution files:" -ForegroundColor Yellow
+    Write-CodeLine "dotnet new sln                         # Create solution file"
+    Write-CodeLine "dotnet sln list                        # List projects in solution"
+    Write-CodeLine "dotnet sln add .\MyProject\MyProject.csproj"
+    Write-CodeLine "dotnet sln remove .\MyProject\MyProject.csproj"
+    Write-CodeLine "dotnet sln migrate                     # Migrate .sln to .slnx if exactly one .sln exists"
+    Write-CodeLine "dotnet sln MySolution.sln migrate      # Migrate specific .sln to .slnx"
+    Write-CodeLine "dotnet build MySolution.slnx           # Build using the new .slnx file"
+
+    Write-Host ""
     Write-Host "EF Core tools:" -ForegroundColor Yellow
     Write-CodeLine "dotnet ef --version                     # Check installed dotnet-ef version"
     Write-CodeLine "dotnet tool uninstall -g dotnet-ef      # Uninstall global dotnet-ef tool"
