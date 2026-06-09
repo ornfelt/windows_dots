@@ -204,6 +204,27 @@ local function log_to_file(message)
 end
 
 local is_linux = (wezterm.target_triple ~= "x86_64-pc-windows-msvc" and wezterm.target_triple ~= "x86_64-pc-windows-gnu")
+
+local function get_prompt_username()
+  if is_linux then
+    return os.getenv("USER") or "jonas"
+  end
+
+  local username = os.getenv("USERNAME") or "jonas"
+  local ud = string.lower(os.getenv("USERDOMAIN") or "")
+
+  if ud:match("^s.*corp$") then
+    local middle = username:match("^[^-]+-([^-]+)-")
+    if middle then
+      username = middle
+    end
+  end
+
+  return username
+end
+
+local prompt_user = get_prompt_username()
+
 ---@diagnostic disable-next-line: unused-local, unused-function
 local function is_vim(pane)
   local process_info = pane:get_foreground_process_info()
@@ -375,12 +396,10 @@ end)
 
 wezterm.on('trigger-vim-with-scrollback-copy-latest', function(window, pane)
   local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
-  local prompt_pattern
-  if is_linux then
-    prompt_pattern = "^jonas:.*> "
-  else
-    prompt_pattern = "^jonas:.*> "
-  end
+  -- Note: The %$ escapes the dollar sign since $ means end-of-string in Lua patterns.
+  local prompt_pattern = is_linux
+    and ("^" .. prompt_user .. ":.*%$ ")
+    or  ("^" .. prompt_user .. ":.*> ")
   local inputs_outputs = {}
 
   for line in text:gmatch("[^\r\n]+") do
@@ -445,7 +464,10 @@ end)
 wezterm.on('trigger-copy-latest-n', function(window, pane)
   local N = 5 -- how many to copy
   local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
-  local prompt_pattern = is_linux and "^jonas:.*> " or "^jonas:.*> "
+  -- Note: The %$ escapes the dollar sign since $ means end-of-string in Lua patterns.
+  local prompt_pattern = is_linux
+    and ("^" .. prompt_user .. ":.*%$ ")
+    or  ("^" .. prompt_user .. ":.*> ")
   local inputs_outputs = {}
 
   for line in text:gmatch("[^\r\n]+") do
