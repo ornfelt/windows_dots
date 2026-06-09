@@ -153,6 +153,22 @@ wezterm.on("save_session", function(window) session_manager.save_state(window) e
 wezterm.on("load_session", function(window) session_manager.load_state(window) end)
 wezterm.on("restore_session", function(window) session_manager.restore_state(window) end)
 
+-- Git status cache
+local git_cache = {} -- { [cwd] = { branch=..., color=..., time=... } }
+-- How often to update git status (seconds):
+local git_cache_ttl = 5
+--local git_cache_ttl = 10
+local git_cache_force_next = false
+
+local function invalidate_git_cache()
+  git_cache_force_next = true
+end
+-- Note: Tab switch doesn't have a dedicated event, but pane-focused fires
+-- when you activate a different tab too, so the above covers both cases.
+-- Note 2: It seems this didn't quite work, so I added the cache invalidate
+-- inside split_nav and tab keybinds instead...
+--wezterm.on("pane-focused", function(_pane) invalidate_git_cache() end)
+
 -- Seamless vim pane integration
 -- I have a somewhat customized version of these that 
 -- enable me to navigate panes via wezterm-tmux-nvim
@@ -239,8 +255,10 @@ local function split_nav(key)
       end
 
       if tab:get_pane_direction(dir) and not is_zoomed then
+        invalidate_git_cache()
         win:perform_action({ ActivatePaneDirection = dir }, pane)
       elseif tab:get_pane_direction(opposite_dir) and not is_zoomed then
+        invalidate_git_cache()
         win:perform_action({ ActivatePaneDirection = opposite_dir }, pane)
       else
         -- Send the key sequence to process, e.g., vim
@@ -761,6 +779,7 @@ config.keys = {
           wezterm.log_error("Failed to switch tmux window: " .. (stderr or "unknown error"))
         end
       else
+        invalidate_git_cache()
         window:perform_action(act.ActivateTabRelative(1), pane)
       end
     end),
@@ -786,6 +805,7 @@ config.keys = {
           wezterm.log_error("Failed to switch tmux window: " .. (stderr or "unknown error"))
         end
       else
+        invalidate_git_cache()
         window:perform_action(act.ActivateTabRelative(-1), pane)
         --window:perform_action(act.SendKey({ key = "Tab", mods = "CTRL|SHIFT" }), pane)
       end
@@ -1154,64 +1174,75 @@ wezterm.on("update-right-status", function(window, pane)
   local is_windows = wezterm.target_triple:find("windows") ~= nil
 
   local git_branch = nil
-  local branch_color = "green"
+  -- Base color: in sync
+  --local branch_color = "green"
+  --local branch_color = "#689d6a"
+  --local branch_color = "#8ec07c"
+  local branch_color = "#98971a"
 
   if cwd and #cwd > 0 then
-    local git_cmd
+    local cached = git_cache[cwd]
+    local now = os.time()
 
-    if is_windows then
-      git_cmd = string.format(
-        'cd "%s"; git status --porcelain -b 2>$null',
-        cwd:gsub("\\", "/")
-      )
+    if cached and not git_cache_force_next and (now - cached.time) < git_cache_ttl then
+      git_branch = cached.branch
+      branch_color = cached.color
+      -- For debugging (add c suffix if the branch comes from cached):
+      git_branch = git_branch and (git_branch .. " c") or nil
     else
-      git_cmd = string.format(
-        "cd '%s' && git status --porcelain -b 2>/dev/null",
-        cwd
-      )
-    end
+      git_cache_force_next = false
+      local git_cmd
 
-    local success, stdout, stderr = wezterm.run_child_process({
-      is_windows and "powershell" or "bash",
-      is_windows and "-Command" or "-c",
-      git_cmd,
-    })
-
-    if success and stdout and stdout:match("%S") then
-      local first_line, rest = stdout:match("([^\n]*)\n?(.*)")
-      first_line = first_line or ""
-      rest = rest or ""
-
-      local branch = first_line:gsub("^## ", "")
-      branch = branch:gsub("%.%.%..*$", "") -- strip remote "...origin/main"
-      branch = branch:gsub(" .*$", "") -- strip " [ahead 1]" etc
-      git_branch = branch ~= "" and branch or nil
-
-      local has_changes = rest:match("%S") ~= nil
-
-      -- Base color: in sync
-      --branch_color = "green"
-      --branch_color = "#689d6a"
-      --branch_color = "#8ec07c"
-      branch_color = "#98971a"
-
-      -- Remote state overrides base color
-      if first_line:find("diverged") then
-        --branch_color = "magenta"
-        branch_color = "#b16286"
-      elseif first_line:find("behind") then
-        --branch_color = "red"
-        branch_color = "#cc241d"
-      elseif first_line:find("ahead") then
-        --branch_color = "cyan"
-      --branch_color = "#83a598"
-        branch_color = "#458588"
+      if is_windows then
+        git_cmd = string.format(
+          'cd "%s"; git status --porcelain -b 2>$null',
+          cwd:gsub("\\", "/")
+        )
+      else
+        git_cmd = string.format(
+          "cd '%s' && git status --porcelain -b 2>/dev/null",
+          cwd
+        )
       end
 
-      if has_changes then
-        --branch_color = "yellow"
-        branch_color = "#fabd2f"
+      local success, stdout, stderr = wezterm.run_child_process({
+        is_windows and "powershell" or "bash",
+        is_windows and "-Command" or "-c",
+        git_cmd,
+      })
+
+      if success and stdout and stdout:match("%S") then
+        local first_line, rest = stdout:match("([^\n]*)\n?(.*)")
+        first_line = first_line or ""
+        rest = rest or ""
+
+        local branch = first_line:gsub("^## ", "")
+        branch = branch:gsub("%.%.%..*$", "") -- strip remote "...origin/main"
+        branch = branch:gsub(" .*$", "") -- strip " [ahead 1]" etc
+        git_branch = branch ~= "" and branch or nil
+
+        local has_changes = rest:match("%S") ~= nil
+
+        -- Remote state overrides base color
+        if first_line:find("diverged") then
+          --branch_color = "magenta"
+          branch_color = "#b16286"
+        elseif first_line:find("behind") then
+          --branch_color = "red"
+          branch_color = "#cc241d"
+        elseif first_line:find("ahead") then
+          --branch_color = "cyan"
+        --branch_color = "#83a598"
+          branch_color = "#458588"
+        end
+
+        if has_changes then
+          --branch_color = "yellow"
+          branch_color = "#fabd2f"
+        end
       end
+
+      git_cache[cwd] = { branch = git_branch, color = branch_color, time = now }
     end
   end
 
