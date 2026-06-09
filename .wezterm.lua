@@ -191,7 +191,8 @@ local resize_keys = {
 }
 
 -- Log to a simple file
-local log_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_test.txt"
+local log_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_log.txt"
+---@diagnostic disable-next-line: unused-local, unused-function
 local function log_to_file(message)
   local file = io.open(log_file, "a") -- Open in append mode
   if file then
@@ -203,7 +204,7 @@ local function log_to_file(message)
 end
 
 local is_linux = (wezterm.target_triple ~= "x86_64-pc-windows-msvc" and wezterm.target_triple ~= "x86_64-pc-windows-gnu")
-
+---@diagnostic disable-next-line: unused-local, unused-function
 local function is_vim(pane)
   local process_info = pane:get_foreground_process_info()
   local process_name = process_info and process_info.name
@@ -338,9 +339,16 @@ wezterm.on('trigger-vim-with-scrollback', function(window, pane)
   local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
 
   --local name = os.tmpname()
-  local name = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text_debug.txt"
-  -- vim $env:USERPROFILE/wez_text_debug.txt
-  local f = io.open(name, 'w+')
+  local name = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text_dbg.txt"
+  -- see file:
+  --vim $env:USERPROFILE/wez_text_dbg.txt
+  -- or:
+  --vim $HOME/wez_text_dbg.txt
+
+  local f, err = io.open(name, "w+")
+  if not f then
+    error("Failed to open file '" .. tostring(name) .. "': " .. tostring(err))
+  end
   f:write(text)
   f:flush()
   f:close()
@@ -367,9 +375,12 @@ end)
 
 wezterm.on('trigger-vim-with-scrollback-copy-latest', function(window, pane)
   local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
-  local prompt_pattern = "^PS%s+.+>"
-  --local prompt_pattern = "^PS%s+([^\n]+)>%s*(.*)"
-  --local prompt_pattern = "^PS%s+[^>]*\\[^>]*>"
+  local prompt_pattern
+  if is_linux then
+    prompt_pattern = "^jonas:.*> "
+  else
+    prompt_pattern = "^jonas:.*> "
+  end
   local inputs_outputs = {}
 
   for line in text:gmatch("[^\r\n]+") do
@@ -380,14 +391,26 @@ wezterm.on('trigger-vim-with-scrollback-copy-latest', function(window, pane)
     end
   end
 
-  local scrollback_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text_debug.txt"
-  local scrollback_f = io.open(scrollback_file, 'w+')
+  -- print raw full scrollback text to wez_text_dbg.txt
+  local scrollback_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text_dbg.txt"
+  local scrollback_f, scrollback_err = io.open(scrollback_file, "w+")
+
+  if not scrollback_f then
+    error("Failed to open file '" .. tostring(scrollback_file) .. "': " .. tostring(scrollback_err))
+  end
+
   scrollback_f:write(text)
   scrollback_f:flush()
   scrollback_f:close()
 
+  -- print parsed input/output block to wez_text.txt
   local wez_text_file = (os.getenv("HOME") or os.getenv("USERPROFILE")) .. "/wez_text.txt"
-  local wez_text_f = io.open(wez_text_file, 'w+')
+  local wez_text_f, wez_text_err = io.open(wez_text_file, "w+")
+
+  if not wez_text_f then
+    error("Failed to open file '" .. tostring(wez_text_file) .. "': " .. tostring(wez_text_err))
+  end
+
   for _, entry in ipairs(inputs_outputs) do
     wez_text_f:write("Input:\n" .. entry.input .. "\n")
     if entry.output then
@@ -398,7 +421,14 @@ wezterm.on('trigger-vim-with-scrollback-copy-latest', function(window, pane)
   wez_text_f:flush()
   wez_text_f:close()
 
-  local latest_entry = inputs_outputs[#inputs_outputs - 1]
+  local latest_entry = nil
+  for i = #inputs_outputs, 1, -1 do
+    if inputs_outputs[i].output and inputs_outputs[i].output:match("%S") then
+      latest_entry = inputs_outputs[i]
+      break
+    end
+  end
+
   if latest_entry then
     local latest_input = latest_entry.input
     local latest_output = latest_entry.output or ""
@@ -407,6 +437,41 @@ wezterm.on('trigger-vim-with-scrollback-copy-latest', function(window, pane)
     --window:copy_to_clipboard(clipboard_text, 'Clipboard')
     window:copy_to_clipboard(clipboard_text, 'PrimarySelection')
     --window:toast_notification("Copied to Clipboard", "Latest input and output have been copied.", nil, 5000)
+  else
+    window:toast_notification("No Input/Output Found", "No valid input/output detected in scrollback.", nil, 5000)
+  end
+end)
+
+wezterm.on('trigger-copy-latest-n', function(window, pane)
+  local N = 5 -- how many to copy
+  local text = pane:get_lines_as_text(pane:get_dimensions().scrollback_rows)
+  local prompt_pattern = is_linux and "^jonas:.*> " or "^jonas:.*> "
+  local inputs_outputs = {}
+
+  for line in text:gmatch("[^\r\n]+") do
+    if line:match(prompt_pattern) then
+      table.insert(inputs_outputs, {input = line, output = nil})
+    elseif #inputs_outputs > 0 then
+      inputs_outputs[#inputs_outputs].output = (inputs_outputs[#inputs_outputs].output or "") .. line .. "\n"
+    end
+  end
+
+  -- Collect entries with non-empty output, walking backward
+  local entries = {}
+  for i = #inputs_outputs, 1, -1 do
+    if inputs_outputs[i].output and inputs_outputs[i].output:match("%S") then
+      table.insert(entries, 1, inputs_outputs[i]) -- insert at front to preserve order
+      if #entries >= N then break end
+    end
+  end
+
+  if #entries > 0 then
+    local parts = {}
+    for _, entry in ipairs(entries) do
+      table.insert(parts, "Input:\n" .. entry.input .. "\n\nOutput:\n" .. (entry.output or ""))
+    end
+    local clipboard_text = table.concat(parts, "\n---\n\n")
+    window:copy_to_clipboard(clipboard_text, 'PrimarySelection')
   else
     window:toast_notification("No Input/Output Found", "No valid input/output detected in scrollback.", nil, 5000)
   end
@@ -831,6 +896,12 @@ config.keys = {
     --action = act.EmitEvent 'trigger-vim-with-scrollback',
     action = act.EmitEvent 'trigger-vim-with-scrollback-copy-latest',
   },
+  -- bind alt-ctrl-k: act.EmitEvent trigger-copy-latest-n
+  {
+    key = 'K',
+    mods = 'ALT|CTRL',
+    action = act.EmitEvent 'trigger-copy-latest-n',
+  },
 }
 
 -- Read dir path and start a split pane
@@ -919,8 +990,10 @@ local function open_github_repo(win, pane)
 
   -- Debug
   --log_to_file(cwd)
-  -- See file logs via:
-  -- vim $env:USERPROFILE/wez_test.txt
+  -- see file:
+  --vim $env:USERPROFILE/wez_log.txt
+  -- or:
+  --vim $HOME/wez_log.txt
 
   local is_windows = wezterm.target_triple:find("windows") ~= nil
   local git_remote_cmd, git_branch_cmd
@@ -1188,7 +1261,7 @@ wezterm.on("update-right-status", function(window, pane)
       git_branch = cached.branch
       branch_color = cached.color
       -- For debugging (add c suffix if the branch comes from cached):
-      git_branch = git_branch and (git_branch .. " c") or nil
+      --git_branch = git_branch and (git_branch .. " c") or nil
     else
       git_cache_force_next = false
       local git_cmd

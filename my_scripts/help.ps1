@@ -700,8 +700,16 @@ function Show-Paths-Help {
         '$Env:userprofile/.wezterm/wezterm-session-manager/wezterm_state_coding.json' `
         $Keyword
 
-    Show-PathEntry "wezterm debug log file" `
-        '$Env:userprofile/wez_test.txt' `
+    Show-PathEntry "wezterm lua log file" `
+        '$Env:USERPROFILE/wez_log.txt' `
+        $Keyword
+
+    Show-PathEntry "wezterm parsed io file" `
+        '$Env:USERPROFILE/wez_text.txt' `
+        $Keyword
+
+    Show-PathEntry "wezterm scrollback debug file" `
+        '$Env:USERPROFILE/wez_text_dbg.txt' `
         $Keyword
 
     Show-PathEntry "alacritty config path" `
