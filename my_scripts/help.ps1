@@ -522,15 +522,15 @@ function Show-Env-Help {
 
     Write-Host ""
     Write-Host "  Print a variable value:" -ForegroundColor DarkGray
-    Write-CodeLine '$env:USERNAME'
-    Write-CodeLine 'echo $env:COMPUTERNAME'
-    Write-CodeLine '[Environment]::GetEnvironmentVariable("PATH", "Machine")   # machine-level'
-    Write-CodeLine '[Environment]::GetEnvironmentVariable("PATH", "User")      # user-level'
+    Write-CodeLine '  $env:USERNAME'
+    Write-CodeLine '  echo $env:COMPUTERNAME'
+    Write-CodeLine '  [Environment]::GetEnvironmentVariable("PATH", "Machine")   # machine-level'
+    Write-CodeLine '  [Environment]::GetEnvironmentVariable("PATH", "User")      # user-level'
     Write-Host ""
     Write-Host "  List all env vars:" -ForegroundColor DarkGray
-    Write-CodeLine 'Get-ChildItem Env:                                            # all vars'
-    Write-CodeLine 'Get-ChildItem Env: | Sort-Object Name                         # sorted'
-    Write-CodeLine 'Get-ChildItem Env: | Where-Object { $_.Name -like "*path*" }  # filtered'
+    Write-CodeLine '  Get-ChildItem Env:                                            # all vars'
+    Write-CodeLine '  Get-ChildItem Env: | Sort-Object Name                         # sorted'
+    Write-CodeLine '  Get-ChildItem Env: | Where-Object { $_.Name -like "*path*" }  # filtered'
 }
 
 # Other commands
@@ -551,13 +551,13 @@ function Show-Other-Help {
     Write-Host ""
     Write-Host "List only directories:" -ForegroundColor Yellow
     Write-CodeLine "ls -Directory                                   # shorthand (PowerShell 3.0+)"
-    Write-CodeLine "ls | Where-Object {`$_.PSIsContainer}           # works in all versions"
+    Write-CodeLine "ls | Where-Object {`$_.PSIsContainer}            # works in all versions"
     Write-CodeLine "Get-ChildItem -Directory                        # explicit"
 
     Write-Host ""
     Write-Host "List only files:" -ForegroundColor Yellow
     Write-CodeLine "ls -File                                        # shorthand (PowerShell 3.0+)"
-    Write-CodeLine "ls | Where-Object {!`$_.PSIsContainer}          # works in all versions"
+    Write-CodeLine "ls | Where-Object {!`$_.PSIsContainer}           # works in all versions"
     Write-CodeLine "Get-ChildItem -File                             # explicit"
 
     Write-Host ""
