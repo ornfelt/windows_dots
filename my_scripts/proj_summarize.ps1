@@ -71,20 +71,6 @@ if (-not (Test-Path $scriptPath)) {
     exit 1
 }
 
-# --- Report file map ---------------------------------------------------------
-
-$reportFileMap = @{
-    'cs'   = 'csproj-summary.txt'
-    'go'   = 'go-summary.txt'
-    'java' = 'java-summary.txt'
-    'js'   = 'package-summary.txt'
-    'ts'   = 'package-summary.txt'
-    'py'   = 'python-summary.txt'
-    'rs'   = 'rust-summary.txt'
-    'c'    = 'c-summary.txt'
-    'cpp'  = 'cpp-summary.txt'
-}
-
 # --- Dispatch ----------------------------------------------------------------
 
 Write-Info "Dispatching to [$langDir] -> $scriptPath"
@@ -101,7 +87,7 @@ $exitCode = $LASTEXITCODE
 # Only ask if the language script succeeded
 if ($exitCode -eq 0) {
     if ($reportFileMap.ContainsKey($langDir)) {
-        $reportFileName = $reportFileMap[$langDir]
+        $reportFileName = "$langDir-proj-summary.txt"
         $reportFilePath = Join-Path (Get-Location) $reportFileName
 
         if (Test-Path $reportFilePath) {
