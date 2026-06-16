@@ -71,6 +71,20 @@ if (-not (Test-Path $scriptPath)) {
     exit 1
 }
 
+# --- Report file map ---------------------------------------------------------
+
+$reportFileMap = @{
+    'cs'   = 'csproj-summary.txt'
+    'go'   = 'go-summary.txt'
+    'java' = 'java-summary.txt'
+    'js'   = 'package-summary.txt'
+    'ts'   = 'package-summary.txt'
+    'py'   = 'python-summary.txt'
+    'rs'   = 'rust-summary.txt'
+    'c'    = 'c-summary.txt'
+    'cpp'  = 'cpp-summary.txt'
+}
+
 # --- Dispatch ----------------------------------------------------------------
 
 Write-Info "Dispatching to [$langDir] -> $scriptPath"
@@ -80,5 +94,35 @@ if ($forwardArgs.Count -gt 0) {
 }
 
 & $scriptPath @forwardArgs
-exit $LASTEXITCODE
+#exit $LASTEXITCODE
+# prompt to see if user wants to keep report before exiting...
+$exitCode = $LASTEXITCODE
 
+# Only ask if the language script succeeded
+if ($exitCode -eq 0) {
+    if ($reportFileMap.ContainsKey($langDir)) {
+        $reportFileName = $reportFileMap[$langDir]
+        $reportFilePath = Join-Path (Get-Location) $reportFileName
+
+        if (Test-Path $reportFilePath) {
+            #Write-Info "Summary file produced: $reportFilePath"
+            $answer = Read-Host "Keep this summary file? Type yes/y to keep"
+
+            if ($answer.Trim() -match '^(?i:y|yes)$') {
+                Write-Ok "Keeping summary file: $reportFilePath"
+            }
+            else {
+                Remove-Item $reportFilePath -Force
+                Write-Warn "Deleted summary file: $reportFilePath"
+            }
+        }
+        else {
+            Write-Warn "Expected summary file was not found: $reportFilePath"
+        }
+    }
+    else {
+        Write-Warn "No report file mapping configured for language '$langDir'."
+    }
+}
+
+exit $exitCode
