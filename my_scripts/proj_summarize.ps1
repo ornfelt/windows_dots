@@ -86,28 +86,23 @@ $exitCode = $LASTEXITCODE
 
 # Only ask if the language script succeeded
 if ($exitCode -eq 0) {
-    if ($reportFileMap.ContainsKey($langDir)) {
-        $reportFileName = "$langDir-proj-summary.txt"
-        $reportFilePath = Join-Path (Get-Location) $reportFileName
+    $reportFileName = "$langDir-proj-summary.txt"
+    $reportFilePath = Join-Path (Get-Location) $reportFileName
 
-        if (Test-Path $reportFilePath) {
-            #Write-Info "Summary file produced: $reportFilePath"
-            $answer = Read-Host "Keep this summary file? Type yes/y to keep"
+    if (Test-Path $reportFilePath) {
+        #Write-Info "Summary file produced: $reportFilePath"
+        $answer = Read-Host "Keep this summary file? Type yes/y to keep"
 
-            if ($answer.Trim() -match '^(?i:y|yes)$') {
-                Write-Ok "Keeping summary file: $reportFilePath"
-            }
-            else {
-                Remove-Item $reportFilePath -Force
-                Write-Warn "Deleted summary file: $reportFilePath"
-            }
+        if ($answer.Trim() -match '^(?i:y|yes)$') {
+            Write-Ok "Keeping summary file: $reportFilePath"
         }
         else {
-            Write-Warn "Expected summary file was not found: $reportFilePath"
+            Remove-Item $reportFilePath -Force
+            Write-Warn "Deleted summary file: $reportFilePath"
         }
     }
     else {
-        Write-Warn "No report file mapping configured for language '$langDir'."
+        Write-Warn "Expected summary file was not found: $reportFilePath"
     }
 }
 
