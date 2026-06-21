@@ -565,6 +565,7 @@ else
       rust      = [[ (function_item) @func ]],
       lua       = [[ 
         (function_declaration) @func 
+        (function_definition)  @func
       ]],
       java = [[
         (method_declaration)      @func
