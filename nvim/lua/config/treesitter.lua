@@ -738,7 +738,7 @@ else
 
         -- also skip block‐comment lines for JS/TS
         if not skip and (ts_lang == "javascript" or ts_lang == "typescript" or ts_lang == "tsx") then
-          if trimmed:match("^/%*") or trimmed:match("^%*") or trimmed:match("%*/$") then
+          if trimmed:match("^/%*") or trimmed:match("^%*") then
             skip = true
           end
         end
