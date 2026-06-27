@@ -401,9 +401,13 @@ function Show-Grep-Help {
     Write-CodeLine 'tmp="$(mktemp)" && grep -rIn -C 3 "FIRST" . >"$tmp" && grep -i "SECOND" "$tmp" && rm -f "$tmp"'
 }
 
-# Moved: all dot commands / scripts
+# all dot commands / scripts
 function Show-Scripts-Help {
     Write-Host "Some useful dot commands:" -ForegroundColor Yellow
+
+    Write-Host ""
+    Write-Host "  Meta:" -ForegroundColor DarkGray
+    Write-CommandWithDescription ".help" "show this help" 'Cyan'
 
     Write-Host ""
     Write-Host "  Navigation / cd helpers:" -ForegroundColor DarkGray
@@ -419,6 +423,7 @@ function Show-Scripts-Help {
     Write-CommandWithDescription ".playermap" "cd into playermap dir and run" 'Cyan'
     Write-CommandWithDescription ".mangos" "cd into mangos dir"               'Cyan'
     Write-CommandWithDescription ".mwd"   "my_wow_docs: cd_and_print"         'Cyan'
+    Write-CommandWithDescription ".dots"  "cd into Linux dotfiles"       'Cyan'
 
     Write-Host ""
     Write-Host "  Run / launcher helpers:" -ForegroundColor DarkGray
@@ -444,6 +449,7 @@ function Show-Scripts-Help {
     Write-CommandWithDescription ".list_p"           "list processes"                          'Cyan'
     Write-CommandWithDescription ".list_pm"          "list processes by memory usage"          'Cyan'
     Write-CommandWithDescription ".list_mapped_drives" "list mapped drives"                    'Cyan'
+    Write-CommandWithDescription ".proc"       "list/inspect processes"                        'Cyan'
 
     Write-Host ""
     Write-Host "  Network helpers:" -ForegroundColor DarkGray
@@ -455,13 +461,25 @@ function Show-Scripts-Help {
     Write-Host "  Search / inspect / dump helpers:" -ForegroundColor DarkGray
     Write-CommandWithDescription ".search_conf" "search local config"                         'Cyan'
     Write-CommandWithDescription ".dump_files"  "dump files"                                  'Cyan'
+    Write-CommandWithDescription ".fr"         "find and replace"                              'Cyan'
+    Write-CommandWithDescription ".fr_py"      "find and replace (Python)"                     'Cyan'
+    Write-CommandWithDescription ".fr_cs"      "find and replace (C#)"                         'Cyan'
+    Write-CommandWithDescription ".find_files" "helper script for finding files"               'Cyan'
+    Write-CommandWithDescription ".dir_sizes"  "show directory/file sizes"                     'Cyan'
+    Write-CommandWithDescription ".search_env" "search environment variables"                  'Cyan'
+    Write-CommandWithDescription ".gs"         "git search helper script"                      'Cyan'
 
     Write-Host ""
     Write-Host "  Build / tools / maintenance:" -ForegroundColor DarkGray
     Write-CommandWithDescription ".cmake"   "helper script for cmake"                          'Cyan'
+    Write-CommandWithDescription ".cmake_old"  "old cmake helper script"                       'Cyan'
+    Write-CommandWithDescription ".cmake_py"   "Python equivalent of cmake helper script"      'Cyan'
+    Write-CommandWithDescription ".clean"      "clean up build dirs (bin, obj, etc.)"          'Cyan'
     Write-CommandWithDescription ".build"   "helper script for building"                       'Cyan'
     Write-CommandWithDescription ".build_py" "helper script for building"                      'Cyan'
     Write-CommandWithDescription ".pkg"      "helper script for packages"                      'Cyan'
+    Write-CommandWithDescription ".sln"        "helper script for VS solutions"                'Cyan'
+    Write-CommandWithDescription ".proj_summarize" "summarize a project"                       'Cyan'
     Write-CommandWithDescription ".git_push"  "helper script for git push"                     'Cyan'
     Write-CommandWithDescription ".git_pull"  "helper script for git pull"                     'Cyan'
     Write-CommandWithDescription ".git_ignore" "helper script for git ignore"                  'Cyan'
