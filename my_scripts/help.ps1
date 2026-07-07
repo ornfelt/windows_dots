@@ -423,76 +423,78 @@ function Show-Scripts-Help {
     Write-CommandWithDescription ".playermap" "cd into playermap dir and run" 'Cyan'
     Write-CommandWithDescription ".mangos" "cd into mangos dir"               'Cyan'
     Write-CommandWithDescription ".mwd"   "my_wow_docs: cd_and_print"         'Cyan'
-    Write-CommandWithDescription ".dots"  "cd into Linux dotfiles"       'Cyan'
+    Write-CommandWithDescription ".dots"  "cd into Linux dotfiles"            'Cyan'
 
     Write-Host ""
     Write-Host "  Run / launcher helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".ioq3"  "run ioq3"                          'Cyan'
-    Write-CommandWithDescription ".openmw" "run openmw"                       'Cyan'
-    Write-CommandWithDescription ".stk"   "run SuperTuxKart (stk)"            'Cyan'
-    Write-CommandWithDescription ".wow"   "run World of Warcraft client"      'Cyan'
-    Write-CommandWithDescription ".wowbot" "run wowbot"                       'Cyan'
-    Write-CommandWithDescription ".llama" "run llama"                         'Cyan'
-    Write-CommandWithDescription ".cava"  "run cava visualizer"               'Cyan'
-    Write-CommandWithDescription ".wc"    "run wow client (wc)"               'Cyan'
-    Write-CommandWithDescription ".mw"    "my_wow: cd_and_print"              'Cyan'
-    Write-CommandWithDescription ".mww"   "my_web_wow: cd_and_print"          'Cyan'
+    Write-CommandWithDescription ".ioq3"  "run ioq3"                            'Cyan'
+    Write-CommandWithDescription ".openmw" "run openmw"                         'Cyan'
+    Write-CommandWithDescription ".stk"   "run SuperTuxKart (stk)"              'Cyan'
+    Write-CommandWithDescription ".wow"   "run World of Warcraft client"        'Cyan'
+    Write-CommandWithDescription ".wowbot" "run wowbot"                         'Cyan'
+    Write-CommandWithDescription ".llama" "run llama"                           'Cyan'
+    Write-CommandWithDescription ".cava"  "run cava visualizer"                 'Cyan'
+    Write-CommandWithDescription ".wc"    "run wow client (wc)"                 'Cyan'
+    Write-CommandWithDescription ".mw"    "my_wow: cd_and_print"                'Cyan'
+    Write-CommandWithDescription ".mww"   "my_web_wow: cd_and_print"            'Cyan'
     Write-CommandWithDescription ".mwr"   "my_wow: run_with_args.ps1 with args" 'Cyan'
 
     Write-Host ""
     Write-Host "  Listing helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".list_colors"      "print colors"                            'Cyan'
-    Write-CommandWithDescription ".list_all_colors"  "print all colors"                        'Cyan'
-    Write-CommandWithDescription ".list_std_colors"  "print standard colors"                   'Cyan'
-    Write-CommandWithDescription ".list_files"       "list largest files recursively (CLI)"    'Cyan'
-    Write-CommandWithDescription ".list_files_gui"   "list largest files recursively via GUI"  'Cyan'
-    Write-CommandWithDescription ".list_p"           "list processes"                          'Cyan'
-    Write-CommandWithDescription ".list_pm"          "list processes by memory usage"          'Cyan'
-    Write-CommandWithDescription ".list_mapped_drives" "list mapped drives"                    'Cyan'
-    Write-CommandWithDescription ".proc"       "list/inspect processes"                        'Cyan'
+    Write-CommandWithDescription ".list_colors"      "print colors"                           'Cyan'
+    Write-CommandWithDescription ".list_all_colors"  "print all colors"                       'Cyan'
+    Write-CommandWithDescription ".list_std_colors"  "print standard colors"                  'Cyan'
+    Write-CommandWithDescription ".list_files"       "list largest files recursively (CLI)"   'Cyan'
+    Write-CommandWithDescription ".list_files_gui"   "list largest files recursively via GUI" 'Cyan'
+    Write-CommandWithDescription ".list_p"           "list processes"                         'Cyan'
+    Write-CommandWithDescription ".list_pm"          "list processes by memory usage"         'Cyan'
+    Write-CommandWithDescription ".list_mapped_drives" "list mapped drives"                   'Cyan'
+    Write-CommandWithDescription ".proc"       "list/inspect processes"                       'Cyan'
 
     Write-Host ""
     Write-Host "  Network helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".show_wifi"           "print stored Wi-Fi settings"          'Cyan'
-    Write-CommandWithDescription ".network_devices"     "list network devices"                 'Cyan'
-    Write-CommandWithDescription ".network_devices_ping" "ping common network devices"         'Cyan'
+    Write-CommandWithDescription ".show_wifi"           "print stored Wi-Fi settings"  'Cyan'
+    Write-CommandWithDescription ".network_devices"     "list network devices"         'Cyan'
+    Write-CommandWithDescription ".network_devices_ping" "ping common network devices" 'Cyan'
 
     Write-Host ""
     Write-Host "  Search / inspect / dump helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".search_conf" "search local config"                         'Cyan'
-    Write-CommandWithDescription ".dump_files"  "dump files"                                  'Cyan'
-    Write-CommandWithDescription ".fr"         "find and replace"                              'Cyan'
-    Write-CommandWithDescription ".fr_py"      "find and replace (Python)"                     'Cyan'
-    Write-CommandWithDescription ".fr_cs"      "find and replace (C#)"                         'Cyan'
-    Write-CommandWithDescription ".find_files" "helper script for finding files"               'Cyan'
-    Write-CommandWithDescription ".dir_sizes"  "show directory/file sizes"                     'Cyan'
-    Write-CommandWithDescription ".search_env" "search environment variables"                  'Cyan'
-    Write-CommandWithDescription ".gs"         "git search helper script"                      'Cyan'
+    Write-CommandWithDescription ".search_conf" "search local config"            'Cyan'
+    Write-CommandWithDescription ".dump_files"  "dump files"                     'Cyan'
+    Write-CommandWithDescription ".fr"         "find and replace"                'Cyan'
+    Write-CommandWithDescription ".fr_py"      "find and replace (Python)"       'Cyan'
+    Write-CommandWithDescription ".fr_cs"      "find and replace (C#)"           'Cyan'
+    Write-CommandWithDescription ".find_files" "helper script for finding files" 'Cyan'
+    Write-CommandWithDescription ".dir_sizes"  "show directory/file sizes"       'Cyan'
+    Write-CommandWithDescription ".search_env" "search environment variables"    'Cyan'
+    Write-CommandWithDescription ".gs"         "git search helper script"        'Cyan'
+    Write-CommandWithDescription ".gb"         "helper script for git branches"  'Cyan'
 
     Write-Host ""
     Write-Host "  Build / tools / maintenance:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".cmake"   "helper script for cmake"                          'Cyan'
-    Write-CommandWithDescription ".cmake_old"  "old cmake helper script"                       'Cyan'
-    Write-CommandWithDescription ".cmake_py"   "Python equivalent of cmake helper script"      'Cyan'
-    Write-CommandWithDescription ".clean"      "clean up build dirs (bin, obj, etc.)"          'Cyan'
-    Write-CommandWithDescription ".pkg"      "helper script for packages"                      'Cyan'
-    Write-CommandWithDescription ".sln"        "helper script for VS solutions"                'Cyan'
-    Write-CommandWithDescription ".proj_summarize" "summarize a project"                       'Cyan'
-    Write-CommandWithDescription ".build"   "helper script for building"                       'Cyan'
-    Write-CommandWithDescription ".build_py" "helper script for building"                      'Cyan'
-    Write-CommandWithDescription ".git_push"  "helper script for git push"                     'Cyan'
-    Write-CommandWithDescription ".git_pull"  "helper script for git pull"                     'Cyan'
-    Write-CommandWithDescription ".git_ignore" "helper script for git ignore"                  'Cyan'
-    Write-CommandWithDescription ".copy_git_msg" "copy N-latest commit msg"                    'Cyan'
-    Write-CommandWithDescription ".diff_shader_git" "run diff_shader_git py script"            'Cyan'
-    Write-CommandWithDescription ".health_check" "health check script"                        'Cyan'
-    Write-CommandWithDescription ".gen_plant" "generate PlantUML image"                        'Cyan'
-    Write-CommandWithDescription ".gen_merm"  "generate Mermaid image"                         'Cyan'
+    Write-CommandWithDescription ".cmake"   "helper script for cmake"                     'Cyan'
+    Write-CommandWithDescription ".cmake_old"  "old cmake helper script"                  'Cyan'
+    Write-CommandWithDescription ".cmake_py"   "Python equivalent of cmake helper script" 'Cyan'
+    Write-CommandWithDescription ".clean"      "clean up build dirs (bin, obj, etc.)"     'Cyan'
+    Write-CommandWithDescription ".pkg"      "helper script for packages"                 'Cyan'
+    Write-CommandWithDescription ".sln"        "helper script for VS solutions"           'Cyan'
+    Write-CommandWithDescription ".proj_summarize" "summarize a project"                  'Cyan'
+    Write-CommandWithDescription ".build"   "helper script for building"                  'Cyan'
+    Write-CommandWithDescription ".build_py" "helper script for building"                 'Cyan'
+    Write-CommandWithDescription ".go_flags"  "helper script for Go build tags / flags"   'Cyan'
+    Write-CommandWithDescription ".git_push"  "helper script for git push"                'Cyan'
+    Write-CommandWithDescription ".git_pull"  "helper script for git pull"                'Cyan'
+    Write-CommandWithDescription ".git_ignore" "helper script for git ignore"             'Cyan'
+    Write-CommandWithDescription ".copy_git_msg" "copy N-latest commit msg"               'Cyan'
+    Write-CommandWithDescription ".diff_shader_git" "run diff_shader_git py script"       'Cyan'
+    Write-CommandWithDescription ".health_check" "health check script"                    'Cyan'
+    Write-CommandWithDescription ".gen_plant" "generate PlantUML image"                   'Cyan'
+    Write-CommandWithDescription ".gen_merm"  "generate Mermaid image"                    'Cyan'
 
-    Write-CommandWithDescription ".acore_update"  "update acore repo"                          'Cyan'
-    Write-CommandWithDescription ".tcore_update"  "update tcore repo"                          'Cyan'
-    Write-CommandWithDescription ".mangos_update" "update mangos repo"                         'Cyan'
-    Write-CommandWithDescription ".cmangos_update" "update cmangos repo"                       'Cyan'
+    Write-CommandWithDescription ".acore_update"  "update acore repo"                     'Cyan'
+    Write-CommandWithDescription ".tcore_update"  "update tcore repo"                     'Cyan'
+    Write-CommandWithDescription ".mangos_update" "update mangos repo"                    'Cyan'
+    Write-CommandWithDescription ".cmangos_update" "update cmangos repo"                  'Cyan'
     Write-CommandWithDescription ".update_nvim_from_linux" "update neovim config from Linux dots" 'Cyan'
 
     Write-CommandWithDescription ".clean_shada" "clean neovim shada data"                      'Cyan'
@@ -1026,6 +1028,20 @@ function Show-Go-Help {
     Write-CodeLine "go run main.go                      # Run directly"
     Write-CodeLine "go build ./...                      # Build all packages"
     Write-CodeLine "go test ./...                       # Run tests"
+
+    Write-Host ""
+    Write-Host "Build tags / feature flags:" -ForegroundColor Yellow
+    Write-CodeLine "go build -tags=with_debug_rendering ./...                   # Build with one tag"
+    Write-CodeLine "go run -tags=with_debug_rendering .                         # Run with one tag"
+    Write-CodeLine "go build -tags=with_debug_rendering,with_performance ./...  # Build with multiple tags"
+    Write-CodeLine "go run -tags=with_debug_rendering,with_performance .        # Run with multiple tags"
+
+    Write-Host ""
+    Write-Host "Persistent GOFLAGS:" -ForegroundColor Yellow
+    Write-CodeLine 'go env -w GOFLAGS="-tags=with_debug_rendering"                   # Always use one tag'
+    Write-CodeLine 'go env -w GOFLAGS="-tags=with_debug_rendering,with_performance"  # Always use multiple tags'
+    Write-CodeLine "go env GOFLAGS                                                   # Check current GOFLAGS"
+    Write-CodeLine "go env -u GOFLAGS                                                # Remove / unset GOFLAGS"
 
     Write-Host ""
     Write-Host "With output redirected to test.txt:" -ForegroundColor Yellow
