@@ -482,6 +482,7 @@ function Show-Scripts-Help {
     Write-CommandWithDescription ".build"   "helper script for building"                  'Cyan'
     Write-CommandWithDescription ".build_py" "helper script for building"                 'Cyan'
     Write-CommandWithDescription ".go_flags"  "helper script for Go build tags / flags"   'Cyan'
+    Write-CommandWithDescription ".rs_flags"  "helper script for Rust feature flags"      'Cyan'
     Write-CommandWithDescription ".git_push"  "helper script for git push"                'Cyan'
     Write-CommandWithDescription ".git_pull"  "helper script for git pull"                'Cyan'
     Write-CommandWithDescription ".git_ignore" "helper script for git ignore"             'Cyan'
