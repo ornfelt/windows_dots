@@ -908,6 +908,24 @@ function Show-Rust-Help {
     Write-CodeLine "cargo run -- --use-dt=false         # OFF"
 
     Write-Host ""
+    Write-Host "Feature flags:" -ForegroundColor Yellow
+    Write-CodeLine 'cargo build --features use_async                        # Build with one feature'
+    Write-CodeLine 'cargo run --features use_async                          # Run with one feature'
+    Write-CodeLine 'cargo build --features "use_async,with_imgui"           # Build with multiple features'
+    Write-CodeLine 'cargo run --features "use_async,with_imgui"             # Run with multiple features'
+    Write-CodeLine 'cargo build --all-features                              # Build with all features'
+    Write-CodeLine 'cargo build --no-default-features                       # Build without default features'
+    Write-CodeLine 'cargo build --no-default-features --features use_async  # Specific features only'
+
+    Write-Host ""
+    Write-Host "CARGO_FEATURES env var (for rust-analyzer / neovim):" -ForegroundColor Yellow
+    Write-CodeLine '$env:CARGO_FEATURES = "use_async,with_imgui"            # Set features for session'
+    Write-CodeLine '$env:CARGO_FEATURES                                     # Check current value'
+    Write-CodeLine 'Remove-Item Env:CARGO_FEATURES                          # Unset / remove'
+    Write-CodeLine 'cargo build --features $env:CARGO_FEATURES              # Use inline with cargo build'
+    Write-CodeLine 'cargo run --features $env:CARGO_FEATURES                # Use inline with cargo run'
+
+    Write-Host ""
     Write-Host "Add packages (crates):" -ForegroundColor Yellow
     Write-CodeLine "cargo add serde                                 # Add latest"
     Write-CodeLine "cargo add serde@1.0.197                         # Add specific version"
