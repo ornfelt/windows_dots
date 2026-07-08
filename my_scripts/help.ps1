@@ -411,19 +411,20 @@ function Show-Scripts-Help {
 
     Write-Host ""
     Write-Host "  Navigation / cd helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".cdn"   "cd into my_notes_path"             'Cyan'
-    Write-CommandWithDescription ".cdc"   "cd into code_root_dir"             'Cyan'
-    Write-CommandWithDescription ".cdp"   "cd into ps_profile_path"           'Cyan'
-    Write-CommandWithDescription ".docs"  "cd into Documents"                 'Cyan'
-    Write-CommandWithDescription ".down"  "cd into Downloads"                 'Cyan'
-    Write-CommandWithDescription ".cdh"   "cd into home dir"                  'Cyan'
-    Write-CommandWithDescription ".acore" "cd into acore dir"                 'Cyan'
-    Write-CommandWithDescription ".tcore" "cd into tcore dir"                 'Cyan'
-    Write-CommandWithDescription ".wcell" "cd into wcell dir"                 'Cyan'
+    Write-CommandWithDescription ".cdn"       "cd into my_notes_path"         'Cyan'
+    Write-CommandWithDescription ".cdc"       "cd into code_root_dir"         'Cyan'
+    Write-CommandWithDescription ".cdp"       "cd into ps_profile_path"       'Cyan'
+    Write-CommandWithDescription ".docs"      "cd into Documents"             'Cyan'
+    Write-CommandWithDescription ".down"      "cd into Downloads"             'Cyan'
+    Write-CommandWithDescription ".cdh"       "cd into home dir"              'Cyan'
+    Write-CommandWithDescription ".acore"     "cd into acore dir"             'Cyan'
+    Write-CommandWithDescription ".tcore"     "cd into tcore dir"             'Cyan'
+    Write-CommandWithDescription ".wcell"     "cd into wcell dir"             'Cyan'
     Write-CommandWithDescription ".playermap" "cd into playermap dir and run" 'Cyan'
-    Write-CommandWithDescription ".mangos" "cd into mangos dir"               'Cyan'
-    Write-CommandWithDescription ".mwd"   "my_wow_docs: cd_and_print"         'Cyan'
-    Write-CommandWithDescription ".dots"  "cd into Linux dotfiles"            'Cyan'
+    Write-CommandWithDescription ".mangos"    "cd into mangos dir"            'Cyan'
+    Write-CommandWithDescription ".mwd"       "my_wow_docs: cd_and_print"     'Cyan'
+    Write-CommandWithDescription ".dots"      "cd into Linux dotfiles"        'Cyan'
+    Write-CommandWithDescription ".gfx"       "cd into gfx dir"               'Cyan'
 
     Write-Host ""
     Write-Host "  Run / launcher helpers:" -ForegroundColor DarkGray
