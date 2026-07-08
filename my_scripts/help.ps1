@@ -427,17 +427,23 @@ function Show-Scripts-Help {
 
     Write-Host ""
     Write-Host "  Run / launcher helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".ioq3"  "run ioq3"                            'Cyan'
-    Write-CommandWithDescription ".openmw" "run openmw"                         'Cyan'
-    Write-CommandWithDescription ".stk"   "run SuperTuxKart (stk)"              'Cyan'
-    Write-CommandWithDescription ".wow"   "run World of Warcraft client"        'Cyan'
-    Write-CommandWithDescription ".wowbot" "run wowbot"                         'Cyan'
-    Write-CommandWithDescription ".llama" "run llama"                           'Cyan'
-    Write-CommandWithDescription ".cava"  "run cava visualizer"                 'Cyan'
-    Write-CommandWithDescription ".wc"    "run wow client (wc)"                 'Cyan'
-    Write-CommandWithDescription ".mw"    "my_wow: cd_and_print"                'Cyan'
-    Write-CommandWithDescription ".mww"   "my_web_wow: cd_and_print"            'Cyan'
-    Write-CommandWithDescription ".mwr"   "my_wow: run_with_args.ps1 with args" 'Cyan'
+    Write-CommandWithDescription ".ioq3"   "run ioq3"                                      'Cyan'
+    Write-CommandWithDescription ".openmw" "run openmw"                                    'Cyan'
+    Write-CommandWithDescription ".stk"    "run SuperTuxKart (stk)"                        'Cyan'
+    Write-CommandWithDescription ".wow"    "run World of Warcraft client"                  'Cyan'
+    Write-CommandWithDescription ".wowbot" "run wowbot"                                    'Cyan'
+    Write-CommandWithDescription ".llama"  "run llama"                                     'Cyan'
+    Write-CommandWithDescription ".cava"   "run cava visualizer"                           'Cyan'
+    Write-CommandWithDescription ".wc"     "run wow client (wc)"                           'Cyan'
+    Write-CommandWithDescription ".mw"     "my_wow: cd_and_print"                          'Cyan'
+    Write-CommandWithDescription ".mww"    "my_web_wow: cd_and_print"                      'Cyan'
+    Write-CommandWithDescription ".mwr"    "my_wow: run_with_args.ps1 with args"           'Cyan'
+    Write-CommandWithDescription ".geo"    "cd into geo-quiz and print usage"              'Cyan'
+    Write-CommandWithDescription ".map"    "cd into maps_data and print usage"             'Cyan'
+    Write-CommandWithDescription ".trans"  "cd into transaction-dashboard and print usage" 'Cyan'
+    Write-CommandWithDescription ".mov"    "cd into mov and print usage"                   'Cyan'
+    Write-CommandWithDescription ".mov_py" "cd into mov_py and print usage"                'Cyan'
+    Write-CommandWithDescription ".book"   "cd into bookshelf and print usage"             'Cyan'
 
     Write-Host ""
     Write-Host "  Listing helpers:" -ForegroundColor DarkGray
