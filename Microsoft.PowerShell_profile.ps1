@@ -216,7 +216,7 @@ $aliases = @(
     ".diff_shader_git", ".build", ".build_py", ".pkg", ".proc", ".copy_git_msg", ".sln",
     ".cmake_old", ".cmake_py", ".fr", ".fr_py", ".fr_cs", ".dots", ".search_env", ".gs",
     ".clean", ".proj_summarize", ".find_files", ".dir_sizes", ".gb", ".go_flags", ".rs_flags",
-    ".geo", ".map", ".trans", ".mov", ".mov_py", ".book", ".gfx"
+    ".geo", ".map", ".trans", ".mov", ".mov_py", ".book", ".gfx", ".utils"
 )
 
 foreach ($alias in $aliases) {
