@@ -88,6 +88,26 @@ function Write-CleanWarning {
     Write-Host "Be careful: below command(s) hard-delete generated files/folders from the current directory." -ForegroundColor DarkYellow
 }
 
+# Helper: check if a section's descriptive text matches the keyword (case-insensitive)
+function Test-SectionMatch {
+    param(
+        [string]$SectionText,
+        [string]$Keyword
+    )
+    if (-not $Keyword) { return $true }
+    return $SectionText.ToLower().Contains($Keyword.Trim().ToLower())
+}
+
+# Print "Filtered by keyword: ..." header when keyword is provided
+function Write-KeywordFilter {
+    param(
+        [string]$Keyword
+    )
+    if ($Keyword) {
+        Write-Host "Filtered by keyword: $Keyword" -ForegroundColor DarkGray
+    }
+}
+
 # IMPORTANT: When no arg (or unknown arg), print ONLY the available args and nothing else.
 function Show-Args {
     $args = @(
@@ -116,514 +136,698 @@ function Show-Args {
     foreach ($a in $args) {
         Write-Host "  $a" -ForegroundColor Magenta
     }
+
+    Write-Host ""
+    Write-Host "  Optional second arg: keyword to filter sections" -ForegroundColor DarkGray
+    Write-Host "  Example: .help cs clean" -ForegroundColor DarkGray
+    Write-Host "  Example: .help scripts build" -ForegroundColor DarkGray
 }
 
 function Show-Git-Help {
+    param([string]$Keyword)
+
     Write-Host "Git commands:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
     Write-Host ""
 
-    Write-CodeLine 'git push https://$env:GITHUB_TOKEN@github.com/ornfelt/small_games'
-    Write-CodeLine 'git clone --recurse-submodules -j8 https://$GITHUB_TOKEN@github.com/ornfelt/my_wow_docs'
-    Write-Host ""
+    if (Test-SectionMatch "push clone token" $Keyword) {
+        Write-CodeLine 'git push https://$env:GITHUB_TOKEN@github.com/ornfelt/small_games'
+        Write-CodeLine 'git clone --recurse-submodules -j8 https://$GITHUB_TOKEN@github.com/ornfelt/my_wow_docs'
+        Write-Host ""
+    }
 
-    # Existing useful git commands moved here
-    Write-Host "# Display history with graph and decorate:" -ForegroundColor DarkGray
-    Write-Host "git log --graph --decorate" -ForegroundColor Blue
+    if (Test-SectionMatch "log history graph decorate" $Keyword) {
+        # Existing useful git commands moved here
+        Write-Host "# Display history with graph and decorate:" -ForegroundColor DarkGray
+        Write-Host "git log --graph --decorate" -ForegroundColor Blue
+    }
 
-    Write-Host "# Generate diff showing changes from latest commit:" -ForegroundColor DarkGray
-    #Write-Host "git show HEAD | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
-    Write-Host "git show HEAD --output=latest_changes.diff" -ForegroundColor Blue
+    if (Test-SectionMatch "diff show changes latest commit" $Keyword) {
+        Write-Host "# Generate diff showing changes from latest commit:" -ForegroundColor DarkGray
+        #Write-Host "git show HEAD | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+        Write-Host "git show HEAD --output=latest_changes.diff" -ForegroundColor Blue
 
-    Write-Host "# Generate diff showing changes from second latest commit (use HEAD^^ for third etc.):" -ForegroundColor DarkGray
-    #Write-Host "git show HEAD^ | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
-    Write-Host "git show HEAD^ --output=latest_changes.diff" -ForegroundColor Blue
+        Write-Host "# Generate diff showing changes from second latest commit (use HEAD^^ for third etc.):" -ForegroundColor DarkGray
+        #Write-Host "git show HEAD^ | Set-Content -Encoding UTF8 latest_changes.diff" -ForegroundColor Blue
+        Write-Host "git show HEAD^ --output=latest_changes.diff" -ForegroundColor Blue
 
-    Write-Host "# Generate diff for specified commit id, filtering on specific file type:" -ForegroundColor DarkGray
-    #Write-Host "git show c7aa908 -- '*.go' | Set-Content -Encoding UTF8 go_fixes.diff" -ForegroundColor Blue
-    Write-Host "git show c7aa908 --output=go_fixes.diff -- '*.go'" -ForegroundColor Blue
+        Write-Host "# Generate diff for specified commit id, filtering on specific file type:" -ForegroundColor DarkGray
+        #Write-Host "git show c7aa908 -- '*.go' | Set-Content -Encoding UTF8 go_fixes.diff" -ForegroundColor Blue
+        Write-Host "git show c7aa908 --output=go_fixes.diff -- '*.go'" -ForegroundColor Blue
 
-    Write-Host "# Generate diff between specific commit and now, filtering on specific file types:" -ForegroundColor DarkGray
-    Write-Host "git diff cbceb5a..HEAD -- '**/*.java' '*.cs' > new_java_cs_changes.diff" -ForegroundColor Blue
+        Write-Host "# Generate diff between specific commit and now, filtering on specific file types:" -ForegroundColor DarkGray
+        Write-Host "git diff cbceb5a..HEAD -- '**/*.java' '*.cs' > new_java_cs_changes.diff" -ForegroundColor Blue
+    }
 
-    Write-Host "# Apply patch:" -ForegroundColor DarkGray
-    Write-Host 'cd $env:code_root_dir/Code2/C#/dotnet-integration; git apply $env:my_notes_path/notes/svea/diffs/testshop_dev.diff --verbose' -ForegroundColor Blue
+    if (Test-SectionMatch "apply patch" $Keyword) {
+        Write-Host "# Apply patch:" -ForegroundColor DarkGray
+        Write-Host 'cd $env:code_root_dir/Code2/C#/dotnet-integration; git apply $env:my_notes_path/notes/svea/diffs/testshop_dev.diff --verbose' -ForegroundColor Blue
+    }
 }
 
 function Show-RipGrep-Help {
+    param([string]$Keyword)
+
     Write-Host "## ripgrep" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
     Write-Host ""
 
-    Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Basic Recursive Search" $Keyword) {
+        Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'rg --max-depth 1 "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Non-Recursive Search" $Keyword) {
+        Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'rg --max-depth 1 "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "*.txt"'
-    Write-Host "Use -g (glob) to include only .txt files." -ForegroundColor DarkGray
-    Write-Host ""
+    if (Test-SectionMatch "Search Only in Files with Specific Extensions" $Keyword) {
+        Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "*.txt"'
+        Write-Host "Use -g (glob) to include only .txt files." -ForegroundColor DarkGray
+        Write-Host ""
+    }
 
-    Write-Host "Multiple extensions:" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "*.txt" -g "*.md"'
-    Write-Host "You can add multiple -g filters." -ForegroundColor DarkGray
-    Write-Host ""
+    if (Test-SectionMatch "Multiple extensions" $Keyword) {
+        Write-Host "Multiple extensions:" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "*.txt" -g "*.md"'
+        Write-Host "You can add multiple -g filters." -ForegroundColor DarkGray
+        Write-Host ""
+    }
 
-    Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "!*.log"'
-    Write-Host "The ! negates the glob, so it excludes .log files." -ForegroundColor DarkGray
-    Write-Host ""
+    if (Test-SectionMatch "Exclude Specific File Extensions" $Keyword) {
+        Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "!*.log"'
+        Write-Host "The ! negates the glob, so it excludes .log files." -ForegroundColor DarkGray
+        Write-Host ""
+    }
 
-    Write-Host "Exclude multiple:" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "!*.log" -g "!*.tmp"'
-    Write-Host ""
+    if (Test-SectionMatch "Exclude multiple" $Keyword) {
+        Write-Host "Exclude multiple:" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "!*.log" -g "!*.tmp"'
+        Write-Host ""
+    }
 
-    Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
-    Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "*.cs" -g "!*.Designer.cs"'
-    Write-Host ""
+    if (Test-SectionMatch "Combine Include and Exclude" $Keyword) {
+        Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
+        Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "*.cs" -g "!*.Designer.cs"'
+        Write-Host ""
+    }
 
-    Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" path/to/directory'
-    Write-Host ""
+    if (Test-SectionMatch "Search in a Specific Directory" $Keyword) {
+        Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" path/to/directory'
+        Write-Host ""
+    }
 
-    Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
-    Write-CodeLine 'rg -l "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Show Only File Names with Matches" $Keyword) {
+        Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
+        Write-CodeLine 'rg -l "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Show Line Numbers" -ForegroundColor DarkGray
-    Write-CodeLine 'rg -n "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Show Line Numbers" $Keyword) {
+        Write-Host "Show Line Numbers" -ForegroundColor DarkGray
+        Write-CodeLine 'rg -n "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'rg -i "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Case-Insensitive Search" $Keyword) {
+        Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'rg -i "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
-    Write-CodeLine 'rg -F "literal_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Literal Search no regex" $Keyword) {
+        Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
+        Write-CodeLine 'rg -F "literal_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
-    Write-CodeLine 'rg -i "your_search_text" -g "!build/**" -g "!out/**" -g "!node_modules/**" -g "!.git/**" -g "!bin/**"'
-    Write-Host ""
+    if (Test-SectionMatch "Recursive case-insensitive excluding common build dirs" $Keyword) {
+        Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
+        Write-CodeLine 'rg -i "your_search_text" -g "!build/**" -g "!out/**" -g "!node_modules/**" -g "!.git/**" -g "!bin/**"'
+        Write-Host ""
+    }
 
-    Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "CMakeLists.txt"'
-    Write-Host ""
+    if (Test-SectionMatch "CMake CMakeLists" $Keyword) {
+        Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "CMakeLists.txt"'
+        Write-Host ""
 
-    Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "*.cmake"'
-    Write-Host ""
+        Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "*.cmake"'
+        Write-Host ""
 
-    Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "CMakeLists.txt" -g "*.cmake"'
-    Write-Host ""
+        Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "CMakeLists.txt" -g "*.cmake"'
+        Write-Host ""
 
-    Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" -g "*cmake*" -g "!*.cmake"'
-    Write-Host "CMake-ish filenames (case-insensitive filename glob):" -ForegroundColor DarkGray
-    Write-CodeLine 'rg "your_search_text" --iglob "*cmake*" --iglob "!*.cmake"'
-    Write-Host ""
+        Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" -g "*cmake*" -g "!*.cmake"'
+        Write-Host "CMake-ish filenames (case-insensitive filename glob):" -ForegroundColor DarkGray
+        Write-CodeLine 'rg "your_search_text" --iglob "*cmake*" --iglob "!*.cmake"'
+        Write-Host ""
+    }
 
-    Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
-    Write-Host "PowerShell version:" -ForegroundColor DarkGray
-    Write-CodeLine '$tmp = New-TemporaryFile; rg -in -C 3 "FIRST" . > $tmp; rg -i "SECOND" $tmp; Remove-Item $tmp'
+    if (Test-SectionMatch "Context search temp file second grep" $Keyword) {
+        Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
+        Write-Host "PowerShell version:" -ForegroundColor DarkGray
+        Write-CodeLine '$tmp = New-TemporaryFile; rg -in -C 3 "FIRST" . > $tmp; rg -i "SECOND" $tmp; Remove-Item $tmp'
+    }
 }
 
 function Show-GitGrep-Help {
+    param([string]$Keyword)
+
     Write-Host "## git grep" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
     Write-Host ""
 
-    Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Basic Recursive Search" $Keyword) {
+        Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- "./*"'
-    Write-Host ""
+    if (Test-SectionMatch "Non-Recursive Search" $Keyword) {
+        Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- "./*"'
+        Write-Host ""
+    }
 
-    Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- "*.txt"'
-    Write-Host ""
+    if (Test-SectionMatch "Search Only in Files with Specific Extensions" $Keyword) {
+        Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- "*.txt"'
+        Write-Host ""
+    }
 
-    Write-Host "Multiple extensions:" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- "*.txt" "*.md"'
-    Write-Host ""
+    if (Test-SectionMatch "Multiple extensions" $Keyword) {
+        Write-Host "Multiple extensions:" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- "*.txt" "*.md"'
+        Write-Host ""
+    }
 
-    Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- ":!*.log"'
-    Write-Host ""
+    if (Test-SectionMatch "Exclude Specific File Extensions" $Keyword) {
+        Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- ":!*.log"'
+        Write-Host ""
+    }
 
-    Write-Host "Exclude multiple:" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- ":!*.log" ":!*.tmp"'
-    Write-Host ""
+    if (Test-SectionMatch "Exclude multiple" $Keyword) {
+        Write-Host "Exclude multiple:" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- ":!*.log" ":!*.tmp"'
+        Write-Host ""
+    }
 
-    Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
-    Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- "*.cs" ":!*.Designer.cs"'
-    Write-Host ""
+    if (Test-SectionMatch "Combine Include and Exclude" $Keyword) {
+        Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
+        Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- "*.cs" ":!*.Designer.cs"'
+        Write-Host ""
+    }
 
-    Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- path/to/directory'
-    Write-Host ""
+    if (Test-SectionMatch "Search in a Specific Directory" $Keyword) {
+        Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- path/to/directory'
+        Write-Host ""
+    }
 
-    Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep -l "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Show Only File Names with Matches" $Keyword) {
+        Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep -l "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Show Line Numbers" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep -n "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Show Line Numbers" $Keyword) {
+        Write-Host "Show Line Numbers" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep -n "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep -i "your_search_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Case-Insensitive Search" $Keyword) {
+        Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep -i "your_search_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep -F "literal_text"'
-    Write-Host ""
+    if (Test-SectionMatch "Literal Search no regex" $Keyword) {
+        Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep -F "literal_text"'
+        Write-Host ""
+    }
 
-    Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep -i "your_search_text" -- ":(exclude)build/**" ":(exclude)out/**" ":(exclude)node_modules/**" ":(exclude).git/**" ":(exclude)bin/**"'
-    Write-Host ""
+    if (Test-SectionMatch "Recursive case-insensitive excluding common build dirs" $Keyword) {
+        Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep -i "your_search_text" -- ":(exclude)build/**" ":(exclude)out/**" ":(exclude)node_modules/**" ":(exclude).git/**" ":(exclude)bin/**"'
+        Write-Host ""
+    }
 
-    Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- "CMakeLists.txt"'
-    Write-Host ""
+    if (Test-SectionMatch "CMake CMakeLists" $Keyword) {
+        Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- "CMakeLists.txt"'
+        Write-Host ""
 
-    Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- "*.cmake"'
-    Write-Host ""
+        Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- "*.cmake"'
+        Write-Host ""
 
-    Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- "CMakeLists.txt" "*.cmake"'
-    Write-Host ""
+        Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- "CMakeLists.txt" "*.cmake"'
+        Write-Host ""
 
-    Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- "*cmake*" ":(exclude)*.cmake"'
-    Write-Host "CMake-ish filenames (case-insensitive path match):" -ForegroundColor DarkGray
-    Write-CodeLine 'git grep "your_search_text" -- ":(icase)*cmake*" ":(exclude)*.cmake"'
-    Write-Host ""
+        Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- "*cmake*" ":(exclude)*.cmake"'
+        Write-Host "CMake-ish filenames (case-insensitive path match):" -ForegroundColor DarkGray
+        Write-CodeLine 'git grep "your_search_text" -- ":(icase)*cmake*" ":(exclude)*.cmake"'
+        Write-Host ""
+    }
 
-    Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
-    Write-Host "PowerShell version:" -ForegroundColor DarkGray
-    Write-CodeLine '$tmp = New-TemporaryFile; git grep -in -C 3 "FIRST" -- . > $tmp; git grep -i "SECOND" $tmp; Remove-Item $tmp'
+    if (Test-SectionMatch "Context search temp file second grep" $Keyword) {
+        Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
+        Write-Host "PowerShell version:" -ForegroundColor DarkGray
+        Write-CodeLine '$tmp = New-TemporaryFile; git grep -in -C 3 "FIRST" -- . > $tmp; git grep -i "SECOND" $tmp; Remove-Item $tmp'
+    }
 }
 
 function Show-Grep-Help {
+    param([string]$Keyword)
+
     Write-Host "## grep" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
     Write-Host ""
 
-    Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -r "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Basic Recursive Search" $Keyword) {
+        Write-Host "Basic Recursive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -r "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'grep "your_search_text" *'
-    Write-Host ""
+    if (Test-SectionMatch "Non-Recursive Search" $Keyword) {
+        Write-Host "Non-Recursive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'grep "your_search_text" *'
+        Write-Host ""
+    }
 
-    Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -r --include="*.txt" "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Search Only in Files with Specific Extensions" $Keyword) {
+        Write-Host "Search Only in Files with Specific Extensions" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -r --include="*.txt" "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Multiple extensions:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -r --include="*.txt" --include="*.md" "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Multiple extensions" $Keyword) {
+        Write-Host "Multiple extensions:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -r --include="*.txt" --include="*.md" "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -r --exclude="*.log" "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Exclude Specific File Extensions" $Keyword) {
+        Write-Host "Exclude Specific File Extensions" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -r --exclude="*.log" "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Exclude multiple:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -r --exclude="*.log" --exclude="*.tmp" "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Exclude multiple" $Keyword) {
+        Write-Host "Exclude multiple:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -r --exclude="*.log" --exclude="*.tmp" "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
-    Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -r --include="*.cs" --exclude="*.Designer.cs" "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Combine Include and Exclude" $Keyword) {
+        Write-Host "Combine Include and Exclude" -ForegroundColor DarkGray
+        Write-Host "Only .cs files but exclude .Designer.cs ones:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -r --include="*.cs" --exclude="*.Designer.cs" "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -r "your_search_text" path/to/directory'
-    Write-Host ""
+    if (Test-SectionMatch "Search in a Specific Directory" $Keyword) {
+        Write-Host "Search in a Specific Directory" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -r "your_search_text" path/to/directory'
+        Write-Host ""
+    }
 
-    Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -rl "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Show Only File Names with Matches" $Keyword) {
+        Write-Host "Show Only File Names with Matches" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -rl "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Show Line Numbers" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -rn "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Show Line Numbers" $Keyword) {
+        Write-Host "Show Line Numbers" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -rn "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -ri "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Case-Insensitive Search" $Keyword) {
+        Write-Host "Case-Insensitive Search" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -ri "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -rF "literal_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Literal Search no regex" $Keyword) {
+        Write-Host "Literal Search (no regex)" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -rF "literal_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -rIn --exclude-dir={build,out,node_modules,.git,bin} "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "Recursive case-insensitive excluding common build dirs" $Keyword) {
+        Write-Host "Recursive + case-insensitive, excluding common build dirs" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -rIn --exclude-dir={build,out,node_modules,.git,bin} "your_search_text" .'
+        Write-Host ""
+    }
 
-    Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
-    Write-Host "Original:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -R --line-number --with-filename "your_search_text" --include="CMakeLists.txt" .'
-    Write-Host "Shortened:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -RIn --include="CMakeLists.txt" "your_search_text" .'
-    Write-Host ""
+    if (Test-SectionMatch "CMake CMakeLists" $Keyword) {
+        Write-Host "CMake: only CMakeLists.txt" -ForegroundColor DarkGray
+        Write-Host "Original:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -R --line-number --with-filename "your_search_text" --include="CMakeLists.txt" .'
+        Write-Host "Shortened:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -RIn --include="CMakeLists.txt" "your_search_text" .'
+        Write-Host ""
 
-    Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
-    Write-Host "Original:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -R -n "your_search_text" --include="*.cmake" .'
-    Write-Host "Shortened:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -Rn --include="*.cmake" your_search_text .'
-    Write-Host ""
+        Write-Host "CMake: only *.cmake" -ForegroundColor DarkGray
+        Write-Host "Original:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -R -n "your_search_text" --include="*.cmake" .'
+        Write-Host "Shortened:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -Rn --include="*.cmake" your_search_text .'
+        Write-Host ""
 
-    Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
-    Write-Host "Original:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -R -n "your_search_text" --include="CMakeLists.txt" --include="*.cmake" .'
-    Write-Host "Shortened:" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -Rn --include="CMakeLists.txt" --include="*.cmake" your_search_text .'
-    Write-Host ""
+        Write-Host "CMake: CMakeLists.txt + *.cmake" -ForegroundColor DarkGray
+        Write-Host "Original:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -R -n "your_search_text" --include="CMakeLists.txt" --include="*.cmake" .'
+        Write-Host "Shortened:" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -Rn --include="CMakeLists.txt" --include="*.cmake" your_search_text .'
+        Write-Host ""
 
-    Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
-    Write-Host "Grep (simple):" -ForegroundColor DarkGray
-    Write-CodeLine 'grep -Rn --include="*cmake*" --exclude="*.cmake" "your_search_text" .'
-    Write-Host "Find + grep (case-insensitive filename match):" -ForegroundColor DarkGray
-    Write-CodeLine 'find . -type f -iname "*cmake*" ! -iname "*.cmake" -exec grep -n "your_search_text" {} +'
-    Write-Host ""
+        Write-Host 'CMake-ish filenames: name contains "cmake" but NOT ending with .cmake' -ForegroundColor DarkGray
+        Write-Host "Grep (simple):" -ForegroundColor DarkGray
+        Write-CodeLine 'grep -Rn --include="*cmake*" --exclude="*.cmake" "your_search_text" .'
+        Write-Host "Find + grep (case-insensitive filename match):" -ForegroundColor DarkGray
+        Write-CodeLine 'find . -type f -iname "*cmake*" ! -iname "*.cmake" -exec grep -n "your_search_text" {} +'
+        Write-Host ""
+    }
 
-    Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
-    Write-CodeLine 'tmp="$(mktemp)" && grep -rIn -C 3 "FIRST" . >"$tmp" && grep -i "SECOND" "$tmp" && rm -f "$tmp"'
+    if (Test-SectionMatch "Context search temp file second grep" $Keyword) {
+        Write-Host "Context search -> save to temp file -> second grep on output -> delete temp file" -ForegroundColor DarkGray
+        Write-CodeLine 'tmp="$(mktemp)" && grep -rIn -C 3 "FIRST" . >"$tmp" && grep -i "SECOND" "$tmp" && rm -f "$tmp"'
+    }
 }
 
 # all dot commands / scripts
 function Show-Scripts-Help {
+    param([string]$Keyword)
+
     Write-Host "Some useful dot commands:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "  Meta:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".help" "show this help" 'Cyan'
+    if (Test-SectionMatch "Meta help" $Keyword) {
+        Write-Host ""
+        Write-Host "  Meta:" -ForegroundColor DarkGray
+        Write-CommandWithDescription ".help" "show this help" 'Cyan'
+    }
 
-    Write-Host ""
-    Write-Host "  Navigation / cd helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".cdn"       "cd into my_notes_path"         'Cyan'
-    Write-CommandWithDescription ".cdc"       "cd into code_root_dir"         'Cyan'
-    Write-CommandWithDescription ".cdp"       "cd into ps_profile_path"       'Cyan'
-    Write-CommandWithDescription ".docs"      "cd into Documents"             'Cyan'
-    Write-CommandWithDescription ".down"      "cd into Downloads"             'Cyan'
-    Write-CommandWithDescription ".cdh"       "cd into home dir"              'Cyan'
-    Write-CommandWithDescription ".acore"     "cd into acore dir"             'Cyan'
-    Write-CommandWithDescription ".tcore"     "cd into tcore dir"             'Cyan'
-    Write-CommandWithDescription ".wcell"     "cd into wcell dir"             'Cyan'
-    Write-CommandWithDescription ".playermap" "cd into playermap dir and run" 'Cyan'
-    Write-CommandWithDescription ".mangos"    "cd into mangos dir"            'Cyan'
-    Write-CommandWithDescription ".mwd"       "my_wow_docs: cd_and_print"     'Cyan'
-    Write-CommandWithDescription ".dots"      "cd into Linux dotfiles"        'Cyan'
-    Write-CommandWithDescription ".gfx"       "cd into gfx dir"               'Cyan'
+    if (Test-SectionMatch "Navigation cd helpers" $Keyword) {
+        Write-Host ""
+        Write-Host "  Navigation / cd helpers:" -ForegroundColor DarkGray
+        Write-CommandWithDescription ".cdn"       "cd into my_notes_path"         'Cyan'
+        Write-CommandWithDescription ".cdc"       "cd into code_root_dir"         'Cyan'
+        Write-CommandWithDescription ".cdp"       "cd into ps_profile_path"       'Cyan'
+        Write-CommandWithDescription ".docs"      "cd into Documents"             'Cyan'
+        Write-CommandWithDescription ".down"      "cd into Downloads"             'Cyan'
+        Write-CommandWithDescription ".cdh"       "cd into home dir"              'Cyan'
+        Write-CommandWithDescription ".acore"     "cd into acore dir"             'Cyan'
+        Write-CommandWithDescription ".tcore"     "cd into tcore dir"             'Cyan'
+        Write-CommandWithDescription ".wcell"     "cd into wcell dir"             'Cyan'
+        Write-CommandWithDescription ".playermap" "cd into playermap dir and run" 'Cyan'
+        Write-CommandWithDescription ".mangos"    "cd into mangos dir"            'Cyan'
+        Write-CommandWithDescription ".mwd"       "my_wow_docs: cd_and_print"     'Cyan'
+        Write-CommandWithDescription ".dots"      "cd into Linux dotfiles"        'Cyan'
+        Write-CommandWithDescription ".gfx"       "cd into gfx dir"               'Cyan'
+    }
 
-    Write-Host ""
-    Write-Host "  Run / launcher helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".ioq3"   "run ioq3"                                      'Cyan'
-    Write-CommandWithDescription ".openmw" "run openmw"                                    'Cyan'
-    Write-CommandWithDescription ".stk"    "run SuperTuxKart (stk)"                        'Cyan'
-    Write-CommandWithDescription ".wow"    "run World of Warcraft client"                  'Cyan'
-    Write-CommandWithDescription ".wowbot" "run wowbot"                                    'Cyan'
-    Write-CommandWithDescription ".llama"  "run llama"                                     'Cyan'
-    Write-CommandWithDescription ".cava"   "run cava visualizer"                           'Cyan'
-    Write-CommandWithDescription ".wc"     "run wow client (wc)"                           'Cyan'
-    Write-CommandWithDescription ".mw"     "my_wow: cd_and_print"                          'Cyan'
-    Write-CommandWithDescription ".mww"    "my_web_wow: cd_and_print"                      'Cyan'
-    Write-CommandWithDescription ".mwr"    "my_wow: run_with_args.ps1 with args"           'Cyan'
-    Write-CommandWithDescription ".geo"    "cd into geo-quiz and print usage"              'Cyan'
-    Write-CommandWithDescription ".map"    "cd into maps_data and print usage"             'Cyan'
-    Write-CommandWithDescription ".trans"  "cd into transaction-dashboard and print usage" 'Cyan'
-    Write-CommandWithDescription ".mov"    "cd into mov and print usage"                   'Cyan'
-    Write-CommandWithDescription ".mov_py" "cd into mov_py and print usage"                'Cyan'
-    Write-CommandWithDescription ".book"   "cd into bookshelf and print usage"             'Cyan'
+    if (Test-SectionMatch "Run launcher helpers" $Keyword) {
+        Write-Host ""
+        Write-Host "  Run / launcher helpers:" -ForegroundColor DarkGray
+        Write-CommandWithDescription ".ioq3"   "run ioq3"                                      'Cyan'
+        Write-CommandWithDescription ".openmw" "run openmw"                                    'Cyan'
+        Write-CommandWithDescription ".stk"    "run SuperTuxKart (stk)"                        'Cyan'
+        Write-CommandWithDescription ".wow"    "run World of Warcraft client"                  'Cyan'
+        Write-CommandWithDescription ".wowbot" "run wowbot"                                    'Cyan'
+        Write-CommandWithDescription ".llama"  "run llama"                                     'Cyan'
+        Write-CommandWithDescription ".cava"   "run cava visualizer"                           'Cyan'
+        Write-CommandWithDescription ".wc"     "run wow client (wc)"                           'Cyan'
+        Write-CommandWithDescription ".mw"     "my_wow: cd_and_print"                          'Cyan'
+        Write-CommandWithDescription ".mww"    "my_web_wow: cd_and_print"                      'Cyan'
+        Write-CommandWithDescription ".mwr"    "my_wow: run_with_args.ps1 with args"           'Cyan'
+        Write-CommandWithDescription ".geo"    "cd into geo-quiz and print usage"              'Cyan'
+        Write-CommandWithDescription ".map"    "cd into maps_data and print usage"             'Cyan'
+        Write-CommandWithDescription ".trans"  "cd into transaction-dashboard and print usage" 'Cyan'
+        Write-CommandWithDescription ".mov"    "cd into mov and print usage"                   'Cyan'
+        Write-CommandWithDescription ".mov_py" "cd into mov_py and print usage"                'Cyan'
+        Write-CommandWithDescription ".book"   "cd into bookshelf and print usage"             'Cyan'
+    }
 
-    Write-Host ""
-    Write-Host "  Listing helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".list_colors"      "print colors"                           'Cyan'
-    Write-CommandWithDescription ".list_all_colors"  "print all colors"                       'Cyan'
-    Write-CommandWithDescription ".list_std_colors"  "print standard colors"                  'Cyan'
-    Write-CommandWithDescription ".list_files"       "list largest files recursively (CLI)"   'Cyan'
-    Write-CommandWithDescription ".list_files_gui"   "list largest files recursively via GUI" 'Cyan'
-    Write-CommandWithDescription ".list_p"           "list processes"                         'Cyan'
-    Write-CommandWithDescription ".list_pm"          "list processes by memory usage"         'Cyan'
-    Write-CommandWithDescription ".list_mapped_drives" "list mapped drives"                   'Cyan'
-    Write-CommandWithDescription ".proc"       "list/inspect processes"                       'Cyan'
+    if (Test-SectionMatch "Listing helpers list" $Keyword) {
+        Write-Host ""
+        Write-Host "  Listing helpers:" -ForegroundColor DarkGray
+        Write-CommandWithDescription ".list_colors"      "print colors"                           'Cyan'
+        Write-CommandWithDescription ".list_all_colors"  "print all colors"                       'Cyan'
+        Write-CommandWithDescription ".list_std_colors"  "print standard colors"                  'Cyan'
+        Write-CommandWithDescription ".list_files"       "list largest files recursively (CLI)"   'Cyan'
+        Write-CommandWithDescription ".list_files_gui"   "list largest files recursively via GUI" 'Cyan'
+        Write-CommandWithDescription ".list_p"           "list processes"                         'Cyan'
+        Write-CommandWithDescription ".list_pm"          "list processes by memory usage"         'Cyan'
+        Write-CommandWithDescription ".list_mapped_drives" "list mapped drives"                   'Cyan'
+        Write-CommandWithDescription ".proc"       "list/inspect processes"                       'Cyan'
+    }
 
-    Write-Host ""
-    Write-Host "  Network helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".show_wifi"           "print stored Wi-Fi settings"  'Cyan'
-    Write-CommandWithDescription ".network_devices"     "list network devices"         'Cyan'
-    Write-CommandWithDescription ".network_devices_ping" "ping common network devices" 'Cyan'
+    if (Test-SectionMatch "Network helpers wifi" $Keyword) {
+        Write-Host ""
+        Write-Host "  Network helpers:" -ForegroundColor DarkGray
+        Write-CommandWithDescription ".show_wifi"           "print stored Wi-Fi settings"  'Cyan'
+        Write-CommandWithDescription ".network_devices"     "list network devices"         'Cyan'
+        Write-CommandWithDescription ".network_devices_ping" "ping common network devices" 'Cyan'
+    }
 
-    Write-Host ""
-    Write-Host "  Search / inspect / dump helpers:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".search_conf" "search local config"            'Cyan'
-    Write-CommandWithDescription ".dump_files"  "dump files"                     'Cyan'
-    Write-CommandWithDescription ".fr"         "find and replace"                'Cyan'
-    Write-CommandWithDescription ".fr_py"      "find and replace (Python)"       'Cyan'
-    Write-CommandWithDescription ".fr_cs"      "find and replace (C#)"           'Cyan'
-    Write-CommandWithDescription ".find_files" "helper script for finding files" 'Cyan'
-    Write-CommandWithDescription ".dir_sizes"  "show directory/file sizes"       'Cyan'
-    Write-CommandWithDescription ".search_env" "search environment variables"    'Cyan'
-    Write-CommandWithDescription ".gs"         "git search helper script"        'Cyan'
-    Write-CommandWithDescription ".gb"         "helper script for git branches"  'Cyan'
+    if (Test-SectionMatch "Search inspect dump helpers find replace" $Keyword) {
+        Write-Host ""
+        Write-Host "  Search / inspect / dump helpers:" -ForegroundColor DarkGray
+        Write-CommandWithDescription ".search_conf" "search local config"            'Cyan'
+        Write-CommandWithDescription ".dump_files"  "dump files"                     'Cyan'
+        Write-CommandWithDescription ".fr"         "find and replace"                'Cyan'
+        Write-CommandWithDescription ".fr_py"      "find and replace (Python)"       'Cyan'
+        Write-CommandWithDescription ".fr_cs"      "find and replace (C#)"           'Cyan'
+        Write-CommandWithDescription ".find_files" "helper script for finding files" 'Cyan'
+        Write-CommandWithDescription ".dir_sizes"  "show directory/file sizes"       'Cyan'
+        Write-CommandWithDescription ".search_env" "search environment variables"    'Cyan'
+        Write-CommandWithDescription ".gs"         "git search helper script"        'Cyan'
+        Write-CommandWithDescription ".gb"         "helper script for git branches"  'Cyan'
+    }
 
-    Write-Host ""
-    Write-Host "  Build / tools / maintenance:" -ForegroundColor DarkGray
-    Write-CommandWithDescription ".cmake"   "helper script for cmake"                     'Cyan'
-    Write-CommandWithDescription ".cmake_old"  "old cmake helper script"                  'Cyan'
-    Write-CommandWithDescription ".cmake_py"   "Python equivalent of cmake helper script" 'Cyan'
-    Write-CommandWithDescription ".clean"      "clean up build dirs (bin, obj, etc.)"     'Cyan'
-    Write-CommandWithDescription ".pkg"      "helper script for packages"                 'Cyan'
-    Write-CommandWithDescription ".sln"        "helper script for VS solutions"           'Cyan'
-    Write-CommandWithDescription ".proj_summarize" "summarize a project"                  'Cyan'
-    Write-CommandWithDescription ".build"   "helper script for building"                  'Cyan'
-    Write-CommandWithDescription ".build_py" "helper script for building"                 'Cyan'
-    Write-CommandWithDescription ".go_flags"  "helper script for Go build tags / flags"   'Cyan'
-    Write-CommandWithDescription ".rs_flags"  "helper script for Rust feature flags"      'Cyan'
-    Write-CommandWithDescription ".git_push"  "helper script for git push"                'Cyan'
-    Write-CommandWithDescription ".git_pull"  "helper script for git pull"                'Cyan'
-    Write-CommandWithDescription ".git_ignore" "helper script for git ignore"             'Cyan'
-    Write-CommandWithDescription ".copy_git_msg" "copy N-latest commit msg"               'Cyan'
-    Write-CommandWithDescription ".diff_shader_git" "run diff_shader_git py script"       'Cyan'
-    Write-CommandWithDescription ".health_check" "health check script"                    'Cyan'
-    Write-CommandWithDescription ".gen_plant" "generate PlantUML image"                   'Cyan'
-    Write-CommandWithDescription ".gen_merm"  "generate Mermaid image"                    'Cyan'
+    if (Test-SectionMatch "Build tools maintenance cmake clean update" $Keyword) {
+        Write-Host ""
+        Write-Host "  Build / tools / maintenance:" -ForegroundColor DarkGray
+        Write-CommandWithDescription ".cmake"   "helper script for cmake"                     'Cyan'
+        Write-CommandWithDescription ".cmake_old"  "old cmake helper script"                  'Cyan'
+        Write-CommandWithDescription ".cmake_py"   "Python equivalent of cmake helper script" 'Cyan'
+        Write-CommandWithDescription ".clean"      "clean up build dirs (bin, obj, etc.)"     'Cyan'
+        Write-CommandWithDescription ".pkg"      "helper script for packages"                 'Cyan'
+        Write-CommandWithDescription ".sln"        "helper script for VS solutions"           'Cyan'
+        Write-CommandWithDescription ".proj_summarize" "summarize a project"                  'Cyan'
+        Write-CommandWithDescription ".build"   "helper script for building"                  'Cyan'
+        Write-CommandWithDescription ".build_py" "helper script for building"                 'Cyan'
+        Write-CommandWithDescription ".go_flags"  "helper script for Go build tags / flags"   'Cyan'
+        Write-CommandWithDescription ".rs_flags"  "helper script for Rust feature flags"      'Cyan'
+        Write-CommandWithDescription ".git_push"  "helper script for git push"                'Cyan'
+        Write-CommandWithDescription ".git_pull"  "helper script for git pull"                'Cyan'
+        Write-CommandWithDescription ".git_ignore" "helper script for git ignore"             'Cyan'
+        Write-CommandWithDescription ".copy_git_msg" "copy N-latest commit msg"               'Cyan'
+        Write-CommandWithDescription ".diff_shader_git" "run diff_shader_git py script"       'Cyan'
+        Write-CommandWithDescription ".health_check" "health check script"                    'Cyan'
+        Write-CommandWithDescription ".gen_plant" "generate PlantUML image"                   'Cyan'
+        Write-CommandWithDescription ".gen_merm"  "generate Mermaid image"                    'Cyan'
 
-    Write-CommandWithDescription ".acore_update"  "update acore repo"                     'Cyan'
-    Write-CommandWithDescription ".tcore_update"  "update tcore repo"                     'Cyan'
-    Write-CommandWithDescription ".mangos_update" "update mangos repo"                    'Cyan'
-    Write-CommandWithDescription ".cmangos_update" "update cmangos repo"                  'Cyan'
-    Write-CommandWithDescription ".update_nvim_from_linux" "update neovim config from Linux dots" 'Cyan'
+        Write-CommandWithDescription ".acore_update"  "update acore repo"                     'Cyan'
+        Write-CommandWithDescription ".tcore_update"  "update tcore repo"                     'Cyan'
+        Write-CommandWithDescription ".mangos_update" "update mangos repo"                    'Cyan'
+        Write-CommandWithDescription ".cmangos_update" "update cmangos repo"                  'Cyan'
+        Write-CommandWithDescription ".update_nvim_from_linux" "update neovim config from Linux dots" 'Cyan'
 
-    Write-CommandWithDescription ".clean_shada" "clean neovim shada data"                      'Cyan'
-    Write-CommandWithDescription ".wow_wtf_update" "copy WoW WTF files into wow_addons repo"   'Cyan'
-    Write-CommandWithDescription ".wow_wtf_fix"    "copy WoW WTF files from wow_addons repo to local WoW dir" 'Cyan'
+        Write-CommandWithDescription ".clean_shada" "clean neovim shada data"                      'Cyan'
+        Write-CommandWithDescription ".wow_wtf_update" "copy WoW WTF files into wow_addons repo"   'Cyan'
+        Write-CommandWithDescription ".wow_wtf_fix"    "copy WoW WTF files from wow_addons repo to local WoW dir" 'Cyan'
+    }
 }
 
 function Show-Env-Help {
+    param([string]$Keyword)
+
     Write-Host "Useful environment variables:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
     Write-Host ""
-    Write-Host "  System / machine:" -ForegroundColor DarkGray
-    Write-CommandWithDescription '$env:COMPUTERNAME'        "machine hostname"                  'Green'
-    Write-CommandWithDescription '$env:OS'                  "OS name (e.g. Windows_NT)"         'Green'
-    Write-CommandWithDescription '$env:PROCESSOR_ARCHITECTURE' "CPU arch (e.g. AMD64)"          'Green'
-    Write-CommandWithDescription '$env:NUMBER_OF_PROCESSORS' "CPU thread count (like nproc)"    'Green'
-    Write-CommandWithDescription '$env:PROCESSOR_IDENTIFIER' "CPU model string"                 'Green'
 
-    Write-Host ""
-    Write-Host "  User / profile:" -ForegroundColor DarkGray
-    Write-CommandWithDescription '$env:USERNAME'            "current user name"                  'Green'
-    Write-CommandWithDescription '$env:USERPROFILE'         "user home dir  (C:\Users\name)"     'Green'
-    Write-CommandWithDescription '$env:APPDATA'             "roaming AppData"                    'Green'
-    Write-CommandWithDescription '$env:LOCALAPPDATA'        "local AppData"                      'Green'
-    Write-CommandWithDescription '$env:TEMP'                "temp dir"                           'Green'
-    Write-CommandWithDescription '$env:TMP'                 "temp dir (legacy alias)"            'Green'
-    Write-CommandWithDescription '$env:HOMEPATH'            "user home path (no drive letter)"   'Green'
-    Write-CommandWithDescription '$env:HOMEDRIVE'           "drive of home path (e.g. C:)"       'Green'
-    Write-CommandWithDescription '$env:USERDOMAIN'          "domain the user belongs to"         'Green'
+    if (Test-SectionMatch "System machine hostname OS CPU" $Keyword) {
+        Write-Host "  System / machine:" -ForegroundColor DarkGray
+        Write-CommandWithDescription '$env:COMPUTERNAME'        "machine hostname"                  'Green'
+        Write-CommandWithDescription '$env:OS'                  "OS name (e.g. Windows_NT)"         'Green'
+        Write-CommandWithDescription '$env:PROCESSOR_ARCHITECTURE' "CPU arch (e.g. AMD64)"          'Green'
+        Write-CommandWithDescription '$env:NUMBER_OF_PROCESSORS' "CPU thread count (like nproc)"    'Green'
+        Write-CommandWithDescription '$env:PROCESSOR_IDENTIFIER' "CPU model string"                 'Green'
+    }
 
-    Write-Host ""
-    Write-Host "  System dirs:" -ForegroundColor DarkGray
-    Write-CommandWithDescription '$env:SystemRoot'          "Windows root  (C:\Windows)"         'Green'
-    Write-CommandWithDescription '$env:SystemDrive'         "system drive   (C:)"                'Green'
-    Write-CommandWithDescription '$env:ProgramFiles'        "64-bit Program Files"               'Green'
-    Write-CommandWithDescription '$env:ProgramFiles(x86)'   "32-bit Program Files"               'Green'
-    Write-CommandWithDescription '$env:ProgramData'         "shared app data (no user)"          'Green'
-    Write-CommandWithDescription '$env:PUBLIC'              "public user folder"                 'Green'
-    Write-CommandWithDescription '$env:CommonProgramFiles'  "shared program components"          'Green'
-    Write-CommandWithDescription '$env:windir'              "Windows dir alias (= SystemRoot)"   'Green'
+    if (Test-SectionMatch "User profile home AppData" $Keyword) {
+        Write-Host ""
+        Write-Host "  User / profile:" -ForegroundColor DarkGray
+        Write-CommandWithDescription '$env:USERNAME'            "current user name"                  'Green'
+        Write-CommandWithDescription '$env:USERPROFILE'         "user home dir  (C:\Users\name)"     'Green'
+        Write-CommandWithDescription '$env:APPDATA'             "roaming AppData"                    'Green'
+        Write-CommandWithDescription '$env:LOCALAPPDATA'        "local AppData"                      'Green'
+        Write-CommandWithDescription '$env:TEMP'                "temp dir"                           'Green'
+        Write-CommandWithDescription '$env:TMP'                 "temp dir (legacy alias)"            'Green'
+        Write-CommandWithDescription '$env:HOMEPATH'            "user home path (no drive letter)"   'Green'
+        Write-CommandWithDescription '$env:HOMEDRIVE'           "drive of home path (e.g. C:)"       'Green'
+        Write-CommandWithDescription '$env:USERDOMAIN'          "domain the user belongs to"         'Green'
+    }
 
-    Write-Host ""
-    Write-Host "  Shell / process:" -ForegroundColor DarkGray
-    Write-CommandWithDescription '$env:PATH'                "executable search paths"            'Green'
-    Write-CommandWithDescription '$env:PATHEXT'             "executable file extensions"         'Green'
-    Write-CommandWithDescription '$env:PSModulePath'        "PowerShell module search paths"     'Green'
-    Write-CommandWithDescription '$env:ComSpec'             "cmd.exe path"                       'Green'
-    Write-CommandWithDescription '$env:TERM'                "terminal type (if set)"             'Green'
+    if (Test-SectionMatch "System dirs Windows ProgramFiles" $Keyword) {
+        Write-Host ""
+        Write-Host "  System dirs:" -ForegroundColor DarkGray
+        Write-CommandWithDescription '$env:SystemRoot'          "Windows root  (C:\Windows)"         'Green'
+        Write-CommandWithDescription '$env:SystemDrive'         "system drive   (C:)"                'Green'
+        Write-CommandWithDescription '$env:ProgramFiles'        "64-bit Program Files"               'Green'
+        Write-CommandWithDescription '$env:ProgramFiles(x86)'   "32-bit Program Files"               'Green'
+        Write-CommandWithDescription '$env:ProgramData'         "shared app data (no user)"          'Green'
+        Write-CommandWithDescription '$env:PUBLIC'              "public user folder"                 'Green'
+        Write-CommandWithDescription '$env:CommonProgramFiles'  "shared program components"          'Green'
+        Write-CommandWithDescription '$env:windir'              "Windows dir alias (= SystemRoot)"   'Green'
+    }
 
-    Write-Host ""
-    Write-Host "  Print a variable value:" -ForegroundColor DarkGray
-    Write-CodeLine '  $env:USERNAME'
-    Write-CodeLine '  echo $env:COMPUTERNAME'
-    Write-CodeLine '  [Environment]::GetEnvironmentVariable("PATH", "Machine")   # machine-level'
-    Write-CodeLine '  [Environment]::GetEnvironmentVariable("PATH", "User")      # user-level'
-    Write-Host ""
-    Write-Host "  List all env vars:" -ForegroundColor DarkGray
-    Write-CodeLine '  Get-ChildItem Env:                                            # all vars'
-    Write-CodeLine '  Get-ChildItem Env: | Sort-Object Name                         # sorted'
-    Write-CodeLine '  Get-ChildItem Env: | Where-Object { $_.Name -like "*path*" }  # filtered'
+    if (Test-SectionMatch "Shell process PATH PATHEXT PSModulePath" $Keyword) {
+        Write-Host ""
+        Write-Host "  Shell / process:" -ForegroundColor DarkGray
+        Write-CommandWithDescription '$env:PATH'                "executable search paths"            'Green'
+        Write-CommandWithDescription '$env:PATHEXT'             "executable file extensions"         'Green'
+        Write-CommandWithDescription '$env:PSModulePath'        "PowerShell module search paths"     'Green'
+        Write-CommandWithDescription '$env:ComSpec'             "cmd.exe path"                       'Green'
+        Write-CommandWithDescription '$env:TERM'                "terminal type (if set)"             'Green'
+    }
+
+    if (Test-SectionMatch "Tool app versions version" $Keyword) {
+        Write-Host ""
+        Write-Host "  Tool / app versions:" -ForegroundColor DarkGray
+        Write-CommandWithDescription '$PSVersionTable'              "full PowerShell version table"    'Green'
+        Write-CommandWithDescription '$PSVersionTable.PSVersion'    "PowerShell version only"          'Green'
+        Write-CommandWithDescription '$Host.Version'                "PowerShell host version"           'Green'
+        Write-CommandWithDescription 'wezterm -V'                   "WezTerm version"                  'Green'
+        Write-CommandWithDescription 'nvim --version'               "Neovim version"                   'Green'
+        Write-CommandWithDescription 'vim --version'                "Vim version"                      'Green'
+        Write-CommandWithDescription 'git --version'                "Git version"                      'Green'
+        Write-CommandWithDescription 'tmux -V'                      "tmux version"                     'Green'
+        Write-CommandWithDescription 'cmake --version'              "CMake version"                    'Green'
+        Write-CommandWithDescription 'curl --version'               "curl version"                     'Green'
+        Write-CommandWithDescription 'ssh -V'                       "OpenSSH version"                  'Green'
+    }
+
+    if (Test-SectionMatch "Print a variable value echo GetEnvironmentVariable" $Keyword) {
+        Write-Host ""
+        Write-Host "  Print a variable value:" -ForegroundColor DarkGray
+        Write-CodeLine '  $env:USERNAME'
+        Write-CodeLine '  echo $env:COMPUTERNAME'
+        Write-CodeLine '  [Environment]::GetEnvironmentVariable("PATH", "Machine")   # machine-level'
+        Write-CodeLine '  [Environment]::GetEnvironmentVariable("PATH", "User")      # user-level'
+    }
+
+    if (Test-SectionMatch "List all env vars Get-ChildItem" $Keyword) {
+        Write-Host ""
+        Write-Host "  List all env vars:" -ForegroundColor DarkGray
+        Write-CodeLine '  Get-ChildItem Env:                                            # all vars'
+        Write-CodeLine '  Get-ChildItem Env: | Sort-Object Name                         # sorted'
+        Write-CodeLine '  Get-ChildItem Env: | Where-Object { $_.Name -like "*path*" }  # filtered'
+    }
 }
 
 # Other commands
 function Show-Other-Help {
+    param([string]$Keyword)
+
     Write-Host "Other useful commands:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
     Write-Host ""
 
-    Write-Host "  . `$PROFILE" -ForegroundColor Green
-    Write-Host "  keepawake" -ForegroundColor Green
-    Write-Host "  vim `$env:code_root_dir/Code2/Wow/tools/my_wow/wow.conf" -ForegroundColor Green
-    Write-Host "  cd `$env:my_notes_path; .\check_dirs.ps1" -ForegroundColor Green
-    Write-Host "  (Get-Location).Path | Set-Clipboard" -ForegroundColor Green
-    Write-Host "  (Get-Command go).Source" -ForegroundColor Green
+    if (Test-SectionMatch "profile keepawake vim clipboard Get-Command" $Keyword) {
+        Write-Host "  . `$PROFILE" -ForegroundColor Green
+        Write-Host "  keepawake" -ForegroundColor Green
+        Write-Host "  vim `$env:code_root_dir/Code2/Wow/tools/my_wow/wow.conf" -ForegroundColor Green
+        Write-Host "  cd `$env:my_notes_path; .\check_dirs.ps1" -ForegroundColor Green
+        Write-Host "  (Get-Location).Path | Set-Clipboard" -ForegroundColor Green
+        Write-Host "  (Get-Command go).Source" -ForegroundColor Green
+    }
 
-    Write-Host ""
-    Write-Host "PS file/dir operations:" -ForegroundColor Yellow
+    if (Test-SectionMatch "PS file dir operations" $Keyword) {
+        Write-Host ""
+        Write-Host "PS file/dir operations:" -ForegroundColor Yellow
+    }
 
-    Write-Host ""
-    Write-Host "List only directories:" -ForegroundColor Yellow
-    Write-CodeLine "ls -Directory                                   # shorthand (PowerShell 3.0+)"
-    Write-CodeLine "ls | Where-Object {`$_.PSIsContainer}            # works in all versions"
-    Write-CodeLine "Get-ChildItem -Directory                        # explicit"
+    if (Test-SectionMatch "List only directories" $Keyword) {
+        Write-Host ""
+        Write-Host "List only directories:" -ForegroundColor Yellow
+        Write-CodeLine "ls -Directory                                   # shorthand (PowerShell 3.0+)"
+        Write-CodeLine "ls | Where-Object {`$_.PSIsContainer}            # works in all versions"
+        Write-CodeLine "Get-ChildItem -Directory                        # explicit"
+    }
 
-    Write-Host ""
-    Write-Host "List only files:" -ForegroundColor Yellow
-    Write-CodeLine "ls -File                                        # shorthand (PowerShell 3.0+)"
-    Write-CodeLine "ls | Where-Object {!`$_.PSIsContainer}           # works in all versions"
-    Write-CodeLine "Get-ChildItem -File                             # explicit"
+    if (Test-SectionMatch "List only files" $Keyword) {
+        Write-Host ""
+        Write-Host "List only files:" -ForegroundColor Yellow
+        Write-CodeLine "ls -File                                        # shorthand (PowerShell 3.0+)"
+        Write-CodeLine "ls | Where-Object {!`$_.PSIsContainer}           # works in all versions"
+        Write-CodeLine "Get-ChildItem -File                             # explicit"
+    }
 
-    Write-Host ""
-    Write-Host "Filter by keyword:" -ForegroundColor Yellow
-    Write-CodeLine "ls | Select-String 'keyword'                    # searches file contents, like grep"
-    Write-CodeLine "ls | Select-String -CaseSensitive keyword       # case-sensitive"
-    Write-CodeLine "ls | Where-Object {`$_.Name -like '*keyword*'}   # filter by name (case-insensitive)"
-    Write-CodeLine "ls | Where-Object {`$_.Name -clike '*keyword*'}  # filter by name (case-sensitive)"
-    Write-CodeLine "ls | Where-Object {`$_.Name -match 'keyword'}    # regex match (case-insensitive)"
-    Write-CodeLine "ls | Where-Object {`$_.Name -cmatch 'keyword'}   # regex match (case-sensitive)"
+    if (Test-SectionMatch "Filter by keyword" $Keyword) {
+        Write-Host ""
+        Write-Host "Filter by keyword:" -ForegroundColor Yellow
+        Write-CodeLine "ls | Select-String 'keyword'                    # searches file contents, like grep"
+        Write-CodeLine "ls | Select-String -CaseSensitive keyword       # case-sensitive"
+        Write-CodeLine "ls | Where-Object {`$_.Name -like '*keyword*'}   # filter by name (case-insensitive)"
+        Write-CodeLine "ls | Where-Object {`$_.Name -clike '*keyword*'}  # filter by name (case-sensitive)"
+        Write-CodeLine "ls | Where-Object {`$_.Name -match 'keyword'}    # regex match (case-insensitive)"
+        Write-CodeLine "ls | Where-Object {`$_.Name -cmatch 'keyword'}   # regex match (case-sensitive)"
+    }
 
-    Write-Host ""
-    Write-Host "Search recursively:" -ForegroundColor Yellow
-    Write-CodeLine "Get-ChildItem -Path ./ -Recurse -ErrorAction SilentlyContinue -Filter 'filename.ext' | Select-Object -ExpandProperty FullName  # find file"
-    Write-CodeLine "Get-ChildItem -Path C:\ -Recurse -Directory -ErrorAction SilentlyContinue -Filter 'dirname'  # find directory"
+    if (Test-SectionMatch "Search recursively find file directory" $Keyword) {
+        Write-Host ""
+        Write-Host "Search recursively:" -ForegroundColor Yellow
+        Write-CodeLine "Get-ChildItem -Path ./ -Recurse -ErrorAction SilentlyContinue -Filter 'filename.ext' | Select-Object -ExpandProperty FullName  # find file"
+        Write-CodeLine "Get-ChildItem -Path C:\ -Recurse -Directory -ErrorAction SilentlyContinue -Filter 'dirname'  # find directory"
+    }
 
-    Write-Host ""
-    Write-Host "View file content:" -ForegroundColor Yellow
-    Write-CodeLine "Get-Content -Path .\file.txt -TotalCount 10     # first 10 lines"
-    Write-CodeLine "gc .\file.txt | Select-Object -First 10         # first 10 lines (shorthand)"
-    Write-CodeLine "Get-Content -Path .\file.txt -Tail 10           # last 10 lines"
-    Write-CodeLine "gc .\file.txt | Select-Object -Last 10          # last 10 lines (shorthand)"
+    if (Test-SectionMatch "View file content head tail first last" $Keyword) {
+        Write-Host ""
+        Write-Host "View file content:" -ForegroundColor Yellow
+        Write-CodeLine "Get-Content -Path .\file.txt -TotalCount 10     # first 10 lines"
+        Write-CodeLine "gc .\file.txt | Select-Object -First 10         # first 10 lines (shorthand)"
+        Write-CodeLine "Get-Content -Path .\file.txt -Tail 10           # last 10 lines"
+        Write-CodeLine "gc .\file.txt | Select-Object -Last 10          # last 10 lines (shorthand)"
+    }
 
-    Write-Host ""
-    Write-Host "Count items:" -ForegroundColor Yellow
-    Write-CodeLine "Get-ChildItem -File | Measure-Object | Select-Object -ExpandProperty Count       # count files (full)"
-    Write-CodeLine "Get-ChildItem -Directory | Measure-Object | Select-Object -ExpandProperty Count  # count directories (full)"
-    Write-CodeLine "Get-ChildItem | Measure-Object | Select-Object -ExpandProperty Count             # count all items (full)"
-    Write-CodeLine "gci -File | measure | select -exp Count         # count files (shorthand)"
-    Write-CodeLine "gci -Directory | measure | select -exp Count    # count directories (shorthand)"
-    Write-CodeLine "(gci -File).Count                               # count files (shortest)"
-    Write-CodeLine "(gci -File -Recurse).Count                      # count files recursive"
-    Write-CodeLine "(gci -Directory).Count                          # count directories (shortest)"
-    Write-CodeLine "(gci -Directory -Recurse -ErrorAction SilentlyContinue).Count  # count dirs (recursive and suppress permission errors)"
-    Write-CodeLine "(gci).Count                                     # count all items (shortest)"
+    if (Test-SectionMatch "Count items files directories measure" $Keyword) {
+        Write-Host ""
+        Write-Host "Count items:" -ForegroundColor Yellow
+        Write-CodeLine "Get-ChildItem -File | Measure-Object | Select-Object -ExpandProperty Count       # count files (full)"
+        Write-CodeLine "Get-ChildItem -Directory | Measure-Object | Select-Object -ExpandProperty Count  # count directories (full)"
+        Write-CodeLine "Get-ChildItem | Measure-Object | Select-Object -ExpandProperty Count             # count all items (full)"
+        Write-CodeLine "gci -File | measure | select -exp Count         # count files (shorthand)"
+        Write-CodeLine "gci -Directory | measure | select -exp Count    # count directories (shorthand)"
+        Write-CodeLine "(gci -File).Count                               # count files (shortest)"
+        Write-CodeLine "(gci -File -Recurse).Count                      # count files recursive"
+        Write-CodeLine "(gci -Directory).Count                          # count directories (shortest)"
+        Write-CodeLine "(gci -Directory -Recurse -ErrorAction SilentlyContinue).Count  # count dirs (recursive and suppress permission errors)"
+        Write-CodeLine "(gci).Count                                     # count all items (shortest)"
+    }
 }
 
 function Show-PathEntry {
@@ -654,9 +858,7 @@ function Show-Paths-Help {
     )
 
     Write-Host "Common config paths:" -ForegroundColor Yellow
-    if ($Keyword) {
-        Write-Host "Filtered by keyword: $Keyword" -ForegroundColor DarkGray
-    }
+    Write-KeywordFilter $Keyword
     Write-Host ""
 
     Show-PathEntry "nvim config path" `
@@ -767,418 +969,541 @@ function Show-Paths-Help {
 
 # Language-specific helpers
 function Show-C-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "C / gcc quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "gcc --version"
-    Write-CodeLine "gcc --help"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "gcc --version"
+        Write-CodeLine "gcc --help"
+    }
 
-    Write-Host ""
-    Write-Host "Compile & run:" -ForegroundColor Yellow
-    Write-CodeLine "gcc -Wall -Wextra -pedantic -std=c17 -o main main.c  # Compile C program"
-    Write-CodeLine "./main  # Run binary"
-    Write-Host ""
-    Write-CodeLine "gcc -g -O0 -Wall -Wextra -std=c17 -o main_debug main.c  # Debug build"
+    if (Test-SectionMatch "Compile run build" $Keyword) {
+        Write-Host ""
+        Write-Host "Compile & run:" -ForegroundColor Yellow
+        Write-CodeLine "gcc -Wall -Wextra -pedantic -std=c17 -o main main.c  # Compile C program"
+        Write-CodeLine "./main  # Run binary"
+        Write-Host ""
+        Write-CodeLine "gcc -g -O0 -Wall -Wextra -std=c17 -o main_debug main.c  # Debug build"
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CleanWarning
-    Write-CodeLine 'Remove-Item -Force main,main.exe,main_debug,main_debug.exe,*.o,*.obj,*.pdb,*.ilk,*.exp,*.lib -ErrorAction SilentlyContinue'
-    Write-CodeLine 'Remove-Item -Recurse -Force build,bin,obj,out -ErrorAction SilentlyContinue'
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CleanWarning
+        Write-CodeLine 'Remove-Item -Force main,main.exe,main_debug,main_debug.exe,*.o,*.obj,*.pdb,*.ilk,*.exp,*.lib -ErrorAction SilentlyContinue'
+        Write-CodeLine 'Remove-Item -Recurse -Force build,bin,obj,out -ErrorAction SilentlyContinue'
+    }
 }
 
 function Show-CSharp-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "C# / .NET quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "dotnet --version"
-    Write-CodeLine "dotnet -h"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "dotnet --version"
+        Write-CodeLine "dotnet -h"
+    }
 
-    Write-Host ""
-    Write-Host "Create new projects:" -ForegroundColor Yellow
-    Write-CodeLine "dotnet new console -o MyConsoleApp      # Console app"
-    Write-CodeLine "dotnet new classlib -o MyLibrary        # Class library"
-    Write-CodeLine "dotnet new webapi -o MyWebApi           # ASP.NET Core Web API"
-    Write-CodeLine "dotnet new worker -o MyWorkerService    # Background worker service"
+    if (Test-SectionMatch "Create new projects console classlib webapi worker" $Keyword) {
+        Write-Host ""
+        Write-Host "Create new projects:" -ForegroundColor Yellow
+        Write-CodeLine "dotnet new console -o MyConsoleApp      # Console app"
+        Write-CodeLine "dotnet new classlib -o MyLibrary        # Class library"
+        Write-CodeLine "dotnet new webapi -o MyWebApi           # ASP.NET Core Web API"
+        Write-CodeLine "dotnet new worker -o MyWorkerService    # Background worker service"
+    }
 
-    Write-Host ""
-    Write-Host "Useful dotnet commands:" -ForegroundColor Yellow
-    Write-CodeLine "dotnet --list-runtimes"
-    Write-CodeLine "dotnet --list-sdks"
-    Write-CodeLine "dotnet build"
-    Write-CodeLine "dotnet build -c Release"
-    Write-CodeLine "# Errors only, no warnings/analyzers"
-    Write-CodeLine "dotnet build -consoleLoggerParameters:ErrorsOnly -p:WarningLevel=0 -p:RunAnalyzersDuringBuild=false"
-    Write-CodeLine "dotnet run -c Release"
-    Write-CodeLine "dotnet run --framework net9.0"
-    Write-CodeLine "dotnet run -f net7.0"
-    Write-CodeLine "dotnet run *> test.txt                  # Run and capture output to test.txt"
-    Write-CodeLine "dotnet test                             # Run tests (from solution dir)"
+    if (Test-SectionMatch "Useful dotnet commands build run test" $Keyword) {
+        Write-Host ""
+        Write-Host "Useful dotnet commands:" -ForegroundColor Yellow
+        Write-CodeLine "dotnet --list-runtimes"
+        Write-CodeLine "dotnet --list-sdks"
+        Write-CodeLine "dotnet build"
+        Write-CodeLine "dotnet build -c Release"
+        Write-CodeLine "# Errors only, no warnings/analyzers"
+        Write-CodeLine "dotnet build -consoleLoggerParameters:ErrorsOnly -p:WarningLevel=0 -p:RunAnalyzersDuringBuild=false"
+        Write-CodeLine "dotnet run -c Release"
+        Write-CodeLine "dotnet run --framework net9.0"
+        Write-CodeLine "dotnet run -f net7.0"
+        Write-CodeLine "dotnet run *> test.txt                  # Run and capture output to test.txt"
+        Write-CodeLine "dotnet test                             # Run tests (from solution dir)"
+    }
 
-    Write-Host ""
-    Write-Host "Solution files:" -ForegroundColor Yellow
-    Write-CodeLine "dotnet new sln                         # Create solution file"
-    Write-CodeLine "dotnet sln list                        # List projects in solution"
-    Write-CodeLine "dotnet sln add .\MyProject\MyProject.csproj"
-    Write-CodeLine "dotnet sln remove .\MyProject\MyProject.csproj"
-    Write-CodeLine "dotnet sln migrate                     # Migrate .sln to .slnx if exactly one .sln exists"
-    Write-CodeLine "dotnet sln MySolution.sln migrate      # Migrate specific .sln to .slnx"
-    Write-CodeLine "dotnet build MySolution.slnx           # Build using the new .slnx file"
+    if (Test-SectionMatch "Solution files sln slnx" $Keyword) {
+        Write-Host ""
+        Write-Host "Solution files:" -ForegroundColor Yellow
+        Write-CodeLine "dotnet new sln                         # Create solution file"
+        Write-CodeLine "dotnet sln list                        # List projects in solution"
+        Write-CodeLine "dotnet sln add .\MyProject\MyProject.csproj"
+        Write-CodeLine "dotnet sln remove .\MyProject\MyProject.csproj"
+        Write-CodeLine "dotnet sln migrate                     # Migrate .sln to .slnx if exactly one .sln exists"
+        Write-CodeLine "dotnet sln MySolution.sln migrate      # Migrate specific .sln to .slnx"
+        Write-CodeLine "dotnet build MySolution.slnx           # Build using the new .slnx file"
+    }
 
-    Write-Host ""
-    Write-Host "EF Core tools:" -ForegroundColor Yellow
-    Write-CodeLine "dotnet ef --version                     # Check installed dotnet-ef version"
-    Write-CodeLine "dotnet tool uninstall -g dotnet-ef      # Uninstall global dotnet-ef tool"
-    Write-CodeLine "dotnet tool install -g dotnet-ef --version 8.*   # Install EF tool for .NET 8"
-    Write-CodeLine "dotnet tool install -g dotnet-ef --version 9.*   # Install EF tool for .NET 9"
+    if (Test-SectionMatch "EF Core tools Entity Framework" $Keyword) {
+        Write-Host ""
+        Write-Host "EF Core tools:" -ForegroundColor Yellow
+        Write-CodeLine "dotnet ef --version                     # Check installed dotnet-ef version"
+        Write-CodeLine "dotnet tool uninstall -g dotnet-ef      # Uninstall global dotnet-ef tool"
+        Write-CodeLine "dotnet tool install -g dotnet-ef --version 8.*   # Install EF tool for .NET 8"
+        Write-CodeLine "dotnet tool install -g dotnet-ef --version 9.*   # Install EF tool for .NET 9"
+    }
 
-    Write-Host ""
-    Write-Host "Add NuGet packages:" -ForegroundColor Yellow
-    Write-CodeLine "dotnet add package Newtonsoft.Json                   # Add latest"
-    Write-CodeLine "dotnet add package Newtonsoft.Json --version 13.0.3  # Add specific version"
-    Write-CodeLine "dotnet add package Dapper                            # Example: Dapper (latest)"
-    Write-CodeLine "dotnet add package Serilog --version 3.1.1           # Example: Serilog (pinned)"
-    Write-CodeLine "dotnet list package                                  # List installed packages"
-    Write-CodeLine "dotnet remove package Newtonsoft.Json                # Remove a package"
+    if (Test-SectionMatch "Add NuGet packages" $Keyword) {
+        Write-Host ""
+        Write-Host "Add NuGet packages:" -ForegroundColor Yellow
+        Write-CodeLine "dotnet add package Newtonsoft.Json                   # Add latest"
+        Write-CodeLine "dotnet add package Newtonsoft.Json --version 13.0.3  # Add specific version"
+        Write-CodeLine "dotnet add package Dapper                            # Example: Dapper (latest)"
+        Write-CodeLine "dotnet add package Serilog --version 3.1.1           # Example: Serilog (pinned)"
+        Write-CodeLine "dotnet list package                                  # List installed packages"
+        Write-CodeLine "dotnet remove package Newtonsoft.Json                # Remove a package"
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CodeLine "dotnet clean                                      # Clean build outputs known to MSBuild"
-    Write-CodeLine "dotnet clean -c Release                           # Clean Release outputs"
-    Write-CodeLine "dotnet clean MySolution.sln                       # Clean solution"
-    Write-CleanWarning
-    Write-CodeLine 'Get-ChildItem -Recurse -Directory -Include bin,obj | Remove-Item -Recurse -Force  # Hard-delete all bin/obj dirs'
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CodeLine "dotnet clean                                      # Clean build outputs known to MSBuild"
+        Write-CodeLine "dotnet clean -c Release                           # Clean Release outputs"
+        Write-CodeLine "dotnet clean MySolution.sln                       # Clean solution"
+        Write-CleanWarning
+        Write-CodeLine 'Get-ChildItem -Recurse -Directory -Include bin,obj | Remove-Item -Recurse -Force  # Hard-delete all bin/obj dirs'
+    }
 }
 
 function Show-CPP-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "C++ / g++ quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "g++ --version"
-    Write-CodeLine "g++ --help"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "g++ --version"
+        Write-CodeLine "g++ --help"
+    }
 
-    Write-Host ""
-    Write-Host "Compile & run:" -ForegroundColor Yellow
-    Write-CodeLine "g++ -O2 -Wall -Wextra -std=c++20 -o main main.cpp  # Compile optimized"
-    Write-CodeLine "./main  # Run binary"
-    Write-Host ""
-    Write-CodeLine "g++ -g -O0 -Wall -Wextra -std=c++20 -o main_debug main.cpp  # Debug build"
+    if (Test-SectionMatch "Compile run build" $Keyword) {
+        Write-Host ""
+        Write-Host "Compile & run:" -ForegroundColor Yellow
+        Write-CodeLine "g++ -O2 -Wall -Wextra -std=c++20 -o main main.cpp  # Compile optimized"
+        Write-CodeLine "./main  # Run binary"
+        Write-Host ""
+        Write-CodeLine "g++ -g -O0 -Wall -Wextra -std=c++20 -o main_debug main.cpp  # Debug build"
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CodeLine "cmake --build build --target clean    # Clean CMake build dir, if supported by generator"
-    Write-CodeLine "ninja -C build clean                  # Clean Ninja build dir"
-    Write-CodeLine "make clean                            # Clean Makefile project, if target exists"
-    Write-CleanWarning
-    Write-CodeLine 'Remove-Item -Force main,main.exe,main_debug,main_debug.exe,*.o,*.obj,*.pdb,*.ilk,*.exp,*.lib -ErrorAction SilentlyContinue'
-    Write-CodeLine 'Remove-Item -Recurse -Force build,bin,obj,out,cmake-build-debug,cmake-build-release -ErrorAction SilentlyContinue'
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CodeLine "cmake --build build --target clean    # Clean CMake build dir, if supported by generator"
+        Write-CodeLine "ninja -C build clean                  # Clean Ninja build dir"
+        Write-CodeLine "make clean                            # Clean Makefile project, if target exists"
+        Write-CleanWarning
+        Write-CodeLine 'Remove-Item -Force main,main.exe,main_debug,main_debug.exe,*.o,*.obj,*.pdb,*.ilk,*.exp,*.lib -ErrorAction SilentlyContinue'
+        Write-CodeLine 'Remove-Item -Recurse -Force build,bin,obj,out,cmake-build-debug,cmake-build-release -ErrorAction SilentlyContinue'
+    }
 }
 
 function Show-Rust-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "Rust / cargo quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "rustc --version"
-    Write-CodeLine "cargo --version"
-    Write-CodeLine "cargo -h"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "rustc --version"
+        Write-CodeLine "cargo --version"
+        Write-CodeLine "cargo -h"
+    }
 
-    Write-Host ""
-    Write-Host "Basic usage:" -ForegroundColor Yellow
-    Write-CodeLine "cargo new TestProject               # Create new project"
-    Write-CodeLine "cd TestProject"
-    Write-CodeLine "cargo build                         # Build debug"
-    Write-CodeLine "cargo run                           # Run debug build"
+    if (Test-SectionMatch "Basic usage new build run" $Keyword) {
+        Write-Host ""
+        Write-Host "Basic usage:" -ForegroundColor Yellow
+        Write-CodeLine "cargo new TestProject               # Create new project"
+        Write-CodeLine "cd TestProject"
+        Write-CodeLine "cargo build                         # Build debug"
+        Write-CodeLine "cargo run                           # Run debug build"
+    }
 
-    Write-Host ""
-    Write-Host "With logs redirected to test.txt:" -ForegroundColor Yellow
-    Write-CodeLine "cargo build *> test.txt             # Build and capture output"
-    Write-CodeLine "cargo run *> test.txt               # Run and capture output"
-    Write-CodeLine "cargo run --release *> test.txt     # Release run and capture output"
+    if (Test-SectionMatch "logs redirected output test.txt" $Keyword) {
+        Write-Host ""
+        Write-Host "With logs redirected to test.txt:" -ForegroundColor Yellow
+        Write-CodeLine "cargo build *> test.txt             # Build and capture output"
+        Write-CodeLine "cargo run *> test.txt               # Run and capture output"
+        Write-CodeLine "cargo run --release *> test.txt     # Release run and capture output"
+    }
 
-    Write-Host ""
-    Write-Host "Backtraces:" -ForegroundColor Yellow
-    Write-CodeLine "RUST_BACKTRACE=1 cargo run          # Short backtrace"
-    Write-CodeLine "RUST_BACKTRACE=full cargo run       # Full backtrace"
+    if (Test-SectionMatch "Backtraces RUST_BACKTRACE" $Keyword) {
+        Write-Host ""
+        Write-Host "Backtraces:" -ForegroundColor Yellow
+        Write-CodeLine "RUST_BACKTRACE=1 cargo run          # Short backtrace"
+        Write-CodeLine "RUST_BACKTRACE=full cargo run       # Full backtrace"
+    }
 
-    Write-Host ""
-    Write-Host "Usage with args (dt flag):" -ForegroundColor Yellow
-    Write-CodeLine "cargo run --                        # default dt ON"
-    Write-CodeLine "cargo run -- --use-dt               # explicit ON"
-    Write-CodeLine "cargo run -- --no-use-dt            # OFF"
-    Write-CodeLine "cargo run -- --use-dt=false         # OFF"
+    if (Test-SectionMatch "Usage with args dt flag" $Keyword) {
+        Write-Host ""
+        Write-Host "Usage with args (dt flag):" -ForegroundColor Yellow
+        Write-CodeLine "cargo run --                        # default dt ON"
+        Write-CodeLine "cargo run -- --use-dt               # explicit ON"
+        Write-CodeLine "cargo run -- --no-use-dt            # OFF"
+        Write-CodeLine "cargo run -- --use-dt=false         # OFF"
+    }
 
-    Write-Host ""
-    Write-Host "Feature flags:" -ForegroundColor Yellow
-    Write-CodeLine 'cargo build --features use_async                        # Build with one feature'
-    Write-CodeLine 'cargo run --features use_async                          # Run with one feature'
-    Write-CodeLine 'cargo build --features "use_async,with_imgui"           # Build with multiple features'
-    Write-CodeLine 'cargo run --features "use_async,with_imgui"             # Run with multiple features'
-    Write-CodeLine 'cargo build --all-features                              # Build with all features'
-    Write-CodeLine 'cargo build --no-default-features                       # Build without default features'
-    Write-CodeLine 'cargo build --no-default-features --features use_async  # Specific features only'
+    if (Test-SectionMatch "Feature flags features" $Keyword) {
+        Write-Host ""
+        Write-Host "Feature flags:" -ForegroundColor Yellow
+        Write-CodeLine 'cargo build --features use_async                        # Build with one feature'
+        Write-CodeLine 'cargo run --features use_async                          # Run with one feature'
+        Write-CodeLine 'cargo build --features "use_async,with_imgui"           # Build with multiple features'
+        Write-CodeLine 'cargo run --features "use_async,with_imgui"             # Run with multiple features'
+        Write-CodeLine 'cargo build --all-features                              # Build with all features'
+        Write-CodeLine 'cargo build --no-default-features                       # Build without default features'
+        Write-CodeLine 'cargo build --no-default-features --features use_async  # Specific features only'
+    }
 
-    Write-Host ""
-    Write-Host "CARGO_FEATURES env var (for rust-analyzer / neovim):" -ForegroundColor Yellow
-    Write-CodeLine '$env:CARGO_FEATURES = "use_async,with_imgui"            # Set features for session'
-    Write-CodeLine '$env:CARGO_FEATURES                                     # Check current value'
-    Write-CodeLine 'Remove-Item Env:CARGO_FEATURES                          # Unset / remove'
-    Write-CodeLine 'cargo build --features $env:CARGO_FEATURES              # Use inline with cargo build'
-    Write-CodeLine 'cargo run --features $env:CARGO_FEATURES                # Use inline with cargo run'
+    if (Test-SectionMatch "CARGO_FEATURES env var rust-analyzer neovim" $Keyword) {
+        Write-Host ""
+        Write-Host "CARGO_FEATURES env var (for rust-analyzer / neovim):" -ForegroundColor Yellow
+        Write-CodeLine '$env:CARGO_FEATURES = "use_async,with_imgui"            # Set features for session'
+        Write-CodeLine '$env:CARGO_FEATURES                                     # Check current value'
+        Write-CodeLine 'Remove-Item Env:CARGO_FEATURES                          # Unset / remove'
+        Write-CodeLine 'cargo build --features $env:CARGO_FEATURES              # Use inline with cargo build'
+        Write-CodeLine 'cargo run --features $env:CARGO_FEATURES                # Use inline with cargo run'
+    }
 
-    Write-Host ""
-    Write-Host "Add packages (crates):" -ForegroundColor Yellow
-    Write-CodeLine "cargo add serde                                 # Add latest"
-    Write-CodeLine "cargo add serde@1.0.197                         # Add specific version"
-    Write-CodeLine "cargo add serde --features derive               # Add with features"
-    Write-CodeLine "cargo add tokio --features full                 # Example: tokio (latest, all features)"
-    Write-CodeLine "cargo add anyhow@1.0.86                         # Example: anyhow (pinned)"
-    Write-CodeLine "cargo remove serde                              # Remove a crate"
+    if (Test-SectionMatch "Add packages crates" $Keyword) {
+        Write-Host ""
+        Write-Host "Add packages (crates):" -ForegroundColor Yellow
+        Write-CodeLine "cargo add serde                                 # Add latest"
+        Write-CodeLine "cargo add serde@1.0.197                         # Add specific version"
+        Write-CodeLine "cargo add serde --features derive               # Add with features"
+        Write-CodeLine "cargo add tokio --features full                 # Example: tokio (latest, all features)"
+        Write-CodeLine "cargo add anyhow@1.0.86                         # Example: anyhow (pinned)"
+        Write-CodeLine "cargo remove serde                              # Remove a crate"
+    }
 
-    Write-Host ""
-    Write-CodeLine '$env:RUSTFLAGS="-Awarnings"         # Allow/suppress all Rust compiler warnings'
+    if (Test-SectionMatch "RUSTFLAGS warnings suppress" $Keyword) {
+        Write-Host ""
+        Write-CodeLine '$env:RUSTFLAGS="-Awarnings"         # Allow/suppress all Rust compiler warnings'
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CodeLine "cargo clean                         # Remove Cargo build artifacts, usually target/"
-    Write-CodeLine "cargo clean --release               # Clean release artifacts"
-    Write-CodeLine "cargo clean -p my_crate             # Clean one package in a workspace"
-    Write-CleanWarning
-    Write-CodeLine 'Remove-Item -Recurse -Force target -ErrorAction SilentlyContinue  # Hard-delete target/'
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CodeLine "cargo clean                         # Remove Cargo build artifacts, usually target/"
+        Write-CodeLine "cargo clean --release               # Clean release artifacts"
+        Write-CodeLine "cargo clean -p my_crate             # Clean one package in a workspace"
+        Write-CleanWarning
+        Write-CodeLine 'Remove-Item -Recurse -Force target -ErrorAction SilentlyContinue  # Hard-delete target/'
+    }
 }
 
 function Show-Java-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "Java quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "java -version"
-    Write-CodeLine "javac -version"
-    Write-CodeLine "java -h"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "java -version"
+        Write-CodeLine "javac -version"
+        Write-CodeLine "java -h"
+    }
 
-    Write-Host ""
-    Write-Host "Compile & run:" -ForegroundColor Yellow
-    Write-CodeLine "javac Main.java                     # Compile"
-    Write-CodeLine "java Main                           # Run"
-    Write-Host ""
-    Write-CodeLine "javac -d out src\Main.java          # Compile into 'out' directory"
-    Write-CodeLine "java -cp out Main                   # Run with explicit classpath"
+    if (Test-SectionMatch "Compile run build" $Keyword) {
+        Write-Host ""
+        Write-Host "Compile & run:" -ForegroundColor Yellow
+        Write-CodeLine "javac Main.java                     # Compile"
+        Write-CodeLine "java Main                           # Run"
+        Write-Host ""
+        Write-CodeLine "javac -d out src\Main.java          # Compile into 'out' directory"
+        Write-CodeLine "java -cp out Main                   # Run with explicit classpath"
+    }
 
-    Write-Host ""
-    Write-Host "Add packages (Maven):" -ForegroundColor Yellow
-    Write-CodeLine "mvn dependency:get -Dartifact=com.google.gson:gson:LATEST  # Fetch latest"
-    Write-CodeLine "mvn dependency:get -Dartifact=com.google.gson:gson:2.10.1  # Fetch specific version"
-    Write-Host "  Or add directly to pom.xml <dependencies>:" -ForegroundColor DarkGray
-    Write-CodeLine "  <dependency>"
-    Write-CodeLine "    <groupId>com.google.gson</groupId>"
-    Write-CodeLine "    <artifactId>gson</artifactId>"
-    Write-CodeLine "    <version>2.10.1</version>"
-    Write-CodeLine "  </dependency>"
-    Write-Host ""
-    Write-Host "Add packages (Gradle):" -ForegroundColor Yellow
-    Write-Host "  Add to build.gradle dependencies {}:" -ForegroundColor DarkGray
-    Write-CodeLine "  implementation 'com.google.gson:gson:+'        # Latest"
-    Write-CodeLine "  implementation 'com.google.gson:gson:2.10.1'   # Specific version"
-    Write-CodeLine "mvn install                                      # Resolve + build (Maven)"
-    Write-CodeLine "gradle build                                     # Resolve + build (Gradle)"
+    if (Test-SectionMatch "Add packages Maven" $Keyword) {
+        Write-Host ""
+        Write-Host "Add packages (Maven):" -ForegroundColor Yellow
+        Write-CodeLine "mvn dependency:get -Dartifact=com.google.gson:gson:LATEST  # Fetch latest"
+        Write-CodeLine "mvn dependency:get -Dartifact=com.google.gson:gson:2.10.1  # Fetch specific version"
+        Write-Host "  Or add directly to pom.xml <dependencies>:" -ForegroundColor DarkGray
+        Write-CodeLine "  <dependency>"
+        Write-CodeLine "    <groupId>com.google.gson</groupId>"
+        Write-CodeLine "    <artifactId>gson</artifactId>"
+        Write-CodeLine "    <version>2.10.1</version>"
+        Write-CodeLine "  </dependency>"
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CodeLine "mvn clean                            # Maven: remove target/"
-    Write-CodeLine "mvn clean install                    # Maven: clean then build/install"
-    Write-CodeLine "gradle clean                         # Gradle: remove build/"
-    Write-CodeLine ".\gradlew clean                      # Gradle wrapper on Windows"
-    Write-CodeLine "./gradlew clean                      # Gradle wrapper on Linux/macOS"
-    Write-CleanWarning
-    Write-CodeLine 'Remove-Item -Recurse -Force target,build,out -ErrorAction SilentlyContinue  # Hard-delete common Java output dirs'
+    if (Test-SectionMatch "Add packages Gradle" $Keyword) {
+        Write-Host ""
+        Write-Host "Add packages (Gradle):" -ForegroundColor Yellow
+        Write-Host "  Add to build.gradle dependencies {}:" -ForegroundColor DarkGray
+        Write-CodeLine "  implementation 'com.google.gson:gson:+'        # Latest"
+        Write-CodeLine "  implementation 'com.google.gson:gson:2.10.1'   # Specific version"
+        Write-CodeLine "mvn install                                      # Resolve + build (Maven)"
+        Write-CodeLine "gradle build                                     # Resolve + build (Gradle)"
+    }
+
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CodeLine "mvn clean                            # Maven: remove target/"
+        Write-CodeLine "mvn clean install                    # Maven: clean then build/install"
+        Write-CodeLine "gradle clean                         # Gradle: remove build/"
+        Write-CodeLine ".\gradlew clean                      # Gradle wrapper on Windows"
+        Write-CodeLine "./gradlew clean                      # Gradle wrapper on Linux/macOS"
+        Write-CleanWarning
+        Write-CodeLine 'Remove-Item -Recurse -Force target,build,out -ErrorAction SilentlyContinue  # Hard-delete common Java output dirs'
+    }
 }
 
 function Show-Python-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "Python quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "python --version"
-    Write-CodeLine "python -h"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "python --version"
+        Write-CodeLine "python -h"
+        Write-CodeLine "pip --version"
+    }
 
-    Write-Host ""
-    Write-Host "Basic usage:" -ForegroundColor Yellow
-    Write-CodeLine "python main.py                      # Run script"
-    Write-CodeLine "python -m venv .venv                # Create virtual environment"
-    Write-CodeLine "source .venv/bin/activate           # Activate venv (Linux/macOS)"
-    Write-CodeLine ".venv\Scripts\Activate.ps1          # Activate venv (Windows PowerShell)"
-    Write-Host ""
-    Write-CodeLine "python -m pip install -r requirements.txt  # Install dependencies"
-    Write-CodeLine "python .\main.py *> test.txt        # Run and capture output to test.txt"
+    if (Test-SectionMatch "Basic usage run venv virtual environment" $Keyword) {
+        Write-Host ""
+        Write-Host "Basic usage:" -ForegroundColor Yellow
+        Write-CodeLine "python main.py                      # Run script"
+        Write-CodeLine "python -m venv .venv                # Create virtual environment"
+        Write-CodeLine "source .venv/bin/activate           # Activate venv (Linux/macOS)"
+        Write-CodeLine ".venv\Scripts\Activate.ps1          # Activate venv (Windows PowerShell)"
+        Write-Host ""
+        Write-CodeLine "python -m pip install -r requirements.txt  # Install dependencies"
+        Write-CodeLine "python .\main.py *> test.txt        # Run and capture output to test.txt"
+    }
 
-    Write-Host ""
-    Write-Host "Add packages:" -ForegroundColor Yellow
-    Write-CodeLine "pip install requests                            # Add latest"
-    Write-CodeLine "pip install requests==2.31.0                    # Add specific version"
-    Write-CodeLine "pip install 'requests>=2.28,<3.0'               # Add with version range"
-    Write-CodeLine "pip install flask numpy pandas                  # Install multiple at once"
-    Write-CodeLine "pip install --upgrade requests                  # Upgrade a package"
-    Write-CodeLine "pip uninstall requests                          # Remove a package"
-    Write-CodeLine "pip freeze > requirements.txt                   # Save installed packages"
+    if (Test-SectionMatch "Add packages pip install" $Keyword) {
+        Write-Host ""
+        Write-Host "Add packages:" -ForegroundColor Yellow
+        Write-CodeLine "pip install requests                            # Add latest"
+        Write-CodeLine "pip install requests==2.31.0                    # Add specific version"
+        Write-CodeLine "pip install 'requests>=2.28,<3.0'               # Add with version range"
+        Write-CodeLine "pip install flask numpy pandas                  # Install multiple at once"
+        Write-CodeLine "pip install --upgrade requests                  # Upgrade a package"
+        Write-CodeLine "pip uninstall requests                          # Remove a package"
+        Write-CodeLine "pip freeze > requirements.txt                   # Save installed packages"
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CleanWarning
-    Write-CodeLine 'Get-ChildItem -Recurse -Directory -Include __pycache__,.pytest_cache,.mypy_cache,.ruff_cache,build,dist | Remove-Item -Recurse -Force'
-    Write-CodeLine 'Get-ChildItem -Recurse -Directory -Filter "*.egg-info" | Remove-Item -Recurse -Force'
-    Write-CodeLine 'Get-ChildItem -Recurse -File -Include *.pyc,*.pyo | Remove-Item -Force'
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CleanWarning
+        Write-CodeLine 'Get-ChildItem -Recurse -Directory -Include __pycache__,.pytest_cache,.mypy_cache,.ruff_cache,build,dist | Remove-Item -Recurse -Force'
+        Write-CodeLine 'Get-ChildItem -Recurse -Directory -Filter "*.egg-info" | Remove-Item -Recurse -Force'
+        Write-CodeLine 'Get-ChildItem -Recurse -File -Include *.pyc,*.pyo | Remove-Item -Force'
+    }
 }
 
 function Show-Go-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "Go quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "go version"
-    Write-CodeLine "go help"
-    Write-CodeLine "go help <command>                   # e.g. go help build"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "go version"
+        Write-CodeLine "go help"
+        Write-CodeLine "go help <command>                   # e.g. go help build"
+    }
 
-    Write-Host ""
-    Write-Host "Basic usage:" -ForegroundColor Yellow
-    Write-CodeLine "go mod init example.com/myapp       # Initialize module"
-    Write-CodeLine "go run main.go                      # Run directly"
-    Write-CodeLine "go build ./...                      # Build all packages"
-    Write-CodeLine "go test ./...                       # Run tests"
+    if (Test-SectionMatch "Basic usage init run build test" $Keyword) {
+        Write-Host ""
+        Write-Host "Basic usage:" -ForegroundColor Yellow
+        Write-CodeLine "go mod init example.com/myapp       # Initialize module"
+        Write-CodeLine "go run main.go                      # Run directly"
+        Write-CodeLine "go build ./...                      # Build all packages"
+        Write-CodeLine "go test ./...                       # Run tests"
+    }
 
-    Write-Host ""
-    Write-Host "Build tags / feature flags:" -ForegroundColor Yellow
-    Write-CodeLine "go build -tags=with_debug_rendering ./...                   # Build with one tag"
-    Write-CodeLine "go run -tags=with_debug_rendering .                         # Run with one tag"
-    Write-CodeLine "go build -tags=with_debug_rendering,with_performance ./...  # Build with multiple tags"
-    Write-CodeLine "go run -tags=with_debug_rendering,with_performance .        # Run with multiple tags"
+    if (Test-SectionMatch "Build tags feature flags" $Keyword) {
+        Write-Host ""
+        Write-Host "Build tags / feature flags:" -ForegroundColor Yellow
+        Write-CodeLine "go build -tags=with_debug_rendering ./...                   # Build with one tag"
+        Write-CodeLine "go run -tags=with_debug_rendering .                         # Run with one tag"
+        Write-CodeLine "go build -tags=with_debug_rendering,with_performance ./...  # Build with multiple tags"
+        Write-CodeLine "go run -tags=with_debug_rendering,with_performance .        # Run with multiple tags"
+    }
 
-    Write-Host ""
-    Write-Host "Persistent GOFLAGS:" -ForegroundColor Yellow
-    Write-CodeLine 'go env -w GOFLAGS="-tags=with_debug_rendering"                   # Always use one tag'
-    Write-CodeLine 'go env -w GOFLAGS="-tags=with_debug_rendering,with_performance"  # Always use multiple tags'
-    Write-CodeLine "go env GOFLAGS                                                   # Check current GOFLAGS"
-    Write-CodeLine "go env -u GOFLAGS                                                # Remove / unset GOFLAGS"
+    if (Test-SectionMatch "Persistent GOFLAGS" $Keyword) {
+        Write-Host ""
+        Write-Host "Persistent GOFLAGS:" -ForegroundColor Yellow
+        Write-CodeLine 'go env -w GOFLAGS="-tags=with_debug_rendering"                   # Always use one tag'
+        Write-CodeLine 'go env -w GOFLAGS="-tags=with_debug_rendering,with_performance"  # Always use multiple tags'
+        Write-CodeLine "go env GOFLAGS                                                   # Check current GOFLAGS"
+        Write-CodeLine "go env -u GOFLAGS                                                # Remove / unset GOFLAGS"
+    }
 
-    Write-Host ""
-    Write-Host "With output redirected to test.txt:" -ForegroundColor Yellow
-    Write-CodeLine "go build; ./my_wow.exe *> test.txt"
-    Write-CodeLine "go build; ./my_wow.exe *> test.txt; vim .\test.txt"
+    if (Test-SectionMatch "output redirected test.txt" $Keyword) {
+        Write-Host ""
+        Write-Host "With output redirected to test.txt:" -ForegroundColor Yellow
+        Write-CodeLine "go build; ./my_wow.exe *> test.txt"
+        Write-CodeLine "go build; ./my_wow.exe *> test.txt; vim .\test.txt"
+    }
 
-    Write-Host ""
-    Write-Host "Add packages:" -ForegroundColor Yellow
-    Write-CodeLine "go get github.com/some/package@latest          # Add latest version"
-    Write-CodeLine "go get github.com/some/package@v1.2.3          # Add specific version"
-    Write-CodeLine "go get github.com/ebitengine/purego@latest"
-    Write-CodeLine "go get github.com/ebitengine/purego@v0.8.2"
-    Write-CodeLine "go get github.com/some/package@none            # Remove a package"
-    Write-CodeLine "go mod tidy                                    # Clean up go.mod / go.sum (removes unused deps)"
+    if (Test-SectionMatch "Add packages go get" $Keyword) {
+        Write-Host ""
+        Write-Host "Add packages:" -ForegroundColor Yellow
+        Write-CodeLine "go get github.com/some/package@latest          # Add latest version"
+        Write-CodeLine "go get github.com/some/package@v1.2.3          # Add specific version"
+        Write-CodeLine "go get github.com/ebitengine/purego@latest"
+        Write-CodeLine "go get github.com/ebitengine/purego@v0.8.2"
+        Write-CodeLine "go get github.com/some/package@none            # Remove a package"
+        Write-CodeLine "go mod tidy                                    # Clean up go.mod / go.sum (removes unused deps)"
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CodeLine "go clean ./...                       # Clean package build artifacts"
-    Write-CodeLine "go clean -cache                      # Remove Go build cache"
-    Write-CodeLine "go clean -testcache                  # Expire Go test cache"
-    Write-CodeLine "go clean -modcache                   # Remove downloaded module cache"
-    Write-CodeLine "go clean -cache -testcache ./...     # Common local clean"
-    Write-CleanWarning
-    Write-CodeLine 'Remove-Item -Force .\*.exe -ErrorAction SilentlyContinue  # Remove local Windows binaries'
-    Write-CodeLine 'Remove-Item -Force .\my_wow,.\main -ErrorAction SilentlyContinue  # Remove common local Linux/macOS binaries'
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CodeLine "go clean ./...                       # Clean package build artifacts"
+        Write-CodeLine "go clean -cache                      # Remove Go build cache"
+        Write-CodeLine "go clean -testcache                  # Expire Go test cache"
+        Write-CodeLine "go clean -modcache                   # Remove downloaded module cache"
+        Write-CodeLine "go clean -cache -testcache ./...     # Common local clean"
+        Write-CleanWarning
+        Write-CodeLine 'Remove-Item -Force .\*.exe -ErrorAction SilentlyContinue  # Remove local Windows binaries'
+        Write-CodeLine 'Remove-Item -Force .\my_wow,.\main -ErrorAction SilentlyContinue  # Remove common local Linux/macOS binaries'
+    }
 }
 
 function Show-JS-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "JavaScript (Node) quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "node --version"
-    Write-CodeLine "node --help"
-    Write-CodeLine "npm -v"
-    Write-CodeLine "npm help"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "node --version"
+        Write-CodeLine "node --help"
+        Write-CodeLine "npm -v"
+        Write-CodeLine "npm help"
+    }
 
-    Write-Host ""
-    Write-Host "Do this:" -ForegroundColor Yellow
-    Write-CodeLine "node main.js"
-    Write-Host "Or:" -ForegroundColor Yellow
-    Write-CodeLine "npm init -y"
-    Write-CodeLine '  # fix package.json (add "start" script, etc.)' -CommandColor DarkGray
-    Write-Host "Then:" -ForegroundColor Yellow
-    Write-CodeLine "npm run start"
-    Write-CodeLine "npm start"
+    if (Test-SectionMatch "run init start basic usage" $Keyword) {
+        Write-Host ""
+        Write-Host "Do this:" -ForegroundColor Yellow
+        Write-CodeLine "node main.js"
+        Write-Host "Or:" -ForegroundColor Yellow
+        Write-CodeLine "npm init -y"
+        Write-CodeLine '  # fix package.json (add "start" script, etc.)' -CommandColor DarkGray
+        Write-Host "Then:" -ForegroundColor Yellow
+        Write-CodeLine "npm run start"
+        Write-CodeLine "npm start"
+    }
 
-    Write-Host ""
-    Write-Host "Add packages:" -ForegroundColor Yellow
-    Write-CodeLine "npm install some-package                       # Add latest"
-    Write-CodeLine "npm install some-package@1.2.3                 # Add specific version"
-    Write-CodeLine "npm install --save-dev some-package            # Add as dev dependency"
-    Write-CodeLine "npm install --save-dev some-package@1.2.3      # Dev dep, specific version"
-    Write-CodeLine "npm install axios                              # Example: axios (latest)"
-    Write-CodeLine "npm install axios@1.6.0                        # Example: axios (pinned)"
-    Write-CodeLine "npm uninstall some-package                     # Remove a package"
-    Write-CodeLine "npm uninstall --save-dev some-package          # Remove a dev dependency"
+    if (Test-SectionMatch "Add packages npm install" $Keyword) {
+        Write-Host ""
+        Write-Host "Add packages:" -ForegroundColor Yellow
+        Write-CodeLine "npm install some-package                       # Add latest"
+        Write-CodeLine "npm install some-package@1.2.3                 # Add specific version"
+        Write-CodeLine "npm install --save-dev some-package            # Add as dev dependency"
+        Write-CodeLine "npm install --save-dev some-package@1.2.3      # Dev dep, specific version"
+        Write-CodeLine "npm install axios                              # Example: axios (latest)"
+        Write-CodeLine "npm install axios@1.6.0                        # Example: axios (pinned)"
+        Write-CodeLine "npm uninstall some-package                     # Remove a package"
+        Write-CodeLine "npm uninstall --save-dev some-package          # Remove a dev dependency"
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CodeLine "npm ci                              # Clean install from package-lock.json; removes node_modules first"
-    Write-CodeLine "npm run clean                       # Project-specific clean script, if package.json has one"
-    Write-CodeLine "npx rimraf dist build coverage .next .nuxt .vite .turbo .cache  # Remove common generated dirs"
-    Write-CleanWarning
-    Write-CodeLine 'Remove-Item -Recurse -Force node_modules,dist,build,coverage,.next,.nuxt,.vite,.turbo,.cache -ErrorAction SilentlyContinue'
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CodeLine "npm ci                              # Clean install from package-lock.json; removes node_modules first"
+        Write-CodeLine "npm run clean                       # Project-specific clean script, if package.json has one"
+        Write-CodeLine "npx rimraf dist build coverage .next .nuxt .vite .turbo .cache  # Remove common generated dirs"
+        Write-CleanWarning
+        Write-CodeLine 'Remove-Item -Recurse -Force node_modules,dist,build,coverage,.next,.nuxt,.vite,.turbo,.cache -ErrorAction SilentlyContinue'
+    }
 }
 
 function Show-TS-Help {
+    param([string]$Keyword)
+
     Write-Host ""
     Write-Host "TypeScript quick examples:" -ForegroundColor Yellow
+    Write-KeywordFilter $Keyword
 
-    Write-Host ""
-    Write-Host "Version / help:" -ForegroundColor Yellow
-    Write-CodeLine "tsc -v"
-    Write-CodeLine "npx tsc --help"
+    if (Test-SectionMatch "Version help" $Keyword) {
+        Write-Host ""
+        Write-Host "Version / help:" -ForegroundColor Yellow
+        Write-CodeLine "tsc -v"
+        Write-CodeLine "npx tsc --help"
+    }
 
-    Write-Host ""
-    Write-Host "Do this:" -ForegroundColor Yellow
-    Write-CodeLine "npm init -y # init npm"
-    Write-CodeLine "# install dev dependencies"
-    Write-CodeLine "npm install --save-dev typescript ts-node @types/node"
-    Write-CodeLine "# Create tsconfig.json"
-    Write-CodeLine "npx tsc --init"
-    Write-CodeLine "#  tweak tsconfig.json and npm scripts, then do either of these:"
-    Write-CodeLine "#  Compile once + run compiled JS:"
-    Write-CodeLine "npm run build  # runs tsc -> creates dist/main.js, dist/config_reader.js"
-    Write-CodeLine "npm start      # runs node dist/main.js"
-    Write-CodeLine "# Dev mode (no separate build step):"
-    Write-CodeLine "npm run dev"
+    if (Test-SectionMatch "init setup build dev run basic usage" $Keyword) {
+        Write-Host ""
+        Write-Host "Do this:" -ForegroundColor Yellow
+        Write-CodeLine "npm init -y # init npm"
+        Write-CodeLine "# install dev dependencies"
+        Write-CodeLine "npm install --save-dev typescript ts-node @types/node"
+        Write-CodeLine "# Create tsconfig.json"
+        Write-CodeLine "npx tsc --init"
+        Write-CodeLine "#  tweak tsconfig.json and npm scripts, then do either of these:"
+        Write-CodeLine "#  Compile once + run compiled JS:"
+        Write-CodeLine "npm run build  # runs tsc -> creates dist/main.js, dist/config_reader.js"
+        Write-CodeLine "npm start      # runs node dist/main.js"
+        Write-CodeLine "# Dev mode (no separate build step):"
+        Write-CodeLine "npm run dev"
+    }
 
-    Write-Host ""
-    Write-Host "Add packages:" -ForegroundColor Yellow
-    Write-CodeLine "npm install some-package                         # Add latest"
-    Write-CodeLine "npm install some-package@1.2.3                   # Add specific version"
-    Write-CodeLine "npm install --save-dev @types/some-package       # Add type definitions"
-    Write-CodeLine "npm install --save-dev @types/some-package@1.2.3 # Pinned type definitions"
-    Write-CodeLine "npm install axios                                # Example: axios (latest)"
-    Write-CodeLine "npm install --save-dev @types/node@20.0.0        # Example: pinned @types/node"
-    Write-CodeLine "npm uninstall some-package                       # Remove a package"
-    Write-CodeLine "npm uninstall --save-dev @types/some-package     # Remove type definitions"
+    if (Test-SectionMatch "Add packages npm install types" $Keyword) {
+        Write-Host ""
+        Write-Host "Add packages:" -ForegroundColor Yellow
+        Write-CodeLine "npm install some-package                         # Add latest"
+        Write-CodeLine "npm install some-package@1.2.3                   # Add specific version"
+        Write-CodeLine "npm install --save-dev @types/some-package       # Add type definitions"
+        Write-CodeLine "npm install --save-dev @types/some-package@1.2.3 # Pinned type definitions"
+        Write-CodeLine "npm install axios                                # Example: axios (latest)"
+        Write-CodeLine "npm install --save-dev @types/node@20.0.0        # Example: pinned @types/node"
+        Write-CodeLine "npm uninstall some-package                       # Remove a package"
+        Write-CodeLine "npm uninstall --save-dev @types/some-package     # Remove type definitions"
+    }
 
-    Write-Host ""
-    Write-Host "Clean project / generated files:" -ForegroundColor Yellow
-    Write-CodeLine "npm ci                              # Clean install from package-lock.json; removes node_modules first"
-    Write-CodeLine "npm run clean                       # Project-specific clean script, if package.json has one"
-    Write-CodeLine "npx tsc --build --clean             # Clean TypeScript project references / incremental build info"
-    Write-CodeLine "npx rimraf dist build coverage .tsbuildinfo .next .nuxt .vite .turbo .cache"
-    Write-CleanWarning
-    Write-CodeLine 'Remove-Item -Recurse -Force node_modules,dist,build,coverage,.next,.nuxt,.vite,.turbo,.cache -ErrorAction SilentlyContinue'
-    Write-CodeLine 'Remove-Item -Force *.tsbuildinfo -ErrorAction SilentlyContinue'
+    if (Test-SectionMatch "Clean project generated files" $Keyword) {
+        Write-Host ""
+        Write-Host "Clean project / generated files:" -ForegroundColor Yellow
+        Write-CodeLine "npm ci                              # Clean install from package-lock.json; removes node_modules first"
+        Write-CodeLine "npm run clean                       # Project-specific clean script, if package.json has one"
+        Write-CodeLine "npx tsc --build --clean             # Clean TypeScript project references / incremental build info"
+        Write-CodeLine "npx rimraf dist build coverage .tsbuildinfo .next .nuxt .vite .turbo .cache"
+        Write-CleanWarning
+        Write-CodeLine 'Remove-Item -Recurse -Force node_modules,dist,build,coverage,.next,.nuxt,.vite,.turbo,.cache -ErrorAction SilentlyContinue'
+        Write-CodeLine 'Remove-Item -Force *.tsbuildinfo -ErrorAction SilentlyContinue'
+    }
 }
 
 # Main argument handling
@@ -1199,27 +1524,30 @@ $normalizedLanguage = $languageMap[$key]
 
 Write-Host "Selected: " -NoNewline
 Write-Host $normalizedLanguage -ForegroundColor Magenta
+if ($Keyword) {
+    Write-Host "Keyword: " -NoNewline
+    Write-Host $Keyword -ForegroundColor DarkYellow
+}
 
 switch ($normalizedLanguage) {
-    'c'          { Show-C-Help }
-    'csharp'     { Show-CSharp-Help }
-    'cpp'        { Show-CPP-Help }
-    'rust'       { Show-Rust-Help }
-    'java'       { Show-Java-Help }
-    'python'     { Show-Python-Help }
-    'go'         { Show-Go-Help }
-    'javascript' { Show-JS-Help }
-    'typescript' { Show-TS-Help }
+    'c'          { Show-C-Help -Keyword $Keyword }
+    'csharp'     { Show-CSharp-Help -Keyword $Keyword }
+    'cpp'        { Show-CPP-Help -Keyword $Keyword }
+    'rust'       { Show-Rust-Help -Keyword $Keyword }
+    'java'       { Show-Java-Help -Keyword $Keyword }
+    'python'     { Show-Python-Help -Keyword $Keyword }
+    'go'         { Show-Go-Help -Keyword $Keyword }
+    'javascript' { Show-JS-Help -Keyword $Keyword }
+    'typescript' { Show-TS-Help -Keyword $Keyword }
 
-    'git'        { Show-Git-Help }
-    'grep'       { Show-Grep-Help }
-    'gitgrep'    { Show-GitGrep-Help }
-    'ripgrep'    { Show-RipGrep-Help }
-    'scripts'    { Show-Scripts-Help }
-    'env'        { Show-Env-Help }
-    'other'      { Show-Other-Help }
+    'git'        { Show-Git-Help -Keyword $Keyword }
+    'grep'       { Show-Grep-Help -Keyword $Keyword }
+    'gitgrep'    { Show-GitGrep-Help -Keyword $Keyword }
+    'ripgrep'    { Show-RipGrep-Help -Keyword $Keyword }
+    'scripts'    { Show-Scripts-Help -Keyword $Keyword }
+    'env'        { Show-Env-Help -Keyword $Keyword }
+    'other'      { Show-Other-Help -Keyword $Keyword }
     'paths'      { Show-Paths-Help -Keyword $Keyword }
 
     default      { }  # Shouldn't happen
 }
-
