@@ -720,12 +720,11 @@ function Show-Env-Help {
         Write-Host "  Tool / app versions:" -ForegroundColor DarkGray
         Write-CommandWithDescription '$PSVersionTable'              "full PowerShell version table"    'Green'
         Write-CommandWithDescription '$PSVersionTable.PSVersion'    "PowerShell version only"          'Green'
-        Write-CommandWithDescription '$Host.Version'                "PowerShell host version"           'Green'
+        Write-CommandWithDescription '$Host.Version'                "PowerShell host version"          'Green'
         Write-CommandWithDescription 'wezterm -V'                   "WezTerm version"                  'Green'
         Write-CommandWithDescription 'nvim --version'               "Neovim version"                   'Green'
         Write-CommandWithDescription 'vim --version'                "Vim version"                      'Green'
         Write-CommandWithDescription 'git --version'                "Git version"                      'Green'
-        Write-CommandWithDescription 'tmux -V'                      "tmux version"                     'Green'
         Write-CommandWithDescription 'cmake --version'              "CMake version"                    'Green'
         Write-CommandWithDescription 'curl --version'               "curl version"                     'Green'
         Write-CommandWithDescription 'ssh -V'                       "OpenSSH version"                  'Green'
