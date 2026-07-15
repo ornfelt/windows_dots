@@ -1,4 +1,14 @@
 # proj_summarize.ps1 - Language dispatcher for proj_summarize scripts
+# see:
+# $env:my_notes_path/scripts/files/proj_summarize/c/proj_summarize.ps1
+# $env:my_notes_path/scripts/files/proj_summarize/cpp/proj_summarize.ps1
+# $env:my_notes_path/scripts/files/proj_summarize/cs/proj_summarize.ps1
+# $env:my_notes_path/scripts/files/proj_summarize/go/proj_summarize.ps1
+# $env:my_notes_path/scripts/files/proj_summarize/java/proj_summarize.ps1
+# $env:my_notes_path/scripts/files/proj_summarize/js/proj_summarize.ps1
+# $env:my_notes_path/scripts/files/proj_summarize/py/proj_summarize.ps1
+# $env:my_notes_path/scripts/files/proj_summarize/rs/proj_summarize.ps1
+# $env:my_notes_path/scripts/files/proj_summarize/ts/proj_summarize.ps1
 
 function Write-Ok      ([string]$m) { Write-Host $m -ForegroundColor Green }
 function Write-Err     ([string]$m) { Write-Host $m -ForegroundColor Red }

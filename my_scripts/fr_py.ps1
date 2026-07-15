@@ -1,3 +1,5 @@
+# see:
+# $env:my_notes_path/scripts/replace/py/find_replace.py
 $notes = $env:my_notes_path
 
 if ([string]::IsNullOrWhiteSpace($notes)) {

@@ -1,3 +1,5 @@
+# see:
+# $env:my_notes_path/scripts/replace/cs/FindReplace/Program.cs
 $notes = $env:my_notes_path
 
 if ([string]::IsNullOrWhiteSpace($notes)) {

@@ -1,3 +1,5 @@
+# see:
+# $env:my_notes_path/scripts/pkg_helper.py
 $notes = $env:my_notes_path
 
 if ([string]::IsNullOrWhiteSpace($notes)) {

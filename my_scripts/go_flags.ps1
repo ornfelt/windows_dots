@@ -1,3 +1,5 @@
+# see:
+# $env:my_notes_path/scripts/files/go_flags/go_flags.py
 $notes = $env:my_notes_path
 
 if ([string]::IsNullOrWhiteSpace($notes)) {

@@ -1,3 +1,5 @@
+# see:
+# $env:my_notes_path/scripts/files/rs_flags/rs_flags.py
 $notes = $env:my_notes_path
 
 if ([string]::IsNullOrWhiteSpace($notes)) {

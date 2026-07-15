@@ -1,3 +1,5 @@
+# see:
+# $env:my_notes_path/scripts/replace/find_replace.ps1
 $notes = $env:my_notes_path
 
 if ([string]::IsNullOrWhiteSpace($notes)) {

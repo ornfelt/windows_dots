@@ -1,3 +1,5 @@
+# see:
+# $env:my_notes_path/scripts/files/dir_sizes.ps1
 $notes = $env:my_notes_path
 
 if ([string]::IsNullOrWhiteSpace($notes)) {
