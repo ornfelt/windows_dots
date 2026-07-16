@@ -216,7 +216,8 @@ $aliases = @(
     ".diff_shader_git", ".build", ".build_py", ".pkg", ".proc", ".copy_git_msg", ".sln",
     ".cmake_old", ".cmake_py", ".fr", ".fr_py", ".fr_cs", ".dots", ".search_env", ".gs",
     ".clean", ".proj_summarize", ".find_files", ".dir_sizes", ".gb", ".go_flags", ".rs_flags",
-    ".geo", ".map", ".trans", ".mov", ".mov_py", ".book", ".gfx", ".utils"
+    ".geo", ".map", ".trans", ".mov", ".mov_py", ".book", ".gfx", ".utils", ".git_diff",
+    ".script_helper"
 )
 
 foreach ($alias in $aliases) {
@@ -261,6 +262,10 @@ function run_health_check {
 
 Set-Alias -Name health_check -Value run_health_check -Scope Global
 Set-Alias -Name '.health_check' -Value run_health_check -Scope Global
+
+if (-not (Get-Command pwsh.exe -ErrorAction SilentlyContinue)) {
+    Set-Alias -Name pwsh -Value powershell.exe
+}
 
 # For wezterm cwd
 # https://wezfurlong.org/wezterm/shell-integration.html#osc-7-on-windows-with-powershell

@@ -87,7 +87,7 @@ function Show-Help {
     Write-Host '  -GitRoot       Use the git repository root as the working directory'
     Write-Host ''
     Write-Info 'EXAMPLES'
-    Write-Host '  .\clean.ps1 cs                            # Clean C# from cwd recursively'
+    Write-Host '  .\clean.ps1 cs                             # Clean C# from cwd recursively'
     Write-Host '  .\clean.ps1 rust -GitRoot                  # Clean Rust from repo root'
     Write-Host '  .\clean.ps1 java -Path C:\projects\app     # Clean Java in specified dir'
     Write-Host '  .\clean.ps1 cpp -NoRecurse                 # Clean C++ (current dir only)'
