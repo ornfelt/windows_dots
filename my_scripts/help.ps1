@@ -177,6 +177,9 @@ function Show-Git-Help {
 
         Write-Host "# Generate diff between specific commit and now, filtering on specific file types:" -ForegroundColor DarkGray
         Write-Host "git diff cbceb5a..HEAD -- '**/*.java' '*.cs' > new_java_cs_changes.diff" -ForegroundColor Blue
+
+        Write-Host "# Generate current working-tree diff:" -ForegroundColor DarkGray
+        Write-Host "git diff --output=changes.diff" -ForegroundColor Blue
     }
 
     if (Test-SectionMatch "apply patch" $Keyword) {
@@ -543,10 +546,11 @@ function Show-Scripts-Help {
     Write-Host "Some useful dot commands:" -ForegroundColor Yellow
     Write-KeywordFilter $Keyword
 
-    if (Test-SectionMatch "Meta help" $Keyword) {
+    if (Test-SectionMatch "Meta help script helper script_helper gui launcher" $Keyword) {
         Write-Host ""
         Write-Host "  Meta:" -ForegroundColor DarkGray
-        Write-CommandWithDescription ".help" "show this help" 'Cyan'
+        Write-CommandWithDescription ".help"          "show this help"                                      'Cyan'
+        Write-CommandWithDescription ".script_helper" "open GUI helper for running other helper scripts"    'Cyan'
     }
 
     if (Test-SectionMatch "Navigation cd helpers" $Keyword) {
@@ -627,7 +631,7 @@ function Show-Scripts-Help {
         Write-CommandWithDescription ".gb"         "helper script for git branches"  'Cyan'
     }
 
-    if (Test-SectionMatch "Build tools maintenance cmake clean update" $Keyword) {
+    if (Test-SectionMatch "Build tools maintenance cmake clean update diff git git_diff" $Keyword) {
         Write-Host ""
         Write-Host "  Build / tools / maintenance:" -ForegroundColor DarkGray
         Write-CommandWithDescription ".cmake"   "helper script for cmake"                     'Cyan'
@@ -644,6 +648,7 @@ function Show-Scripts-Help {
         Write-CommandWithDescription ".git_push"  "helper script for git push"                'Cyan'
         Write-CommandWithDescription ".git_pull"  "helper script for git pull"                'Cyan'
         Write-CommandWithDescription ".git_ignore" "helper script for git ignore"             'Cyan'
+        Write-CommandWithDescription ".git_diff"   "helper script for generating Git diffs"   'Cyan'
         Write-CommandWithDescription ".copy_git_msg" "copy N-latest commit msg"               'Cyan'
         Write-CommandWithDescription ".diff_shader_git" "run diff_shader_git py script"       'Cyan'
         Write-CommandWithDescription ".health_check" "health check script"                    'Cyan'
