@@ -616,19 +616,20 @@ function Show-Scripts-Help {
         Write-CommandWithDescription ".network_devices_ping" "ping common network devices" 'Cyan'
     }
 
-    if (Test-SectionMatch "Search inspect dump helpers find replace" $Keyword) {
+    if (Test-SectionMatch "Search inspect dump helpers find replace grep git grep ripgrep rg" $Keyword) {
         Write-Host ""
         Write-Host "  Search / inspect / dump helpers:" -ForegroundColor DarkGray
-        Write-CommandWithDescription ".search_conf" "search local config"            'Cyan'
-        Write-CommandWithDescription ".dump_files"  "dump files"                     'Cyan'
-        Write-CommandWithDescription ".fr"         "find and replace"                'Cyan'
-        Write-CommandWithDescription ".fr_py"      "find and replace (Python)"       'Cyan'
-        Write-CommandWithDescription ".fr_cs"      "find and replace (C#)"           'Cyan'
-        Write-CommandWithDescription ".find_files" "helper script for finding files" 'Cyan'
-        Write-CommandWithDescription ".dir_sizes"  "show directory/file sizes"       'Cyan'
-        Write-CommandWithDescription ".search_env" "search environment variables"    'Cyan'
-        Write-CommandWithDescription ".gs"         "git search helper script"        'Cyan'
-        Write-CommandWithDescription ".gb"         "helper script for git branches"  'Cyan'
+        Write-CommandWithDescription ".search"      "search using grep, git grep, or ripgrep" 'Cyan'
+        Write-CommandWithDescription ".search_conf" "search local config"                     'Cyan'
+        Write-CommandWithDescription ".dump_files"  "dump files"                              'Cyan'
+        Write-CommandWithDescription ".fr"          "find and replace"                        'Cyan'
+        Write-CommandWithDescription ".fr_py"       "find and replace (Python)"               'Cyan'
+        Write-CommandWithDescription ".fr_cs"       "find and replace (C#)"                   'Cyan'
+        Write-CommandWithDescription ".find_files"  "helper script for finding files"         'Cyan'
+        Write-CommandWithDescription ".dir_sizes"   "show directory/file sizes"               'Cyan'
+        Write-CommandWithDescription ".search_env"  "search environment variables"            'Cyan'
+        Write-CommandWithDescription ".gs"          "git search helper script"                'Cyan'
+        Write-CommandWithDescription ".gb"          "helper script for git branches"          'Cyan'
     }
 
     if (Test-SectionMatch "Build tools maintenance cmake clean update diff git git_diff" $Keyword) {
