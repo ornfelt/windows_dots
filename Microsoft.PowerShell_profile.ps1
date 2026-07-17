@@ -217,7 +217,7 @@ $aliases = @(
     ".cmake_old", ".cmake_py", ".fr", ".fr_py", ".fr_cs", ".dots", ".search_env", ".gs",
     ".clean", ".proj_summarize", ".find_files", ".dir_sizes", ".gb", ".go_flags", ".rs_flags",
     ".geo", ".map", ".trans", ".mov", ".mov_py", ".book", ".gfx", ".utils", ".git_diff",
-    ".search", ".script_helper"
+    ".search", ".help_old", ".script_helper"
 )
 
 foreach ($alias in $aliases) {
