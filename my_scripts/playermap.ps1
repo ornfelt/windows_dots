@@ -23,16 +23,23 @@ if (-not $env:CODE_ROOT_DIR) {
 # Normalize server names
 switch ($Server.ToLower()) {
     'acore'             { $normalized = 'acore'; break }
+    'azerothcore'       { $normalized = 'acore'; break }
     'tcore'             { $normalized = 'tcore'; break }
+    'trinitycore'       { $normalized = 'tcore'; break }
     'cmangos'           { $normalized = 'cmangos'; break }
+    'classic'           { $normalized = 'cmangos'; break }
+    'cmangos-classic'   { $normalized = 'cmangos'; break }
     'vmangos'           { $normalized = 'vmangos'; break }
+    'vanilla'           { $normalized = 'vmangos'; break }
     'mangos0'           { $normalized = 'mangoszero'; break }
     'mangoszero'        { $normalized = 'mangoszero'; break }
+    'mangos-zero'       { $normalized = 'mangoszero'; break }
+    'zero'              { $normalized = 'mangoszero'; break }
     'mangos-tbc'        { $normalized = 'cmangos-tbc'; break }
     'cmangos-tbc'       { $normalized = 'cmangos-tbc'; break }
     'tbc'               { $normalized = 'cmangos-tbc'; break }
     default {
-        Write-Error "Unknown server '$Server'. Valid options are: acore, tcore, cmangos, cmangos-tbc, vmangos, mangoszero"
+        Write-Error "Unknown server '$Server'. Valid options are: acore, azerothcore, tcore, trinitycore, cmangos, classic, cmangos-classic, cmangos-tbc, mangos-tbc, tbc, vmangos, vanilla, mangoszero, mangos0, mangos-zero, zero"
         exit 1
     }
 }
@@ -116,4 +123,3 @@ if ($jsTsPyDirs.ContainsKey($normalized)) {
     Write-Error "Unexpected error: no configuration for server '$normalized'"
     exit 1
 }
-
