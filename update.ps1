@@ -67,16 +67,40 @@ if (-not (Test-Path -Path $weztermDir)) {
 }
 
 # ------------------------------------------------------------
-# Copy files into wezterm-session-manager
-$myNotesPath = [System.Environment]::ExpandEnvironmentVariables("%my_notes_path%")
+# Copy files into wezterm-session-manager (old)
+#$myNotesPath = [System.Environment]::ExpandEnvironmentVariables("%my_notes_path%")
+#
+#$sessionManagerFile = Join-Path -Path $myNotesPath -ChildPath "scripts\wes\session-manager.lua"
+##$weztermStateFile = Join-Path -Path $myNotesPath -ChildPath "scripts\wes\wezterm_state_coding.json"
+#
+#Copy-Item -Path $sessionManagerFile -Destination $weztermDir -Force
+##Copy-Item -Path $weztermStateFile -Destination $weztermDir -Force
+#
+#Write-Host "`nFiles copied successfully to '$weztermDir'" -ForegroundColor Cyan
 
-$sessionManagerFile = Join-Path -Path $myNotesPath -ChildPath "scripts\wes\session-manager.lua"
-#$weztermStateFile = Join-Path -Path $myNotesPath -ChildPath "scripts\wes\wezterm_state_coding.json"
+# Ensure WezTerm directories exist
+$weztermBaseDir = Join-Path $env:USERPROFILE ".wezterm"
+$weztermSessionManagerDir = Join-Path $weztermBaseDir "wezterm-session-manager"
 
-Copy-Item -Path $sessionManagerFile -Destination $weztermDir -Force
-#Copy-Item -Path $weztermStateFile -Destination $weztermDir -Force
+if (-not (Test-Path -Path $weztermBaseDir)) {
+    New-Item -Path $weztermBaseDir -ItemType Directory -Force | Out-Null
+    Write-Host "`nDirectory '$weztermBaseDir' created successfully" -ForegroundColor Green
+}
 
-Write-Host "`nFiles copied successfully to '$weztermDir'" -ForegroundColor Cyan
+if (-not (Test-Path -Path $weztermSessionManagerDir)) {
+    New-Item -Path $weztermSessionManagerDir -ItemType Directory -Force | Out-Null
+    Write-Host "`nDirectory '$weztermSessionManagerDir' created successfully" -ForegroundColor Green
+}
+
+# ------------------------------------------------------------
+# Copy WezTerm files
+$statusFile = ".\wezterm\status.lua"
+$sessionManagerFile = ".\wezterm\session-manager.lua"
+
+Copy-Item -Path $statusFile -Destination $weztermBaseDir -Force
+Copy-Item -Path $sessionManagerFile -Destination $weztermSessionManagerDir -Force
+
+Write-Host "`nWezTerm files copied successfully." -ForegroundColor Cyan
 
 # ------------------------------------------------------------
 # Copy vscode files
