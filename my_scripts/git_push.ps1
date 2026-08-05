@@ -51,7 +51,7 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
             $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
             $commands.Add('git diff origin/new -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_new.diff')
-            $commands.Add('git add -A')
+            $commands.Add('git add -- diff_upstream.diff diff_bkp.diff diff_new.diff')
             $commands.Add('git commit -m "update diff files"')
         }
         "dmenu" {
@@ -59,7 +59,7 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git fetch --all')
             $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
             $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
-            $commands.Add('git add -A')
+            $commands.Add('git add -- diff_upstream.diff diff_bkp.diff')
             $commands.Add('git commit -m "update diff files"')
         }
         "st" {
@@ -67,14 +67,14 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git fetch --all')
             $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
             $commands.Add('git diff bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
-            $commands.Add('git add -A')
+            $commands.Add('git add -- diff_upstream.diff diff_bkp.diff')
             $commands.Add('git commit -m "update diff files"')
         }
         "dwmblocks" {
             Add-UpstreamIfMissing -UpstreamUrl "https://github.com/torrinfail/dwmblocks"
             $commands.Add('git fetch --all')
             $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
-            $commands.Add('git add -A')
+            $commands.Add('git add -- diff_upstream.diff')
             $commands.Add('git commit -m "update diff files"')
         }
         "awsm" {
@@ -83,7 +83,7 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
             $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
             $commands.Add('git diff origin/tarneaux -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_tarneaux.diff')
-            $commands.Add('git add -A')
+            $commands.Add('git add -- diff_upstream.diff diff_bkp.diff diff_tarneaux.diff')
             $commands.Add('git commit -m "update diff files"')
         }
         "stk-code" {
@@ -91,7 +91,7 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git fetch upstream')
             $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diffx')
             $commands.Add('git diff 3f125f6^! | Set-Content -Encoding utf8 ./changes.diffx')
-            $commands.Add('git add -A')
+            $commands.Add('git add -- diff_upstream.diffx changes.diffx')
             $commands.Add('git commit -m "update diff files"')
         }
     }
@@ -106,7 +106,7 @@ if ($cleanedRepoName -eq 'AzerothCore-wotlk-with-NPCBots') {
     } else {
         $commands.Add('git diff upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 ./acore.diffx')
     }
-    $commands.Add('git add -A')
+    $commands.Add('git add -- acore.diffx')
     $commands.Add('git commit -m "update diff files"')
 }
 
@@ -115,7 +115,7 @@ if ($cleanedRepoName -eq 'Trinitycore-3.3.5-with-NPCBots') {
     Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/TrinityCore-3.3.5-with-NPCBots"
     $commands.Add('git fetch upstream')
     $commands.Add('git diff upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 ./tcore.diffx')
-    $commands.Add('git add -A')
+    $commands.Add('git add -- tcore.diffx')
     $commands.Add('git commit -m "update diff files"')
 }
 
@@ -161,4 +161,3 @@ if ($OutputOnly) {
 } else {
     Invoke-Expression $pushCommandActual
 }
-
