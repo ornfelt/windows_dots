@@ -217,7 +217,7 @@ $aliases = @(
     ".cmake_old", ".cmake_py", ".fr", ".fr_py", ".fr_cs", ".dots", ".search_env", ".gs",
     ".clean", ".proj_summarize", ".find_files", ".dir_sizes", ".gb", ".go_flags", ".rs_flags",
     ".geo", ".map", ".trans", ".mov", ".mov_py", ".book", ".gfx", ".utils", ".git_diff",
-    ".search", ".help_old", ".srclist", ".arg_tests", ".restore_ws_only", ".git_pick",
+    ".search", ".help_old", ".srclist", ".arg_tests", ".gr", ".gp",
     ".script_helper"
 )
 
