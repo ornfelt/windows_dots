@@ -235,6 +235,7 @@ Set-Alias -Name chatgpt -Value RunChatGPT
 $nvimPath = (Get-Command nvim).Source
 if ($nvimPath) {
     Set-Alias -Name vim -Value $nvimPath
+    Set-Alias -Name vi -Value $nvimPath
 }
 
 function run_vimu {
