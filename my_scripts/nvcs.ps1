@@ -15,7 +15,7 @@
     TargetFramework from the csproj that is actually installed on this machine.
 
     All arguments given to this script are forwarded verbatim to nvcs.exe:
-        .\run_nvcs.ps1 test.py --verbose
+        .\nvcs.ps1 test.py --verbose
 #>
 
 # Everything on the command line belongs to nvcs.exe - capture it before anything else.
