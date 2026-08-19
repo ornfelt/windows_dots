@@ -14,6 +14,11 @@
     If nothing is built, runs `dotnet build` in the project dir, picking the newest
     TargetFramework from the csproj that is actually installed on this machine.
 
+    After a build is chosen, git is asked (cheaply) whether anything under
+    {code_root_dir}/Code2/C#/my_cs/nvcs/src/nvcs changed after the exe was built -
+    both the last commit touching it and any uncommitted/untracked file there. If so,
+    the exe is rebuilt with the SAME config/framework it already had, then run.
+
     All arguments given to this script are forwarded verbatim to nvcs.exe:
         .\nvcs.ps1 test.py --verbose
 #>
@@ -27,6 +32,8 @@ $ScriptArgs = $args
 $UseRelease          = $false   # $true  => `dotnet build -c Release` instead of Debug
 $DryRun              = $false   # $true  => print the commands instead of running them
 $TieToleranceSeconds = 5        # build times within this many seconds count as "the same"
+$CheckSources        = $true    # $false => skip the git "sources newer than exe" check
+$SrcRelPath          = 'src/nvcs'   # path (relative to the repo dir) watched for changes
 
 $ErrorActionPreference = 'Stop'
 
@@ -64,6 +71,45 @@ function Convert-VersionToTfm([string]$ver) {
 }
 
 # ---------------------------------------------------------------------------
+# Git freshness helpers
+# ---------------------------------------------------------------------------
+# Committer date of the last commit touching $relPath, as local time; $null if
+# git failed, the dir isn't a repo, or the path was never committed.
+function Get-LastCommitTime([string]$repoDir, [string]$relPath) {
+    $out = & git -C $repoDir log -1 --format=%cI -- $relPath 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($out)) { return $null }
+    try { return ([datetimeoffset]::Parse(($out | Select-Object -First 1).Trim())).LocalDateTime }
+    catch { return $null }
+}
+
+# Newest write time among files git reports as dirty/untracked under $relPath.
+# git log only sees COMMITTED work, so this covers "edited but not committed yet".
+# Returns [pscustomobject]@{ Time; File } or $null.
+function Get-DirtyWorkTreeChange([string]$repoDir, [string]$relPath) {
+    $lines = @(& git -C $repoDir status --porcelain --untracked-files=all -- $relPath 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $lines.Count -eq 0) { return $null }
+
+    $newest = $null
+    foreach ($line in $lines) {
+        if ($line.Length -lt 4) { continue }
+        $p = $line.Substring(3)
+        if ($p -match '\s->\s(.+)$') { $p = $Matches[1] }   # rename: use the new name
+        $p = $p.Trim().Trim([char]'"')
+        if ([string]::IsNullOrWhiteSpace($p)) { continue }
+
+        $full = Join-Path $repoDir $p
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
+
+        $item = Get-Item -LiteralPath $full
+        $t = if ($item.CreationTime -gt $item.LastWriteTime) { $item.CreationTime } else { $item.LastWriteTime }
+        if ((-not $newest) -or ($t -gt $newest.Time)) {
+            $newest = [pscustomobject]@{ Time = $t; File = $p }
+        }
+    }
+    return $newest
+}
+
+# ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 $CodeRoot = $env:code_root_dir
@@ -71,6 +117,7 @@ if ([string]::IsNullOrWhiteSpace($CodeRoot)) {
     Fail "environment variable 'code_root_dir' is not set."
 }
 
+$RepoDir    = Join-Path $CodeRoot 'Code2/C#/my_cs/nvcs'
 $ProjectDir = Join-Path $CodeRoot 'Code2/C#/my_cs/nvcs/src/nvcs'
 $CsprojPath = Join-Path $ProjectDir 'nvcs.csproj'
 $BinDir     = Join-Path $ProjectDir 'bin'
@@ -297,6 +344,85 @@ if ($RuntimeTfms.Count -gt 0 -and ($RuntimeTfms -notcontains $Best.Tfm)) {
     Write-Err "  installed : $($RuntimeTfms -join ', ')"
     Write-Err "  Install the .NET $($Best.Tfm -replace '^net','') runtime, or rebuild for one of the installed versions."
     exit 1
+}
+
+# ---------------------------------------------------------------------------
+# 5b. Rebuild when sources changed after the chosen exe was built
+# ---------------------------------------------------------------------------
+if (-not $CheckSources) {
+    Write-Warn "Source freshness check disabled ($SrcRelPath not inspected)."
+}
+elseif (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Warn "'git' was not found on PATH - skipping the source freshness check."
+}
+elseif (-not (Test-Path -LiteralPath $RepoDir)) {
+    Write-Warn "Repo dir not found: $RepoDir - skipping the source freshness check."
+}
+else {
+    Write-Info "Exe built : $($Best.BuildTime.ToString('yyyy-MM-dd HH:mm:ss'))"
+    Write-Info "Checking '$SrcRelPath' in $RepoDir for newer changes..."
+
+    $commitTime  = Get-LastCommitTime $RepoDir $SrcRelPath
+    $dirtyChange = Get-DirtyWorkTreeChange $RepoDir $SrcRelPath
+
+    $NewestSrc  = $null
+    $NewestWhat = $null
+
+    if ($commitTime) {
+        Write-Info ("  last commit touching it : {0:yyyy-MM-dd HH:mm:ss}" -f $commitTime)
+        $NewestSrc  = $commitTime
+        $NewestWhat = "last commit touching $SrcRelPath"
+    } else {
+        Write-Warn "  no git history for $SrcRelPath (not a repo, or nothing committed there)."
+    }
+
+    if ($dirtyChange) {
+        Write-Info ("  newest uncommitted edit : {0:yyyy-MM-dd HH:mm:ss}  ({1})" -f $dirtyChange.Time, $dirtyChange.File)
+        if ((-not $NewestSrc) -or ($dirtyChange.Time -gt $NewestSrc)) {
+            $NewestSrc  = $dirtyChange.Time
+            $NewestWhat = "uncommitted change in $($dirtyChange.File)"
+        }
+    }
+
+    if ($NewestSrc -and $NewestSrc -gt $Best.BuildTime) {
+        $staleBy = [math]::Round(($NewestSrc - $Best.BuildTime).TotalSeconds)
+        Write-Warn "STALE: sources are $staleBy s newer than the exe ($NewestWhat) - recompiling."
+
+        $rebuildArgs = @('build', '-c', $Best.Config)
+        if ($IsMultiTarget) {
+            $rebuildArgs += @('-f', $Best.Tfm)
+            Write-Info "Reusing the chosen exe's options: $($Best.Config) / $($Best.Tfm)."
+        } else {
+            Write-Info "Reusing the chosen exe's configuration: $($Best.Config) (single-target csproj, no -f)."
+        }
+
+        Write-InfoAlt "Running: dotnet $($rebuildArgs -join ' ')   (cwd: $ProjectDir)"
+
+        if ($DryRun) {
+            Write-Warn "DryRun enabled - rebuild skipped."
+        }
+        else {
+            Push-Location -LiteralPath $ProjectDir
+            try {
+                & dotnet @rebuildArgs
+                $rebuildExit = $LASTEXITCODE
+            } finally {
+                Pop-Location
+            }
+
+            if ($rebuildExit -ne 0) { Fail "dotnet build failed with exit code $rebuildExit." }
+            if (-not (Test-Path -LiteralPath $Best.Path)) {
+                Fail "rebuild reported success but $($Best.Path) no longer exists."
+            }
+
+            $rebuiltExe     = Get-Item -LiteralPath $Best.Path
+            $Best.BuildTime = if ($rebuiltExe.CreationTime -gt $rebuiltExe.LastWriteTime) { $rebuiltExe.CreationTime } else { $rebuiltExe.LastWriteTime }
+            Write-Ok ("Rebuild succeeded ($($Best.Label)) - exe now {0:yyyy-MM-dd HH:mm:ss}." -f $Best.BuildTime)
+        }
+    }
+    elseif ($NewestSrc) {
+        Write-Ok "Up to date: nothing under $SrcRelPath is newer than the exe."
+    }
 }
 
 # ---------------------------------------------------------------------------
