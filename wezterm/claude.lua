@@ -35,6 +35,11 @@ M.icon = '🤖 '
 M.icon_width = 2
 
 M.notification_title = 'Claude Code'
+-- Prefixed to the notification text. Both the status line and the toast
+-- fallback take plain text, so a glyph/emoji is the only icon either can show.
+M.notification_icon = M.icon
+-- Between the sessions that just finished and the ones still waiting
+M.notification_separator = '  ·  '
 
 local home = (os.getenv('HOME') or os.getenv('USERPROFILE') or '.'):gsub('\\', '/')
 -- Kept in sync with the hook scripts in ~/.claude/hooks/
@@ -88,6 +93,65 @@ local function window_is_focused(window)
   return true
 end
 
+--- The gui window the user is currently looking at, if any.
+local function focused_gui_window()
+  local ok, windows = pcall(function() return wezterm.gui.gui_windows() end)
+  if not ok or not windows then
+    return nil
+  end
+  for _, window in ipairs(windows) do
+    if window_is_focused(window) then
+      return window
+    end
+  end
+  return nil
+end
+
+--- Turns { pane_id = ..., label = ... } entries into a de-duplicated, stable
+-- list of labels for the notification text.
+local function label_list(entries)
+  table.sort(entries, function(a, b) return a.pane_id < b.pane_id end)
+
+  local labels, seen = {}, {}
+  for _, entry in ipairs(entries) do
+    local label = entry.label or ('pane ' .. entry.pane_id)
+    if not seen[label] then
+      seen[label] = true
+      table.insert(labels, label)
+    end
+  end
+  return labels
+end
+
+--- One notification for every session that finished in the same tick, plus the
+-- ones that finished earlier and still haven't been visited. status.lua only
+-- keeps a single message, so nothing may be left to a second notify() call.
+local function announce(fresh, fallback_window)
+  local fresh_ids = {}
+  for _, entry in ipairs(fresh) do
+    fresh_ids[entry.pane_id] = true
+  end
+
+  local waiting = {}
+  for pane_id, entry in pairs(M.done) do
+    if not fresh_ids[pane_id] then
+      table.insert(waiting, { pane_id = pane_id, label = entry.label })
+    end
+  end
+
+  local message = M.notification_icon .. 'Finished in ' .. table.concat(label_list(fresh), ', ')
+
+  local waiting_labels = label_list(waiting)
+  if #waiting_labels > 0 then
+    message = message .. M.notification_separator .. 'waiting: ' .. table.concat(waiting_labels, ', ')
+  end
+
+  -- Prefer the window the user is actually looking at; the message names every
+  -- project, so it is useful there even when the pane lives somewhere else
+  local target = focused_gui_window() or gui_window_for_pane(fresh[1].pane_id, fallback_window)
+  status.notify(target, M.notification_title, message, true)
+end
+
 --- Drops the marker for a pane, in memory and on disk.
 function M.clear(pane_id)
   local entry = M.done[pane_id]
@@ -113,6 +177,8 @@ function M.poll(window, pane)
   end
 
   local present = {}
+  -- Several sessions can finish within the same tick; collect them all
+  local fresh = {}
 
   for _, path in ipairs(files) do
     local pane_id = tonumber((path:gsub('\\', '/')):match('([0-9]+)%.done$'))
@@ -127,8 +193,7 @@ function M.poll(window, pane)
           M.clear(pane_id)
           present[pane_id] = nil
         else
-          local message = label and ('Finished in ' .. label) or 'Response finished'
-          status.notify(gui_window_for_pane(pane_id, window), M.notification_title, message, true)
+          table.insert(fresh, { pane_id = pane_id, label = label })
         end
       end
     end
@@ -139,6 +204,10 @@ function M.poll(window, pane)
     if not present[pane_id] then
       M.done[pane_id] = nil
     end
+  end
+
+  if #fresh > 0 then
+    announce(fresh, window)
   end
 
   if next(M.done) == nil or not window_is_focused(window) then
