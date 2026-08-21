@@ -96,11 +96,34 @@ if (-not (Test-Path -Path $weztermSessionManagerDir)) {
 # Copy WezTerm files
 $statusFile = ".\wezterm\status.lua"
 $sessionManagerFile = ".\wezterm\session-manager.lua"
+$claudeFile = ".\wezterm\claude.lua"
 
 Copy-Item -Path $statusFile -Destination $weztermBaseDir -Force
 Copy-Item -Path $sessionManagerFile -Destination $weztermSessionManagerDir -Force
+Copy-Item -Path $claudeFile -Destination $weztermBaseDir -Force
 
 Write-Host "`nWezTerm files copied successfully." -ForegroundColor Cyan
+
+# ------------------------------------------------------------
+# Copy Claude files
+$claudeDir = Join-Path $env:USERPROFILE ".claude"
+
+if (Test-Path -Path $claudeDir) {
+    $claudeSettingsFile = ".\.claude\settings.json"
+    $claudeHooksDir = ".\.claude\hooks"
+
+    if (Test-Path -Path $claudeSettingsFile) {
+        Copy-Item -Path $claudeSettingsFile -Destination $claudeDir -Force
+    }
+
+    if (Test-Path -Path $claudeHooksDir) {
+        Copy-Item -Path $claudeHooksDir -Destination $claudeDir -Recurse -Force
+    }
+
+    Write-Host "`nClaude files copied successfully to '$claudeDir'." -ForegroundColor Cyan
+} else {
+    Write-Host "`nClaude directory '$claudeDir' does not exist. Skipping Claude files." -ForegroundColor DarkYellow
+}
 
 # ------------------------------------------------------------
 # Copy vscode files
@@ -288,4 +311,3 @@ foreach ($script in $scriptFiles) {
         Write-Host "`nScript file $sourceScriptPath does not exist. Skipping." -ForegroundColor DarkYellow
     }
 }
-
