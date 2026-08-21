@@ -1,0 +1,33 @@
+{
+  "enabledPlugins": {
+    "gopls-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
+  },
+  "theme": "dark",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:/Users/jonas/.claude/hooks/wezterm-claude-status.ps1\" done",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:/Users/jonas/.claude/hooks/wezterm-claude-status.ps1\" clear",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

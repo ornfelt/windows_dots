@@ -5,6 +5,7 @@ local act             = wezterm.action
 local mux             = wezterm.mux
 local session_manager = require 'wezterm-session-manager/session-manager'
 local status          = require 'status'
+local claude          = require 'claude'
 
 -- Hard-coded switch: set to true to enable the extra debug notifications and
 -- log calls that are normally turned off. The notifications go through the
@@ -1266,8 +1267,11 @@ wezterm.on("format-tab-title", function(tab)
   new_title = new_title:gsub("\\", "/")
   new_title = new_title:gsub("//+", "/") .. " "
 
+  -- Claude Code: robot icon while a finished response hasn't been visited yet
+  local claude_icon = claude.tab_icon(tab)
+
   --local max_title_len = 20 -- If use_fancy_tab_bar
-  local max_title_len = TAB_MAX_WIDTH
+  local max_title_len = TAB_MAX_WIDTH - (claude_icon and claude.icon_width or 0)
   local min_title_len = 12
 
   if #new_title > max_title_len then
@@ -1282,6 +1286,10 @@ wezterm.on("format-tab-title", function(tab)
     local pad_left  = math.floor(pad_total / 2)
     local pad_right = pad_total - pad_left
     new_title = string.rep(" ", pad_left) .. new_title .. string.rep(" ", pad_right)
+  end
+
+  if claude_icon then
+    new_title = claude_icon .. new_title
   end
 
   return {
@@ -1343,6 +1351,9 @@ end)
 --end)
 
 wezterm.on("update-right-status", function(window, pane)
+  -- Claude Code markers; this event is also what expires status messages
+  claude.poll(window, pane)
+
   local cwd_uri = tostring(pane:get_current_working_dir())
   if not cwd_uri then
     status.render(window, {})
