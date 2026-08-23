@@ -93,3 +93,6 @@ end
 vim.keymap.set("n", "<M-q>", save_and_close_tab, { noremap = true, silent = true })
 -- bind m-s-t: restore_tab (n)
 vim.keymap.set("n", "<M-S-T>", restore_tab, { noremap = true, silent = true })
+
+-- bind ctrl-z: detach current UI (n)
+vim.keymap.set("n", "<C-z>", "<Cmd>detach<CR>", { noremap = true, silent = true })
