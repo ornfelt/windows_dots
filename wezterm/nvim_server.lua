@@ -39,23 +39,33 @@
 --   nvim_server.on_quit(action)              -- wraps QuitApplication
 --   nvim_server.panes_added(window)          -- from a hand written callback
 --   nvim_server.sync_now(window)             -- the manual trigger keybind
+--   nvim_server.report(window)               -- read-only dump, changes nothing
 
 local wezterm = require 'wezterm' --[[@as Wezterm]]
 local status = require 'status'
 
 local M = {}
 
+local is_windows = wezterm.target_triple:find('windows') ~= nil
+
 -- Hard-coded switch: nothing in this module does anything unless this is true
 M.enabled = true
+
+-- Forced off on linux, whatever the switch above says: the shell side that
+-- actually attaches to a server is the `vim` function in the PowerShell
+-- profile, so servers would be started here and then never used.
+if not is_windows then
+  M.enabled = false
+end
 
 -- Hard-coded switch: share a pool of long-lived servers instead of mapping one
 -- server to each pane. Pool servers are never killed automatically; they stay
 -- around when a pane, tab or the whole wezterm instance goes away.
-M.use_pool = false
+M.use_pool = true
 
 -- Hard-coded switch: run the reconciling background job. Ignored in pool mode,
 -- where there is nothing to reconcile.
-M.job_enabled = true
+M.job_enabled = false
 
 -- How often the background job runs, in seconds. Fractions are allowed:
 M.job_interval_seconds = 1
@@ -74,7 +84,7 @@ M.orphan_grace_ticks = 3
 M.verify_pids_every_ticks = 5
 
 -- How many warm servers to keep available in the pool (pool mode only)
-M.pool_size = 5
+M.pool_size = 10
 
 -- Also log every background tick, not just the manual trigger
 M.log_background_ticks = false
@@ -94,8 +104,6 @@ M.state_dir = home .. '/.wezterm/nvim-servers'
 M.log_file = home .. '/wez_nvim_log.txt'
 
 M.notification_title = 'nvim servers'
-
-local is_windows = wezterm.target_triple:find('windows') ~= nil
 
 local POOL_PREFIX = 'nvim-wez-pool-'
 local NAME_PREFIX = 'nvim-wez-'
@@ -310,7 +318,10 @@ end
 
 --- Everything the state directory currently claims is running.
 -- @param verify boolean: also confirm each pid against the process table
-local function scan_servers(verify)
+-- @param verify boolean: confirm each pid against the process table
+-- @param readonly boolean: never delete anything, and keep dead servers in the
+--   result with alive=false, so report() can describe them
+local function scan_servers(verify, readonly)
   local result = { pane = {}, pool = {}, stale = {} }
   verify = verify and procinfo_usable()
 
@@ -324,12 +335,16 @@ local function scan_servers(verify)
     local parsed = name and parse_name(name)
     if parsed then
       local pid = read_pid(path)
-      if verify and not nvim_alive(pid) then
+      local alive = (not verify) or nvim_alive(pid)
+      if not alive then
         -- Hard killed or crashed before it could clean up after itself
         table.insert(result.stale, { name = name, pid = pid })
-        os.remove(path)
-      else
-        local server = { name = name, pid = pid }
+        if not readonly then
+          os.remove(path)
+        end
+      end
+      if alive or readonly then
+        local server = { name = name, pid = pid, alive = alive }
         if parsed.kind == 'pool' then
           table.insert(result.pool, server)
         else
@@ -341,6 +356,18 @@ local function scan_servers(verify)
   end
 
   return result
+end
+
+--- Contents of the lease a pooled server is claimed with, or nil when free.
+-- Written by the `vim` shell function as "pid=<shell pid> pane=<wezterm pane>".
+local function read_lease(name)
+  local file = io.open(M.state_dir .. '/' .. name .. '.lease', 'r')
+  if not file then
+    return nil
+  end
+  local line = file:read('*line')
+  file:close()
+  return line and line:gsub('%s+$', '') or ''
 end
 
 --- Tabs and panes of this wezterm instance.
@@ -749,6 +776,219 @@ function M.quitting()
   if #doomed > 0 then
     kill_servers(doomed, true)
   end
+end
+
+--- Read-only counterpart to sync_now(). Describes what is actually there --
+-- tabs, panes, every server and how they map to each other, what is missing or
+-- redundant, the pool, and the leftovers of other wezterm instances -- without
+-- spawning, killing or deleting anything, including stale pid files. Works the
+-- same in both modes and regardless of M.enabled, so it can be used to work out
+-- why nothing is happening. The full dump goes to M.log_file; the status line
+-- only gets a one line summary.
+local function report_impl(window)
+  local self_id = instance_id()
+  local out = {}
+  local function add(line)
+    table.insert(out, line)
+  end
+
+  add(('=== %s  report (read-only)  instance=%s  mode=%s ==='):format(
+    wezterm.strftime('%Y-%m-%d %H:%M:%S'), self_id, M.use_pool and 'pool' or 'pane'))
+  add(('settings: enabled=%s  use_pool=%s  job_enabled=%s  interval=%ss'):format(
+    tostring(M.enabled), tostring(M.use_pool), tostring(M.job_enabled),
+    tostring(M.job_interval_seconds)))
+  add(('          orphan_grace_ticks=%d  verify_pids_every_ticks=%d  pool_size=%d'):format(
+    M.orphan_grace_ticks, M.verify_pids_every_ticks, M.pool_size))
+  add(('paths:    state_dir=%s'):format(M.state_dir))
+  add(('          log_file=%s'):format(M.log_file))
+  add(('          address=%s'):format(address_for('<name>')))
+  add(('procinfo: %s'):format(procinfo_usable() and 'usable'
+    or 'UNAVAILABLE - pids cannot be checked, liveness below is a guess'))
+
+  local snapshot = collect_panes()
+  add('')
+  if not snapshot then
+    add('windows: mux unavailable')
+  else
+    add(('windows / tabs / panes (this instance, %d window(s)):'):format(#snapshot.windows))
+    for _, mux_window in ipairs(snapshot.windows) do
+      add(('  window %d: %d tab(s)'):format(mux_window.id, #mux_window.tabs))
+      for index, tab in ipairs(mux_window.tabs) do
+        add(('    tab %d (id %d): %d pane(s) [%s]'):format(
+          index, tab.id, #tab.pane_ids, table.concat(tab.pane_ids, ', ')))
+      end
+    end
+    add(('  total: %d tab(s), %d pane(s)'):format(snapshot.total_tabs, snapshot.total_panes))
+  end
+
+  local servers = scan_servers(true, true)
+  local mine = servers.pane[self_id] or {}
+
+  -- Pane to server mapping for this instance
+  add('')
+  if M.use_pool then
+    add(('pane servers for this instance (%s): not used in pool mode'):format(self_id))
+  else
+    add(('pane servers for this instance (%s):'):format(self_id))
+  end
+
+  local pane_ids = {}
+  if snapshot then
+    for pane_id in pairs(snapshot.pane_ids) do
+      table.insert(pane_ids, pane_id)
+    end
+  end
+  table.sort(pane_ids)
+
+  local missing, redundant = 0, 0
+  for _, pane_id in ipairs(pane_ids) do
+    local server = mine[pane_id]
+    if server then
+      add(('  pane %-4d -> %-28s pid=%-7s %s'):format(
+        pane_id, server.name, tostring(server.pid),
+        server.alive and 'alive' or 'PID NOT RUNNING'))
+    elseif not M.use_pool then
+      missing = missing + 1
+      add(('  pane %-4d -> %-28s MISSING'):format(pane_id, '(no server)'))
+    end
+  end
+
+  local orphan_ids = {}
+  for pane_id in pairs(mine) do
+    if not (snapshot and snapshot.pane_ids[pane_id]) then
+      table.insert(orphan_ids, pane_id)
+    end
+  end
+  table.sort(orphan_ids)
+  for _, pane_id in ipairs(orphan_ids) do
+    local server = mine[pane_id]
+    redundant = redundant + 1
+    add(('  (no pane %-3d) %-28s pid=%-7s %-16s REDUNDANT'):format(
+      pane_id, server.name, tostring(server.pid),
+      server.alive and 'alive' or 'PID NOT RUNNING'))
+  end
+
+  local strikes = get_strikes()
+  local strike_lines = {}
+  for key, value in pairs(strikes) do
+    table.insert(strike_lines, ('    %s: %s/%d'):format(key, tostring(value), M.orphan_grace_ticks))
+  end
+  table.sort(strike_lines)
+  if #strike_lines > 0 then
+    add('  orphan strikes so far (killed once they reach the limit):')
+    for _, line in ipairs(strike_lines) do
+      add(line)
+    end
+  end
+  local server_count = 0
+  for _ in pairs(mine) do
+    server_count = server_count + 1
+  end
+  add(('  summary: %d pane(s), %d server(s), %d missing, %d redundant'):format(
+    #pane_ids, server_count, missing, redundant))
+
+  -- Pool
+  add('')
+  add(('pool servers (target %d, shared between all instances): %d'):format(
+    M.pool_size, #servers.pool))
+  local free_pool = 0
+  table.sort(servers.pool, function(a, b) return a.name < b.name end)
+  for _, server in ipairs(servers.pool) do
+    local lease = read_lease(server.name)
+    if not lease then
+      free_pool = free_pool + 1
+    end
+    add(('  %-32s pid=%-7s %-16s %s'):format(
+      server.name, tostring(server.pid),
+      server.alive and 'alive' or 'PID NOT RUNNING',
+      lease and ('in use by ' .. lease) or 'free'))
+  end
+  if #servers.pool > 0 then
+    add(('  summary: %d free, %d in use'):format(free_pool, #servers.pool - free_pool))
+  end
+  if M.use_pool and #servers.pool < M.pool_size then
+    add(('  note: %d below target; `vim` tops the pool up as it claims servers')
+      :format(M.pool_size - #servers.pool))
+  end
+
+  -- Anything belonging to another wezterm
+  add('')
+  local other_ids = {}
+  for instance in pairs(servers.pane) do
+    if instance ~= self_id then
+      table.insert(other_ids, instance)
+    end
+  end
+  table.sort(other_ids)
+  if #other_ids == 0 then
+    add('other wezterm instances: none')
+  else
+    add('other wezterm instances:')
+    for _, instance in ipairs(other_ids) do
+      local pid = tonumber(instance)
+      local live = pid and wezterm_alive(pid)
+      local count = 0
+      for _ in pairs(servers.pane[instance]) do
+        count = count + 1
+      end
+      add(('  instance %-8s %-6s %d server(s)  %s'):format(
+        instance, live and 'alive' or 'DEAD', count,
+        live and 'left alone' or 'leaked, reaped by sync after the grace period'))
+      for pane_id, server in pairs(servers.pane[instance]) do
+        add(('    pane %-4d %-28s pid=%-7s %s'):format(
+          pane_id, server.name, tostring(server.pid),
+          server.alive and 'alive' or 'PID NOT RUNNING'))
+      end
+    end
+  end
+
+  -- Pid files whose process is gone; left in place, this is a read-only report
+  add('')
+  if #servers.stale == 0 then
+    add('stale pid files: none')
+  else
+    add(('stale pid files (process gone, file left behind): %d'):format(#servers.stale))
+    for _, server in ipairs(servers.stale) do
+      add(('  %-32s pid=%s'):format(server.name .. '.pid', tostring(server.pid)))
+    end
+    add('  not removed: this report never changes anything')
+  end
+
+  local summary
+  if not M.enabled then
+    summary = 'switched off; ' .. #pane_ids .. ' pane(s)'
+  elseif M.use_pool then
+    summary = ('pool: %d server(s), %d free, %d pane(s)'):format(
+      #servers.pool, free_pool, #pane_ids)
+  elseif missing == 0 and redundant == 0 then
+    summary = ('in sync: %d pane(s), %d server(s)'):format(#pane_ids, server_count)
+  else
+    summary = ('%d pane(s), %d server(s): %d missing, %d redundant'):format(
+      #pane_ids, server_count, missing, redundant)
+  end
+
+  add('')
+  add('verdict: ' .. summary)
+  add('')
+  log_lines(out)
+
+  status.notify(window, M.notification_title, summary,
+    M.use_pool and true or (missing == 0 and redundant == 0))
+end
+
+--- Public entry point; a failure in the report itself must be visible too.
+function M.report(window)
+  local ok, err = xpcall(function() report_impl(window) end, traceback)
+  if ok then
+    return
+  end
+  log_lines({
+    ('=== %s  report failed  instance=%s ==='):format(
+      wezterm.strftime('%Y-%m-%d %H:%M:%S'), instance_id()),
+    'ERROR: ' .. tostring(err),
+    '',
+  })
+  status.notify(window, M.notification_title, 'report failed, see ' .. M.log_file, false)
 end
 
 --- The manual trigger. Deliberately independent of M.job_enabled, so it still

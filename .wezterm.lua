@@ -812,6 +812,15 @@ config.keys = {
       nvim_server.sync_now(window)
     end),
   },
+  -- Dump the state of tabs/panes/servers to wez_nvim_log.txt, changing nothing
+  -- bind leader-r: nvim_server.report
+  {
+    key = 'r',
+    mods = 'LEADER',
+    action = wezterm.action_callback(function(window, _pane)
+      nvim_server.report(window)
+    end),
+  },
 
   -- Seamless wezterm/tmux/vim pane integration
   -- bind alt-h: split_nav Left
