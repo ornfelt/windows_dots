@@ -97,10 +97,12 @@ if (-not (Test-Path -Path $weztermSessionManagerDir)) {
 $statusFile = ".\wezterm\status.lua"
 $sessionManagerFile = ".\wezterm\session-manager.lua"
 $claudeFile = ".\wezterm\claude.lua"
+$nvimServerFile = ".\wezterm\nvim_server.lua"
 
 Copy-Item -Path $statusFile -Destination $weztermBaseDir -Force
 Copy-Item -Path $sessionManagerFile -Destination $weztermSessionManagerDir -Force
 Copy-Item -Path $claudeFile -Destination $weztermBaseDir -Force
+Copy-Item -Path $nvimServerFile -Destination $weztermBaseDir -Force
 
 Write-Host "`nWezTerm files copied successfully." -ForegroundColor Cyan
 
