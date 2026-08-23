@@ -243,6 +243,207 @@ function run_vimu {
 }
 Set-Alias -Name vimu -Value run_vimu
 
+# ---------------------------------------------------------------------------
+# Headless nvim servers (wezterm)
+#
+# ~/.wezterm/nvim_server.lua keeps `nvim --headless --listen ...` servers warm
+# and tells every pane about them through WEZ_NVIM_*, so nothing has to be
+# configured twice here. Attaching a UI to a warm server costs ~60ms instead of
+# the ~2.4s a cold nvim costs with this config.
+#
+#   vim                 attach to this pane's server (or lease a pooled one)
+#   vim file1 file2     the same, opening those files first
+#   nvim                always a plain nvim, never a server
+#
+# Falls back to a plain nvim whenever no server can be reached.
+# ---------------------------------------------------------------------------
+
+# Hard-coded switch: let `vim` attach to a headless server. With this off,
+# `vim` opens a plain nvim exactly like `nvim` does.
+$VimUseNvimServer = $true
+
+# Ask the server to :cd here before attaching. Off, so a reused pool server is
+# left exactly as its previous user left it; file arguments are passed as
+# absolute paths either way.
+$NvimServerSyncCwd = $false
+# How long to wait for a server that is still starting up
+$NvimServerWaitMs = 8000
+
+function Get-NvimServerAddress([string]$Name) {
+    if ($env:OS -eq 'Windows_NT') { return "\\.\pipe\$Name" }
+    return (Join-Path $env:WEZ_NVIM_DIR "$Name.sock")
+}
+
+function Get-NvimServerNames([string]$Prefix) {
+    if ($env:OS -eq 'Windows_NT') {
+        return @([System.IO.Directory]::GetFiles('\\.\pipe\') |
+            ForEach-Object { $_.Substring($_.LastIndexOf('\') + 1) } |
+            Where-Object { $_.StartsWith($Prefix) })
+    }
+    return @(Get-ChildItem -LiteralPath $env:WEZ_NVIM_DIR -Filter "$Prefix*.sock" -ErrorAction SilentlyContinue |
+        ForEach-Object { $_.BaseName })
+}
+
+function Test-NvimServerReady([string]$Name) {
+    if ($env:OS -eq 'Windows_NT') {
+        return ([System.IO.Directory]::GetFiles('\\.\pipe\') -contains "\\.\pipe\$Name")
+    }
+    return (Test-Path -LiteralPath (Get-NvimServerAddress $Name))
+}
+
+function Wait-NvimServer([string]$Name, [int]$TimeoutMs) {
+    $deadline = (Get-Date).AddMilliseconds($TimeoutMs)
+    while ((Get-Date) -lt $deadline) {
+        if (Test-NvimServerReady $Name) { return $true }
+        Start-Sleep -Milliseconds 50
+    }
+    return $false
+}
+
+function New-NvimServerName {
+    return 'nvim-wez-pool-' + [guid]::NewGuid().ToString('N').Substring(0, 12)
+}
+
+function Start-NvimServerProcess([string]$Name) {
+    $dir = $env:WEZ_NVIM_DIR
+    $addr = Get-NvimServerAddress $Name
+    $pidFile = "$dir/$Name.pid"
+    # Same bootstrap as in ~/.wezterm/nvim_server.lua: the server records its
+    # own pid so wezterm can find and kill it later, and removes it on exit
+    $boot = "lua local d=[[$dir]] local p=[[$pidFile]] vim.fn.mkdir(d,[[p]]) " +
+            "vim.fn.writefile({tostring(vim.fn.getpid())},p) " +
+            "vim.api.nvim_create_autocmd('VimLeavePre',{callback=function() vim.fn.delete(p) end})"
+    $argLine = '--headless --listen "{0}" --cmd "{1}"' -f $addr, $boot
+    Start-Process -FilePath 'nvim' -ArgumentList $argLine -WindowStyle Hidden
+}
+
+function Get-NvimServerUiCount([string]$Name) {
+    # --headless matters here: without it the client starts a whole TUI
+    $out = & nvim --headless --server (Get-NvimServerAddress $Name) --remote-expr 'len(nvim_list_uis())' 2>$null
+    if ($LASTEXITCODE -ne 0) { return -1 }
+    $count = 0
+    if ([int]::TryParse((($out | Out-String).Trim()), [ref]$count)) { return $count }
+    return -1
+}
+
+function New-NvimServerLease([string]$Path) {
+    # CreateNew is atomic, so two panes cannot claim the same server
+    try {
+        $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::CreateNew,
+            [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes("pid=$PID pane=$env:WEZTERM_PANE")
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Dispose()
+        return $true
+    }
+    catch { return $false }
+}
+
+function Request-NvimServerFromPool {
+    $dir = $env:WEZ_NVIM_DIR
+    if (-not (Test-Path -LiteralPath $dir)) {
+        New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    }
+
+    $names = @(Get-NvimServerNames 'nvim-wez-pool-')
+    $claim = $null
+
+    # A server with no lease file is free without having to ask it
+    foreach ($name in $names) {
+        $lease = Join-Path $dir "$name.lease"
+        if (Test-Path -LiteralPath $lease) { continue }
+        if (New-NvimServerLease $lease) { $claim = @{ Name = $name; Lease = $lease }; break }
+    }
+
+    # Otherwise look for a lease left behind by a pane that was killed: the
+    # server is still running but nothing is attached to it any more
+    if (-not $claim) {
+        foreach ($name in $names) {
+            if ((Get-NvimServerUiCount $name) -ne 0) { continue }
+            $lease = Join-Path $dir "$name.lease"
+            Remove-Item -LiteralPath $lease -Force -ErrorAction SilentlyContinue
+            if (New-NvimServerLease $lease) { $claim = @{ Name = $name; Lease = $lease }; break }
+        }
+    }
+
+    # Pool exhausted, so grow it
+    if (-not $claim) {
+        $name = New-NvimServerName
+        Start-NvimServerProcess $name
+        if (Wait-NvimServer $name $NvimServerWaitMs) {
+            $lease = Join-Path $dir "$name.lease"
+            if (New-NvimServerLease $lease) { $claim = @{ Name = $name; Lease = $lease } }
+        }
+    }
+
+    # Replace the one just taken so the next pane still finds a warm server.
+    # One at a time, so a cold pool does not start the whole pool at once.
+    $poolSize = 5
+    if ($env:WEZ_NVIM_POOL_SIZE) { $poolSize = [int]$env:WEZ_NVIM_POOL_SIZE }
+    $free = @(Get-NvimServerNames 'nvim-wez-pool-' |
+        Where-Object { -not (Test-Path -LiteralPath (Join-Path $dir "$_.lease")) })
+    if ($free.Count -lt $poolSize) { Start-NvimServerProcess (New-NvimServerName) }
+
+    return $claim
+}
+
+function Invoke-NvimServer {
+    $files = @($args)
+    $mode = $env:WEZ_NVIM_MODE
+
+    if (-not $mode -or $mode -eq 'off' -or -not $env:WEZ_NVIM_DIR) {
+        & nvim @files
+        return
+    }
+
+    $name = $null
+    $lease = $null
+
+    if ($mode -eq 'pool') {
+        $claim = Request-NvimServerFromPool
+        if ($claim) { $name = $claim.Name; $lease = $claim.Lease }
+    }
+    elseif ($env:WEZTERM_PANE) {
+        $name = "nvim-wez-$($env:WEZ_NVIM_INSTANCE)-$($env:WEZTERM_PANE)"
+        if (-not (Test-NvimServerReady $name)) {
+            # The reconciler may not have caught up with a brand new pane yet
+            Start-NvimServerProcess $name
+        }
+        if (-not (Wait-NvimServer $name $NvimServerWaitMs)) { $name = $null }
+    }
+
+    if (-not $name) {
+        Write-Host 'vim: no nvim server available, starting a normal nvim' -ForegroundColor Yellow
+        & nvim @files
+        return
+    }
+
+    $addr = Get-NvimServerAddress $name
+    try {
+        if ($NvimServerSyncCwd) {
+            $cwd = ((Get-Location).ProviderPath -replace '\\', '/').Replace("'", "''")
+            & nvim --headless --server $addr --remote-expr "chdir('$cwd')" 2>$null | Out-Null
+        }
+        if ($files.Count -gt 0) {
+            # Made absolute here so they do not depend on the server's own cwd
+            $paths = @($files | ForEach-Object {
+                $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($_)
+            })
+            & nvim --headless --server $addr --remote @paths 2>$null | Out-Null
+        }
+        & nvim --server $addr --remote-ui
+    }
+    finally {
+        if ($lease) { Remove-Item -LiteralPath $lease -Force -ErrorAction SilentlyContinue }
+    }
+}
+
+# Overrides the plain `vim` alias set further up; `nvim` and `vi` are left
+# alone, so there is always a way to start an editor without a server
+if ($VimUseNvimServer) {
+    Set-Alias -Name vim -Value Invoke-NvimServer
+}
+
 function Go-Up {
     Set-Location ..
 }
