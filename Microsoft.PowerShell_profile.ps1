@@ -442,6 +442,7 @@ function Invoke-NvimServer {
 # alone, so there is always a way to start an editor without a server
 if ($VimUseNvimServer) {
     Set-Alias -Name vim -Value Invoke-NvimServer
+    Set-Alias -Name vi -Value Invoke-NvimServer
 }
 
 function Go-Up {

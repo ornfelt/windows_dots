@@ -20,7 +20,7 @@
 --   claude.poll(window, pane)   -- from the "update-right-status" event
 --   claude.tab_icon(tab)        -- from the "format-tab-title" event
 
-local wezterm = require 'wezterm'
+local wezterm = require 'wezterm' --[[@as Wezterm]]
 local status = require 'status'
 
 local M = {}

@@ -1,6 +1,6 @@
 -- Pull in the wezterm API
 local os              = require 'os'
-local wezterm         = require 'wezterm'
+local wezterm         = require 'wezterm' --[[@as Wezterm]]
 local act             = wezterm.action
 local mux             = wezterm.mux
 local session_manager = require 'wezterm-session-manager/session-manager'

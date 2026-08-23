@@ -1,4 +1,4 @@
-local wezterm = require("wezterm")
+local wezterm = require 'wezterm' --[[@as Wezterm]]
 local status = require("status")
 local session_manager = {}
 local os = wezterm.target_triple

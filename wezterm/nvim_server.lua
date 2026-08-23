@@ -40,7 +40,7 @@
 --   nvim_server.panes_added(window)          -- from a hand written callback
 --   nvim_server.sync_now(window)             -- the manual trigger keybind
 
-local wezterm = require 'wezterm'
+local wezterm = require 'wezterm' --[[@as Wezterm]]
 local status = require 'status'
 
 local M = {}
@@ -55,7 +55,7 @@ M.use_pool = false
 
 -- Hard-coded switch: run the reconciling background job. Ignored in pool mode,
 -- where there is nothing to reconcile.
-M.job_enabled = false
+M.job_enabled = true
 
 -- How often the background job runs, in seconds. Fractions are allowed:
 M.job_interval_seconds = 1
@@ -168,6 +168,15 @@ end
 -- ---------------------------------------------------------------------------
 -- Logging
 -- ---------------------------------------------------------------------------
+
+--- Error handler for xpcall; keeps the stack so a failure in here is
+-- diagnosable from the log rather than vanishing into wezterm's dispatcher.
+local function traceback(err)
+  if debug and debug.traceback then
+    return debug.traceback(tostring(err), 2)
+  end
+  return tostring(err)
+end
 
 local function log_lines(lines)
   local file = io.open(M.log_file, 'a')
@@ -371,14 +380,23 @@ local function collect_panes()
   return snapshot
 end
 
---- Strikes are kept in GLOBAL so they survive a config reload. GLOBAL only
--- takes plain data, and it is written back whole rather than mutated in place.
+--- Orphan strike counts, keyed by pane id or by "instance:<pid>".
+--
+-- Deliberately NOT kept in wezterm.GLOBAL. A table stored there reads back as
+-- a proxy whose fields are mlua Values rather than native numbers, so
+-- `strikes[key] + 1` dies with "attempt to perform arithmetic on a Value
+-- value". Top-level scalars in GLOBAL are converted back properly, which is
+-- why the instance tag and the counters below are still kept there. The only
+-- thing lost by holding these module-locally is that a config reload resets
+-- them, which merely delays a kill by a few ticks.
+local strike_counts = {}
+
 local function get_strikes()
-  return wezterm.GLOBAL.nvim_server_strikes or {}
+  return strike_counts
 end
 
 local function set_strikes(strikes)
-  wezterm.GLOBAL.nvim_server_strikes = strikes
+  strike_counts = strikes
 end
 
 -- ---------------------------------------------------------------------------
@@ -546,6 +564,7 @@ end
 -- ---------------------------------------------------------------------------
 
 local job_started = false
+local job_error_logged = false
 
 local function run_tick()
   tick_count = tick_count + 1
@@ -582,7 +601,17 @@ local function start_job()
     if wezterm.GLOBAL.nvim_server_job_gen ~= generation then
       return
     end
-    pcall(run_tick)
+    local ok, err = xpcall(run_tick, traceback)
+    if not ok and not job_error_logged then
+      -- Once only: a failure that repeats every tick would flood the log
+      job_error_logged = true
+      log_lines({
+        ('=== %s  background tick failed  instance=%s ==='):format(
+          wezterm.strftime('%Y-%m-%d %H:%M:%S'), instance_id()),
+        'ERROR: ' .. tostring(err),
+        '',
+      })
+    end
     wezterm.time.call_after(M.job_interval_seconds, tick)
   end
 
@@ -724,18 +753,46 @@ end
 
 --- The manual trigger. Deliberately independent of M.job_enabled, so it still
 -- reconciles when the background job is switched off; writes a full breakdown
--- to M.log_file and reports through the status line. Does nothing at all in
--- pool mode, where panes and servers are not mapped to each other.
+-- to M.log_file and reports through the status line.
+--
+-- It always writes the header line first, even when there is nothing to do,
+-- and reports errors with a traceback instead of letting wezterm's event
+-- dispatch swallow them. Without that a press that hit an early return, a
+-- stale in-memory copy of this file, or a crash all look identical: nothing
+-- happens at all. The status line only holds one message at a time and falls
+-- back to a short toast when the tab bar is hidden, so the log is the reliable
+-- channel here, not the notification.
 function M.sync_now(window)
-  if not M.enabled or M.use_pool then
+  local header = ('=== %s  manual sync  instance=%s  mode=%s  enabled=%s job_enabled=%s ==='):format(
+    wezterm.strftime('%Y-%m-%d %H:%M:%S'), instance_id(),
+    M.use_pool and 'pool' or 'pane', tostring(M.enabled), tostring(M.job_enabled))
+
+  if not M.enabled then
+    log_lines({ header, 'result: switched off, nothing to do', '' })
+    status.notify(window, M.notification_title, 'nvim servers are disabled', false)
     return
   end
 
-  local header = ('=== %s  manual sync  instance=%s  mode=pane ===')
-    :format(wezterm.strftime('%Y-%m-%d %H:%M:%S'), instance_id())
+  -- Panes and servers are not mapped to each other in pool mode, so there is
+  -- nothing to reconcile; still say so rather than returning silently
+  if M.use_pool then
+    log_lines({ header, 'result: pool mode, nothing to reconcile', '' })
+    status.notify(window, M.notification_title, 'pool mode: nothing to reconcile', true)
+    return
+  end
 
   local log = { header }
-  local result = reconcile({ verify = true, log = log })
+  local ok, result = xpcall(function()
+    return reconcile({ verify = true, log = log })
+  end, traceback)
+
+  if not ok then
+    table.insert(log, 'ERROR: ' .. tostring(result))
+    table.insert(log, '')
+    log_lines(log)
+    status.notify(window, M.notification_title, 'sync failed, see ' .. M.log_file, false)
+    return
+  end
 
   local summary
   if result.skipped then
