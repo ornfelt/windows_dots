@@ -98,3 +98,24 @@ if vim.fn.has("win32") == 1 then
   -- bind ctrl-z: detach current UI (n)
   vim.keymap.set("n", "<C-z>", "<Cmd>detach<CR>", { noremap = true, silent = true })
 end
+
+local function is_remote_ui()
+  for _, ui in ipairs(vim.api.nvim_list_uis()) do
+    local info = vim.api.nvim_get_chan_info(ui.chan)
+
+    if info.stream == "socket" then
+      return true
+    end
+  end
+
+  return false
+end
+
+local function is_headless_server()
+  return vim.tbl_contains(vim.v.argv, "--headless")
+end
+
+vim.api.nvim_create_user_command("NvimServerInfo", function()
+  print("Remote UI:       " .. tostring(is_remote_ui()))
+  print("Headless server: " .. tostring(is_headless_server()))
+end, {})
