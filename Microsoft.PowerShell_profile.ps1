@@ -266,7 +266,8 @@ $VimUseNvimServer = $true
 # Ask the server to :cd here before attaching. Off, so a reused pool server is
 # left exactly as its previous user left it; file arguments are passed as
 # absolute paths either way.
-$NvimServerSyncCwd = $false
+#$NvimServerSyncCwd = $false
+$NvimServerSyncCwd = $true
 # How long to wait for a server that is still starting up
 $NvimServerWaitMs = 8000
 
