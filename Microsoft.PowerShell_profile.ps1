@@ -473,6 +473,14 @@ if (-not (Get-Command pwsh.exe -ErrorAction SilentlyContinue)) {
     Set-Alias -Name pwsh -Value powershell.exe
 }
 
+function .cc {
+    if (Test-Path Env:ANTHROPIC_API_KEY) {
+        Remove-Item Env:ANTHROPIC_API_KEY
+    }
+
+    claude --permission-mode auto @args
+}
+
 # For wezterm cwd
 # https://wezfurlong.org/wezterm/shell-integration.html#osc-7-on-windows-with-powershell
 function prompt {
