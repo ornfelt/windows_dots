@@ -92,7 +92,7 @@ M.pool_size = 5
 -- leave this many or fewer free, instead of topping straight back up to
 -- pool_size. That keeps a spare ready without spawning an nvim on every single
 -- edit; if the pool does run dry, `vim` starts one and waits for it.
-M.pool_min_free = 1
+M.pool_min_free = 2
 
 -- Also log every background tick, not just the manual trigger
 M.log_background_ticks = false
