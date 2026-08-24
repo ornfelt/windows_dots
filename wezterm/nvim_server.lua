@@ -83,8 +83,16 @@ M.orphan_grace_ticks = 3
 -- The manual trigger always verifies.
 M.verify_pids_every_ticks = 5
 
--- How many warm servers to keep available in the pool (pool mode only)
-M.pool_size = 10
+-- How many warm servers to put in the pool at wezterm startup (pool mode only).
+-- This is a one-off prefill, and it is what the pool costs while idle: every
+-- one of them is a fully loaded nvim sitting around (~40MB here).
+M.pool_size = 5
+
+-- Low water mark. `vim` only starts a replacement once claiming a server would
+-- leave this many or fewer free, instead of topping straight back up to
+-- pool_size. That keeps a spare ready without spawning an nvim on every single
+-- edit; if the pool does run dry, `vim` starts one and waits for it.
+M.pool_min_free = 1
 
 -- Also log every background tick, not just the manual trigger
 M.log_background_ticks = false
@@ -668,6 +676,7 @@ function M.env()
     WEZ_NVIM_INSTANCE = instance_id(),
     WEZ_NVIM_DIR = M.state_dir,
     WEZ_NVIM_POOL_SIZE = tostring(M.pool_size),
+    WEZ_NVIM_POOL_MIN_FREE = tostring(M.pool_min_free),
   }
 end
 
@@ -797,8 +806,8 @@ local function report_impl(window)
   add(('settings: enabled=%s  use_pool=%s  job_enabled=%s  interval=%ss'):format(
     tostring(M.enabled), tostring(M.use_pool), tostring(M.job_enabled),
     tostring(M.job_interval_seconds)))
-  add(('          orphan_grace_ticks=%d  verify_pids_every_ticks=%d  pool_size=%d'):format(
-    M.orphan_grace_ticks, M.verify_pids_every_ticks, M.pool_size))
+  add(('          orphan_grace_ticks=%d  verify_pids_every_ticks=%d  pool_size=%d  pool_min_free=%d'):format(
+    M.orphan_grace_ticks, M.verify_pids_every_ticks, M.pool_size, M.pool_min_free))
   add(('paths:    state_dir=%s'):format(M.state_dir))
   add(('          log_file=%s'):format(M.log_file))
   add(('          address=%s'):format(address_for('<name>')))
@@ -889,26 +898,29 @@ local function report_impl(window)
 
   -- Pool
   add('')
-  add(('pool servers (target %d, shared between all instances): %d'):format(
-    M.pool_size, #servers.pool))
-  local free_pool = 0
+  -- Counted before the header: pool_size is the number of FREE servers to keep
+  -- ready, not a total, so the total grows by one per pane holding a server
+  local pool_lines, free_pool = {}, 0
   table.sort(servers.pool, function(a, b) return a.name < b.name end)
   for _, server in ipairs(servers.pool) do
     local lease = read_lease(server.name)
     if not lease then
       free_pool = free_pool + 1
     end
-    add(('  %-32s pid=%-7s %-16s %s'):format(
+    table.insert(pool_lines, ('  %-32s pid=%-7s %-16s %s'):format(
       server.name, tostring(server.pid),
       server.alive and 'alive' or 'PID NOT RUNNING',
       lease and ('in use by ' .. lease) or 'free'))
   end
-  if #servers.pool > 0 then
-    add(('  summary: %d free, %d in use'):format(free_pool, #servers.pool - free_pool))
+  add(('pool servers: %d total = %d free + %d in use  [shared between instances]'):format(
+    #servers.pool, free_pool, #servers.pool - free_pool))
+  add(('              prefill %d at startup, `vim` starts one more only when free <= %d'):format(
+    M.pool_size, M.pool_min_free))
+  for _, line in ipairs(pool_lines) do
+    add(line)
   end
-  if M.use_pool and #servers.pool < M.pool_size then
-    add(('  note: %d below target; `vim` tops the pool up as it claims servers')
-      :format(M.pool_size - #servers.pool))
+  if M.use_pool and free_pool <= M.pool_min_free then
+    add('  note: at the low water mark; the next claim will start a replacement')
   end
 
   -- Anything belonging to another wezterm
@@ -958,8 +970,8 @@ local function report_impl(window)
   if not M.enabled then
     summary = 'switched off; ' .. #pane_ids .. ' pane(s)'
   elseif M.use_pool then
-    summary = ('pool: %d server(s), %d free, %d pane(s)'):format(
-      #servers.pool, free_pool, #pane_ids)
+    summary = ('pool: %d free (min %d), %d total, %d pane(s)'):format(
+      free_pool, M.pool_min_free, #servers.pool, #pane_ids)
   elseif missing == 0 and redundant == 0 then
     summary = ('in sync: %d pane(s), %d server(s)'):format(#pane_ids, server_count)
   else

@@ -376,13 +376,15 @@ function Request-NvimServerFromPool {
         }
     }
 
-    # Replace the one just taken so the next pane still finds a warm server.
-    # One at a time, so a cold pool does not start the whole pool at once.
-    $poolSize = 5
-    if ($env:WEZ_NVIM_POOL_SIZE) { $poolSize = [int]$env:WEZ_NVIM_POOL_SIZE }
+    # Keep a spare ready, but only start one once the pool is nearly empty.
+    # Topping straight back up to the prefill size would mean starting an nvim
+    # on every single edit and holding that many idle servers forever.
+    # One at a time, so a burst of edits does not start a swarm of them.
+    $minFree = 1
+    if ($env:WEZ_NVIM_POOL_MIN_FREE) { $minFree = [int]$env:WEZ_NVIM_POOL_MIN_FREE }
     $free = @(Get-NvimServerNames 'nvim-wez-pool-' |
         Where-Object { -not (Test-Path -LiteralPath (Join-Path $dir "$_.lease")) })
-    if ($free.Count -lt $poolSize) { Start-NvimServerProcess (New-NvimServerName) }
+    if ($free.Count -le $minFree) { Start-NvimServerProcess (New-NvimServerName) }
 
     return $claim
 }
