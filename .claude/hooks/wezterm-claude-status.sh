@@ -30,5 +30,23 @@ cwd="$(printf '%s' "$payload" | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"
 [ -n "$cwd" ] || cwd="$PWD"
 
 mkdir -p "$state_dir"
-printf '%s' "$(basename "$cwd")" > "$marker"
+label="$(basename "$cwd")"
+printf '%s' "$label" > "$marker"
+
+# Append-only trail of finished responses: "<unix ms>\t<pane>\t<label>".
+# The marker above is short lived -- claude.lua removes it again as soon as the
+# tab it belongs to is the active one -- so anything that wants to *wait* for a
+# response to finish (send_hotkey.py) reads this instead. claude.lua only globs
+# *.done, so the log is invisible to it. A single short line with >> is written
+# atomically, so parallel sessions can't interleave.
+trail="${state_dir}/history.log"
+now_ms="$(date +%s%3N 2>/dev/null)"
+case "$now_ms" in *N*|"") now_ms="$(( $(date +%s) * 1000 ))";; esac
+printf '%s\t%s\t%s\n' "$now_ms" "$WEZTERM_PANE" "$label" >> "$trail"
+
+# Keep it from growing forever
+if [ "$(wc -c < "$trail" 2>/dev/null || echo 0)" -gt 65536 ]; then
+  tail -n 200 "$trail" > "${trail}.tmp" && mv -f "${trail}.tmp" "$trail"
+fi
+
 exit 0
