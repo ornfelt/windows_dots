@@ -156,6 +156,11 @@ local FILES_JSON_NAME = "files.json"
 local FILES_JSON_FILES_KEY = "files"
 local FILES_JSON_PATH_KEY = "path"
 
+-- Show every entry the way it is written in files.json ({my_notes_path}/some_file.txt)
+-- instead of the resolved absolute path. This only changes what the picker displays,
+-- opening always uses the resolved path. Set to false to list plain absolute paths.
+local SHOW_PLACEHOLDER_PATHS = true
+
 -- Every placeholder understood in files.json. Each one resolves from the environment
 -- variable of the same name when it is set, and from a per platform default otherwise.
 local PLACEHOLDER_NAMES = {
@@ -292,15 +297,16 @@ local function read_list_entries(notes_dir)
   return paths
 end
 
--- Resolved, de-duplicated absolute paths. Entries whose file is not on this machine are
--- left out unless include_missing is set.
+-- Resolved, de-duplicated entries. Every item is { display = what the picker shows,
+-- path = the absolute path to open }. Entries whose file is not on this machine are left
+-- out unless include_missing is set.
 local function load_file_list(include_missing)
   local notes_dir = strip_trailing_slash(normalize_list_path(my_notes_path))
   local raw_paths = read_list_entries(notes_dir)
   if not raw_paths then return {}, 0, 0 end
 
   local values = get_placeholder_values()
-  local files, seen, missing, unresolved = {}, {}, 0, 0
+  local items, seen, missing, unresolved = {}, {}, 0, 0
 
   for _, raw in ipairs(raw_paths) do
     local path = normalize_list_path(raw)
@@ -311,7 +317,10 @@ local function load_file_list(include_missing)
       elseif not seen[resolved:lower()] then
         seen[resolved:lower()] = true
         if include_missing or vim.loop.fs_stat(resolved) then
-          table.insert(files, resolved)
+          table.insert(items, {
+            display = SHOW_PLACEHOLDER_PATHS and path or resolved,
+            path = resolved,
+          })
         else
           missing = missing + 1
         end
@@ -319,15 +328,15 @@ local function load_file_list(include_missing)
     end
   end
 
-  return files, missing, unresolved
+  return items, missing, unresolved
 end
 
 function open_files_from_list(include_missing)
   local use_fzf = myconfig.get_file_picker() == myconfig.FilePicker.FZF
   local use_fzf_lua = myconfig.get_file_picker() == myconfig.FilePicker.FZF_LUA
-  local files, missing, unresolved = load_file_list(include_missing)
+  local items, missing, unresolved = load_file_list(include_missing)
 
-  if #files == 0 then
+  if #items == 0 then
     vim.notify("No files to open from " .. FILES_JSON_NAME, vim.log.levels.WARN)
     return
   end
@@ -336,10 +345,19 @@ function open_files_from_list(include_missing)
       vim.log.levels.WARN)
   end
 
-  local suffix = missing > 0 and (", " .. missing .. " not here") or ""
-  local prompt_title = string.format("Select a file to open (%d%s)", #files, suffix)
+  -- fzf and fzf-lua hand back the line they displayed, so keep a way back to the real path
+  local entries, path_by_display = {}, {}
+  for _, item in ipairs(items) do
+    table.insert(entries, item.display)
+    path_by_display[item.display] = item.path
+  end
 
-  local function open_file(file, split_cmd)
+  local suffix = missing > 0 and (", " .. missing .. " not here") or ""
+  local prompt_title = string.format("Select a file to open (%d%s)", #items, suffix)
+
+  -- Takes either a displayed line or an absolute path
+  local function open_file(selected, split_cmd)
+    local file = path_by_display[selected] or selected
     if file and file ~= "" then
       vim.cmd(split_cmd .. " " .. vim.fn.fnameescape(file))
     end
@@ -348,7 +366,7 @@ function open_files_from_list(include_missing)
   if use_fzf then
     -- Use fzf file picker to display file paths (edit/tabedit)
     vim.fn['fzf#run']({
-      source = files,
+      source = entries,
       options = '--multi --prompt "' .. prompt_title .. '> " --expect=ctrl-t',
       window = {
         width = 0.6,
@@ -366,7 +384,7 @@ function open_files_from_list(include_missing)
     })
   elseif use_fzf_lua then
     -- Use fzf-lua file picker to display file paths
-    require('fzf-lua').fzf_exec(files, {
+    require('fzf-lua').fzf_exec(entries, {
       prompt = prompt_title .. '> ',
       actions = {
         ['default'] = function(selected)
@@ -382,7 +400,16 @@ function open_files_from_list(include_missing)
     require('telescope.pickers').new({}, {
       prompt_title = prompt_title,
       finder = require('telescope.finders').new_table({
-        results = files,
+        results = items,
+        entry_maker = function(item)
+          return {
+            value = item.path,
+            display = item.display,
+            ordinal = item.display,
+            path = item.path,
+            filename = item.path,
+          }
+        end,
       }),
       sorter = require('telescope.config').values.generic_sorter({}),
       attach_mappings = function(_, map)
