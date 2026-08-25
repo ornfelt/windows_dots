@@ -268,6 +268,7 @@ $VimUseNvimServer = $true
 # absolute paths either way.
 #$NvimServerSyncCwd = $false
 $NvimServerSyncCwd = $true
+
 # How long to wait for a server that is still starting up
 $NvimServerWaitMs = 8000
 
