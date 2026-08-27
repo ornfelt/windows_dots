@@ -5,6 +5,6 @@ if ([string]::IsNullOrWhiteSpace($notes)) {
     exit 1
 }
 
-#python "$notes/scripts/files/git_scripts/git_checkout.py"
+#python "$notes/scripts/files/git_scripts/git_cherry_pick.py"
 # Forward all script arguments to python
-python "$notes/scripts/files/git_scripts/git_checkout.py" @args
+python "$notes/scripts/files/git_scripts/git_cherry_pick.py" @args
