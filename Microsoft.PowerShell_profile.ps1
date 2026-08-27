@@ -219,7 +219,7 @@ $aliases = @(
     ".geo", ".map", ".trans", ".mov", ".mov_py", ".book", ".gfx", ".utils", ".git_diff",
     ".search", ".help_old", ".srclist", ".arg_tests", ".gr", ".gp", "nvcs", ".cmake_build",
     ".audit_diff_commit_info", ".audit_diff_restore", ".gen_commit_msg", ".kill_nvim_servers",
-    ".script_helper"
+    ".gc", ".script_helper"
 )
 
 foreach ($alias in $aliases) {
