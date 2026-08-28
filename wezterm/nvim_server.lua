@@ -58,6 +58,36 @@ if not is_windows then
   M.enabled = false
 end
 
+-- One switch for all three sides. WEZ_NVIM_SERVERS overrides everything above,
+-- and the same variable is read by the `vim` function in the PowerShell
+-- profile and in .zshrc, so servers can be turned on or off from one place
+-- instead of three. Unset means "use the hard-coded switches"; 0/off/false/no
+-- (any case) means off, anything else means on.
+--
+-- Set it where the whole session sees it, not in a shell rc: on Windows as a
+-- user environment variable (setx WEZ_NVIM_SERVERS 0, then restart wezterm),
+-- on linux in ~/.zshenv or ~/.profile - wezterm is started by the desktop and
+-- never sources ~/.zshrc, so a value set there would reach the shell but not
+-- this module.
+M.env_switch = 'WEZ_NVIM_SERVERS'
+
+local function env_bool(name)
+  local value = os.getenv(name)
+  if value == nil then
+    return nil
+  end
+  value = value:lower():gsub('%s', '')
+  if value == '' then
+    return nil
+  end
+  return not (value == '0' or value == 'off' or value == 'false' or value == 'no')
+end
+
+local override = env_bool(M.env_switch)
+if override ~= nil then
+  M.enabled = override
+end
+
 -- Hard-coded switch: share a pool of long-lived servers instead of mapping one
 -- server to each pane. Pool servers are never killed automatically; they stay
 -- around when a pane, tab or the whole wezterm instance goes away.
