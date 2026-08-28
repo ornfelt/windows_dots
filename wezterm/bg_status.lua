@@ -30,6 +30,14 @@ local is_windows = wezterm.target_triple:find('windows') ~= nil
 -- Hard-coded switch: nothing in this module does anything unless this is true
 M.enabled = true
 
+-- Forced off on linux, whatever the switch above says: the keyboard half of
+-- the worker is AutoHotkey, i.e. windows only, and the headless nvim servers
+-- it reports on are disabled there too (see nvim_server.lua). Drop these three
+-- lines to run it on linux as well; the worker itself is cross platform.
+if not is_windows then
+  M.enabled = false
+end
+
 -- Hard-coded switch: how the status line shows what the worker found.
 --   false  only a warning text, and only while the nvim servers are out of
 --          date; nothing about the keyboard is ever shown (default)
@@ -39,8 +47,13 @@ M.use_icons = true
 
 -- Text drawn in warning color in the default (non icon) mode
 M.warning_text = 'nvim servers out of date'
--- Append "(2/5)", stale servers of total, to the warning / icon row
+-- Also show how many servers are out of date. Text mode spells it out as
+-- "(2/5)" after the warning; icon mode only puts the number of stale servers
+-- next to the icon, and nothing at all while they are in sync, so the icons
+-- keep the same width they have with this turned off.
 M.show_counts = false
+M.text_count_format = ' (%d/%d)'
+M.icon_count_format = ' %d'
 
 -- Drawn between this module's output and the rest of the right status
 M.separator = '  '
@@ -216,20 +229,37 @@ end
 -- Rendering
 -- ---------------------------------------------------------------------------
 
-local function counts_suffix(nvim)
+--- "(2/5)" for the warning text, or "" when the counts are turned off.
+local function text_counts(nvim)
   if not M.show_counts or not nvim then
     return ''
   end
-  return (' (%d/%d)'):format(nvim.stale_servers or 0, nvim.servers or 0)
+  return M.text_count_format:format(nvim.stale_servers or 0, nvim.servers or 0)
 end
 
---- Icon and color for the nvim servers.
+--- Just the number of stale servers for the icon row, or nil when there is
+-- nothing to count. Kept out of the icon string on purpose: the glyph comes
+-- from the fallback symbols font, and hanging text off it makes the whole
+-- icon wide. As its own segment the icon stays exactly as it looks without
+-- the counts.
+local function icon_counts(nvim)
+  if not M.show_counts or not nvim then
+    return nil
+  end
+  local stale = nvim.stale_servers or 0
+  if stale == 0 then
+    return nil
+  end
+  return M.icon_count_format:format(stale)
+end
+
+--- Icon, color and optional count for the nvim servers.
 local function nvim_icon(nvim)
   if not nvim or not nvim.enabled then
     return nil
   end
   if nvim.out_of_date then
-    return M.icons.nvim .. counts_suffix(nvim), M.colors.warn
+    return M.icons.nvim, M.colors.warn, icon_counts(nvim)
   end
   if (nvim.servers or 0) > 0 then
     return M.icons.nvim, M.colors.ok
@@ -273,9 +303,9 @@ function M.segments()
   end
 
   if not M.use_icons then
-    -- Default: say something only when the servers are out of date
+    -- Say something only when the servers are out of date
     if state and state.nvim and state.nvim.out_of_date then
-      add(M.warning_text .. counts_suffix(state.nvim), M.colors.warn)
+      add(M.warning_text .. text_counts(state.nvim), M.colors.warn)
       table.insert(segments, { Text = M.separator })
     end
     return segments
@@ -288,9 +318,9 @@ function M.segments()
   end
 
   local icons = {}
-  local nvim_text, nvim_color = nvim_icon(state.nvim)
+  local nvim_text, nvim_color, nvim_count = nvim_icon(state.nvim)
   if nvim_text then
-    table.insert(icons, { text = nvim_text, color = nvim_color })
+    table.insert(icons, { text = nvim_text, color = nvim_color, count = nvim_count })
   end
   local keyboard_text, keyboard_color = keyboard_icon(state.keyboard)
   if keyboard_text then
@@ -299,6 +329,10 @@ function M.segments()
 
   for index, icon in ipairs(icons) do
     add(icon.text, icon.color)
+    if icon.count then
+      -- Own segment, so the glyph above is never laid out together with digits
+      add(icon.count, icon.color)
+    end
     if index < #icons then
       table.insert(segments, { Text = M.icon_separator })
     end
