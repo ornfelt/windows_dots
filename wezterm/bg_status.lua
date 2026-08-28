@@ -55,6 +55,13 @@ M.show_counts = false
 M.text_count_format = ' (%d/%d)'
 M.icon_count_format = ' %d'
 
+-- Hard-coded switch: draw a dim question mark in icon mode while the worker is
+-- not running, or its last result is older than M.stale_seconds. Off by
+-- default; there is a short gap between wezterm starting the worker and its
+-- first tick, and a marker for it is noise rather than information. Turn it on
+-- when you want to see that the worker is not answering.
+M.show_unknown_icon = false
+
 -- Drawn between this module's output and the rest of the right status
 M.separator = '  '
 -- Between the two icons
@@ -312,8 +319,11 @@ function M.segments()
   end
 
   if not state then
-    add(M.icons.unknown, M.colors.dim)
-    table.insert(segments, { Text = M.separator })
+    -- Worker not running or not answering; say nothing unless asked to
+    if M.show_unknown_icon then
+      add(M.icons.unknown, M.colors.dim)
+      table.insert(segments, { Text = M.separator })
+    end
     return segments
   end
 

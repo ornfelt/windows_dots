@@ -263,6 +263,15 @@ Set-Alias -Name vimu -Value run_vimu
 # `vim` opens a plain nvim exactly like `nvim` does.
 $VimUseNvimServer = $true
 
+# One switch for all three sides: WEZ_NVIM_SERVERS overrides the switch above,
+# and ~/.wezterm/nvim_server.lua and .zshrc read the same variable. Unset means
+# "use the switch above"; 0/off/false/no (any case) means off, anything else
+# means on. Set it as a user environment variable so wezterm sees it too:
+#   setx WEZ_NVIM_SERVERS 0   (then restart wezterm and the shells)
+if ($env:WEZ_NVIM_SERVERS) {
+    $VimUseNvimServer = $env:WEZ_NVIM_SERVERS.Trim() -notmatch '^(0|off|false|no)$'
+}
+
 # Ask the server to :cd here before attaching. Off, so a reused pool server is
 # left exactly as its previous user left it; file arguments are passed as
 # absolute paths either way.
