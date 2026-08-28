@@ -44,6 +44,7 @@ if [ -d "$wezterm_dest" ]; then
 
     cp "./wezterm/claude.lua" "$wezterm_dest/"
     cp "./wezterm/nvim_server.lua" "$wezterm_dest/"
+    cp "./wezterm/bg_status.lua" "$wezterm_dest/"
     cp "./wezterm/status.lua" "$wezterm_dest/"
 
     write_ok "WezTerm files copied successfully to $wezterm_dest"
