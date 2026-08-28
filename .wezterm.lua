@@ -33,6 +33,18 @@ config.enable_wayland = false -- Required for hyprland?
 --config.font = wezterm.font('Hack')
 --config.font = wezterm.font('Monaspace Neon')
 
+-- The status line icons (see bg_status.lua) come from wezterm's bundled nerd
+-- font, which draws them a little small next to the text. The status line is
+-- part of the retro tab bar (use_fancy_tab_bar is false), so it uses the
+-- terminal font and the only way to size the icons is to scale that fallback.
+-- 1.0 is the normal size; wezterm keeps its own fallback list after this one,
+-- so emoji and every other glyph are unaffected.
+local NERD_FONT_SCALE = 0.8
+config.font = wezterm.font_with_fallback {
+  'JetBrains Mono', -- wezterm's default, spelled out so the fallback can follow
+  { family = 'Symbols Nerd Font Mono', scale = NERD_FONT_SCALE },
+}
+
 config.audible_bell = "Disabled"
 
 local user_domain = os.getenv("USERDOMAIN") or ""

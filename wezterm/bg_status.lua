@@ -253,19 +253,19 @@ local function icon_counts(nvim)
   return M.icon_count_format:format(stale)
 end
 
---- Icon, color and optional count for the nvim servers.
+--- Icon, color and optional count for the nvim servers, or nil for no icon.
+-- Nothing is drawn while no server is running: with the headless servers
+-- switched off there is nothing that could be out of sync, and an icon for it
+-- would just be noise. (Return M.icons.nvim, M.colors.dim here instead to get
+-- a greyed out icon in that case.)
 local function nvim_icon(nvim)
-  if not nvim or not nvim.enabled then
+  if not nvim or not nvim.enabled or (nvim.servers or 0) == 0 then
     return nil
   end
   if nvim.out_of_date then
     return M.icons.nvim, M.colors.warn, icon_counts(nvim)
   end
-  if (nvim.servers or 0) > 0 then
-    return M.icons.nvim, M.colors.ok
-  end
-  -- No server running: nothing can be out of sync
-  return M.icons.nvim, M.colors.dim
+  return M.icons.nvim, M.colors.ok
 end
 
 --- Icon and color for the keyboard.
