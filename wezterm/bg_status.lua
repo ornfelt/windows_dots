@@ -276,8 +276,8 @@ local function nvim_icon(nvim)
 end
 
 --- Icon and color for the keyboard.
--- green  the keychron is plugged in and does the remapping itself
--- blue   no keychron, ahk is doing it instead
+-- blue   the keychron is plugged in and does the remapping itself
+-- green  no keychron, ahk is doing it instead
 -- orange neither or both, i.e. caps lock is unmapped or mapped twice; that
 --        normally lasts for a single tick while the worker catches up
 local function keyboard_icon(keyboard)
@@ -286,10 +286,10 @@ local function keyboard_icon(keyboard)
   end
   local ahk_running = (keyboard.ahk or 0) > 0
   if keyboard.keychron and not ahk_running then
-    return M.icons.keyboard, M.colors.ok
+    return M.icons.keyboard, M.colors.info
   end
   if not keyboard.keychron and ahk_running then
-    return M.icons.keyboard, M.colors.info
+    return M.icons.keyboard, M.colors.ok
   end
   return M.icons.keyboard, M.colors.warn
 end
