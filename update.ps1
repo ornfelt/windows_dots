@@ -98,11 +98,13 @@ $statusFile = ".\wezterm\status.lua"
 $sessionManagerFile = ".\wezterm\session-manager.lua"
 $claudeFile = ".\wezterm\claude.lua"
 $nvimServerFile = ".\wezterm\nvim_server.lua"
+$bgStatusFile = ".\wezterm\bg_status.lua"
 
 Copy-Item -Path $statusFile -Destination $weztermBaseDir -Force
 Copy-Item -Path $sessionManagerFile -Destination $weztermSessionManagerDir -Force
 Copy-Item -Path $claudeFile -Destination $weztermBaseDir -Force
 Copy-Item -Path $nvimServerFile -Destination $weztermBaseDir -Force
+Copy-Item -Path $bgStatusFile -Destination $weztermBaseDir -Force
 
 Write-Host "`nWezTerm files copied successfully." -ForegroundColor Cyan
 
