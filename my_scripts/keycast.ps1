@@ -31,7 +31,9 @@ function Write-Step { param([string]$Message) Write-Host $Message -ForegroundCol
 # ---------- Constants ----------
 $ExeName        = 'keycastow.exe'
 $ProcessName    = 'keycastow'
-$BuildRelPath   = 'Code/c++/KeyCastOW/build'
+$BuildRelPath   = 'Code2/C++/KeyCastOW/build'
+$SourceRelPath  = 'Code2/C++/KeyCastOW'
+$IniName        = 'keycastow.ini'
 $DefaultConfigs = @('Release', 'Debug')
 
 # ---------- Help ----------
@@ -68,6 +70,8 @@ Notes:
   - Without r/d/rd the script tries Release first, then Debug.
   - The exe is expected under:
         `$Env:code_root_dir/$BuildRelPath/<Config>/$ExeName
+  - If the exe dir has no $IniName, it is copied from:
+        `$Env:code_root_dir/$SourceRelPath/$IniName
 "@ | Write-Output
 }
 
@@ -191,9 +195,21 @@ if ([string]::IsNullOrWhiteSpace($exePath)) {
 
 $workingDir = Split-Path -Parent $exePath
 
+# ---------- keycastow.ini ----------
+$iniTarget = Join-Path $workingDir $IniName
+$iniSource = Join-Path (Join-Path $root $SourceRelPath) $IniName
+
 # ---------- Print-only ----------
 if ($OnlyPrint) {
     Write-Info "Would run ($BuildType):"
+    if (-not (Test-Path $iniTarget -PathType Leaf)) {
+        if (Test-Path $iniSource -PathType Leaf) {
+            Write-Host "  Copy-Item -Path `"$iniSource`" -Destination `"$iniTarget`""
+        }
+        else {
+            Write-Warn "  No $IniName in the exe dir, and none at: $iniSource"
+        }
+    }
     Write-Host "  Start-Process -FilePath `"$exePath`" -WorkingDirectory `"$workingDir`""
     exit 0
 }
@@ -205,6 +221,23 @@ if ($running.Count -gt 0) {
     Write-Warn "$ExeName is already running (PID $($running.Id -join ', '))."
     Write-Warn "Run '.\keycast.ps1 kill' to stop it first."
     exit 0
+}
+
+if (-not (Test-Path $iniTarget -PathType Leaf)) {
+    if (Test-Path $iniSource -PathType Leaf) {
+        try {
+            Copy-Item -Path $iniSource -Destination $iniTarget -ErrorAction Stop
+            Write-Ok "Copied $IniName to $workingDir."
+        }
+        catch {
+            Write-Err "Failed to copy $IniName : $($_.Exception.Message)"
+            exit 1
+        }
+    }
+    else {
+        Write-Warn "No $IniName in the exe dir, and no source copy at:"
+        Write-Host "  $iniSource"
+    }
 }
 
 Write-Step "Running ($BuildType):"
