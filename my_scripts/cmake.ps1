@@ -51,6 +51,10 @@ Notes:
         ./CMakeLists.txt  -> 'cmake -B build -S . ...'
         ../CMakeLists.txt -> 'cmake .. ...'
         neither           -> warn + force PRINT-ONLY
+  - Entries with "platform": "linux" (or legacy "linux_only": true) are
+    ignored here; "platform": "windows" entries are Windows-only.
+  - "extra_args" is inserted between the prefix and the -D flags
+    (e.g. -G "Visual Studio 17 2022" -A x64).
 "@ | Write-Output
 }
 
@@ -144,8 +148,27 @@ function Test-PathContainsInOrder {
     return $true
 }
 
+function Get-PatternPlatform {
+    param($pattern)
+    # 'linux', 'windows' or 'any'. Legacy 'linux_only': true means linux.
+    if ($pattern.PSObject.Properties.Name -contains 'platform' `
+        -and -not [string]::IsNullOrWhiteSpace($pattern.platform)) {
+        return $pattern.platform.ToLowerInvariant()
+    }
+    if ($pattern.PSObject.Properties.Name -contains 'linux_only' -and $pattern.linux_only -eq $true) {
+        return 'linux'
+    }
+    return 'any'
+}
+
 function Test-PatternMatches {
     param($pattern)
+
+    # Platform gate: entries marked for another OS are skipped entirely, so a
+    # linux/windows pair may share the same keywords.
+    $plat = Get-PatternPlatform $pattern
+    if ($plat -ne 'any' -and $plat -ne 'windows') { return $false }
+
     $kw = $pattern.keywords
     if ($null -eq $kw -or $kw.Count -eq 0) { return $false }
 
@@ -290,6 +313,13 @@ function Invoke-Pattern {
     # 3) Standard base_flags + variants pattern
     $detect = Ensure-CMakeDetected -Context $ctx
     $cmakePrefix = $detect.Prefix
+
+    # extra_args: raw text between the cmake prefix and the -D flags,
+    # e.g. -G "Visual Studio 17 2022" -A x64.
+    if ($pattern.PSObject.Properties.Name -contains 'extra_args' `
+        -and -not [string]::IsNullOrWhiteSpace($pattern.extra_args)) {
+        $cmakePrefix = "$cmakePrefix $(Substitute-Tokens $pattern.extra_args)"
+    }
 
     $baseFlags = $pattern.base_flags  # PSCustomObject or $null
 
