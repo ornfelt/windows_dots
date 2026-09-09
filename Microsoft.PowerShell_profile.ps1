@@ -12,8 +12,13 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 #Install-Module -Name PSReadLine -Force -Scope CurrentUser
 Import-Module PSReadLine
 Set-PSReadLineOption -BellStyle None
-Set-PSReadLineOption -PredictionSource History
-Set-PSReadLineOption -PredictionViewStyle ListView
+# Both of these throw when stdout is redirected - which is the case for every
+# `powershell -Command ...` started from a script or from wezterm - printing
+# two errors and paying for the exceptions on each such run
+if (-not [Console]::IsOutputRedirected) {
+    Set-PSReadLineOption -PredictionSource History
+    Set-PSReadLineOption -PredictionViewStyle ListView
+}
 Set-PSReadLineOption -EditMode Vi
 #Set-PSReadLineOption -EditMode Windows
 
