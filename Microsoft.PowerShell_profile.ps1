@@ -229,7 +229,7 @@ $aliases = @(
     ".search", ".help_old", ".srclist", ".arg_tests", ".gr", ".gp", "nvcs", ".cmake_build",
     ".audit_diff_commit_info", ".audit_diff_restore", ".gen_commit_msg", ".kill_nvim_servers",
     ".gc", ".gcp", ".gd", ".do_the_thing", ".keycast", ".sql", ".ssms", ".ccs",
-    ".cmake_helper", ".script_helper"
+    ".display_info", ".cmake_helper", ".script_helper"
 )
 
 foreach ($alias in $aliases) {
