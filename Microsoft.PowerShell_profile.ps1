@@ -140,6 +140,10 @@ Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
 
 Set-PSReadLineKeyHandler -Chord 'Alt+c' -ScriptBlock {
     Invoke-FuzzySetLocation
+    # Set-Location inside a key handler doesn't redraw the prompt, so it kept
+    # showing the old dir until Enter was pressed. InvokePrompt re-runs prompt
+    # in place, which also sends the new cwd to wezterm via OSC 7
+    [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
 }
 
 Set-PSReadLineKeyHandler -Chord 'Ctrl+f' -ScriptBlock {
@@ -554,4 +558,3 @@ $Env:EDITOR = "nvim"
 $Env:YAZI_FILE_ONE = "C:\Program Files\Git\usr\bin\file.exe"
 
 . "$PSScriptRoot\env.ps1"
-
