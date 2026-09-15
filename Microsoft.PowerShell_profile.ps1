@@ -503,14 +503,21 @@ Set-Alias ... Go-Up-Twice
 # when the cwd moved (Alt+c, .., scripts) and pushes the dir that was left.
 # The stack never holds duplicates or the current dir (entry 0 of `dirs -v`).
 # ---------------------------------------------------------------------------
+
+# How many dirs the stack keeps besides the current one; the oldest are dropped
+# first. 0 means no limit. Change it live with e.g. `$DirStackMax = 50`
+$global:DirStackMax = 20
+
 $global:DirStack = @()    # [0] is the most recently left dir
 $global:DirForward = @()  # dirs left by `cd -`, for `cd +`
 $global:DirLast = $null   # cwd as last recorded
 
 function Push-DirStack([string]$Left) {
     $seen = @{ $PWD.Path = 1 }  # hashtable keys are case-insensitive, like paths
-    $global:DirStack = @(@($Left) + $global:DirStack |
+    $stack = @(@($Left) + $global:DirStack |
         Where-Object { $_ -and -not $seen[$_] } | ForEach-Object { $seen[$_] = 1; $_ })
+    if ($global:DirStackMax -gt 0) { $stack = @($stack | Select-Object -First $global:DirStackMax) }
+    $global:DirStack = $stack
     $global:DirLast = $PWD.Path
 }
 
