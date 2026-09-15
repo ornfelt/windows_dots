@@ -237,6 +237,14 @@ foreach ($alias in $aliases) {
     Set-Alias -Name $alias -Value "$PSScriptRoot\my_scripts\$scriptName.ps1"
 }
 
+# `wez` runs the custom wezterm launcher from the wezterm checkout, the same way
+# `nvcs` runs its script. It lives outside my_scripts, so it gets its own alias.
+# `wez help` prints its usage.
+$WeztermRunScript = Join-Path $env:code_root_dir 'Code2\Rust\wezterm\run-custom-wezterm.ps1'
+if (Test-Path $WeztermRunScript) {
+    Set-Alias -Name wez -Value $WeztermRunScript
+}
+
 function RunChatGPT {
 	# python -m revChatGPT.V3 --api_key $env:OPENAI_API_KEY --submit_key enter
     python -m revChatGPT.V3 --api_key $env:OPENAI_API_KEY
