@@ -487,6 +487,92 @@ function Go-Up-Twice {
 }
 Set-Alias ... Go-Up-Twice
 
+# ---------------------------------------------------------------------------
+# Directory stack, bash/zsh style
+#
+#   cd <dir>      change dir; the dir you left goes on the stack
+#   cd            go home
+#   cd -          back to the previous dir (again: further back)
+#   cd +          forward again, undoing a `cd -`
+#   cd +N         jump to entry N of `dirs -v`
+#   d             list the stack numbered (dirs -v); `d N` is `cd +N`
+#   dirs [-v|-c]  print the stack / numbered / clear it
+#   popd          back to the previous dir, like `cd -` but not undoable
+#
+# Every dir change is recorded, not only those made with cd: the prompt notices
+# when the cwd moved (Alt+c, .., scripts) and pushes the dir that was left.
+# The stack never holds duplicates or the current dir (entry 0 of `dirs -v`).
+# ---------------------------------------------------------------------------
+$global:DirStack = @()    # [0] is the most recently left dir
+$global:DirForward = @()  # dirs left by `cd -`, for `cd +`
+$global:DirLast = $null   # cwd as last recorded
+
+function Push-DirStack([string]$Left) {
+    $seen = @{ $PWD.Path = 1 }  # hashtable keys are case-insensitive, like paths
+    $global:DirStack = @(@($Left) + $global:DirStack |
+        Where-Object { $_ -and -not $seen[$_] } | ForEach-Object { $seen[$_] = 1; $_ })
+    $global:DirLast = $PWD.Path
+}
+
+# Records a cwd change that did not go through the functions below
+function Update-DirStack {
+    if ($global:DirLast -and $global:DirLast -ne $PWD.Path) {
+        $global:DirForward = @()
+        Push-DirStack $global:DirLast
+    }
+    $global:DirLast = $PWD.Path
+}
+
+function Set-LocationWithStack([string]$Path = '~') {
+    Update-DirStack
+    $here = $PWD.Path
+    if ($Path -eq '-') {
+        if (-not $global:DirStack) { Write-Error 'cd: directory stack is empty'; return }
+        Set-Location -LiteralPath $global:DirStack[0]; if (-not $?) { return }
+        $global:DirForward = @($here) + $global:DirForward
+        Push-DirStack $null
+    }
+    elseif ($Path -eq '+') {
+        if (-not $global:DirForward) { Write-Error 'cd: nothing to go forward to'; return }
+        Set-Location -LiteralPath $global:DirForward[0]; if (-not $?) { return }
+        $global:DirForward = @($global:DirForward | Select-Object -Skip 1)
+        Push-DirStack $here
+    }
+    elseif ($Path -match '^\+(\d+)$') {
+        $i = [int]$Matches[1]
+        if ($i -eq 0) { return }
+        if ($i -gt $global:DirStack.Count) { Write-Error "cd: no entry $i in dirs -v"; return }
+        Set-Location -LiteralPath $global:DirStack[$i - 1]; if (-not $?) { return }
+        $global:DirForward = @()
+        Push-DirStack $here
+    }
+    else {
+        Set-Location $Path; if (-not $?) { return }
+        $global:DirForward = @()
+        Push-DirStack $here
+    }
+}
+
+function Pop-DirStack {
+    if (-not $global:DirStack) { Write-Error 'popd: directory stack is empty'; return }
+    Update-DirStack
+    Set-Location -LiteralPath $global:DirStack[0]; if (-not $?) { return }
+    Push-DirStack $null
+}
+
+function dirs([switch]$v, [switch]$c) {
+    if ($c) { $global:DirStack = @(); $global:DirForward = @(); return }
+    $all = @($PWD.Path) + $global:DirStack | ForEach-Object { $_ -replace "^$([regex]::Escape($HOME))", '~' }
+    if (-not $v) { return $all -join '  ' }
+    for ($i = 0; $i -lt $all.Count; $i++) { '{0,2}  {1}' -f $i, $all[$i] }
+}
+
+function d { if ($args) { Set-LocationWithStack "+$($args[0])" } else { dirs -v } }
+
+Set-Alias cd Set-LocationWithStack -Option AllScope -Force
+Set-Alias pushd Set-LocationWithStack -Option AllScope -Force
+Set-Alias popd Pop-DirStack -Option AllScope -Force
+
 function run_keepawake {
     python "$env:code_root_dir\Code2\C#\wowbot\keep_awake.py" @args
 }
@@ -514,6 +600,7 @@ function .cc {
 # For wezterm cwd
 # https://wezfurlong.org/wezterm/shell-integration.html#osc-7-on-windows-with-powershell
 function prompt {
+    Update-DirStack  # record dir changes made without cd (see Directory stack)
     $p = $executionContext.SessionState.Path.CurrentLocation
     $osc7 = ""
     if ($p.Provider.Name -eq "FileSystem") {
