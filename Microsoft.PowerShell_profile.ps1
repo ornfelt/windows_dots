@@ -495,7 +495,8 @@ Set-Alias ... Go-Up-Twice
 #   cd -          back to the previous dir (again: further back)
 #   cd +          forward again, undoing a `cd -`
 #   cd +N         jump to entry N of `dirs -v`
-#   d             list the stack numbered (dirs -v); `d N` is `cd +N`
+#   d             list the stack numbered (dirs -v); `d N` / `d +N` is `cd +N`
+#   Alt+d         pick a dir from the stack with fzf
 #   dirs [-v|-c]  print the stack / numbered / clear it
 #   popd          back to the previous dir, like `cd -` but not undoable
 #
@@ -574,7 +575,19 @@ function dirs([switch]$v, [switch]$c) {
     for ($i = 0; $i -lt $all.Count; $i++) { '{0,2}  {1}' -f $i, $all[$i] }
 }
 
-function d { if ($args) { Set-LocationWithStack "+$($args[0])" } else { dirs -v } }
+function d { if ($args) { Set-LocationWithStack "+$("$($args[0])".TrimStart('+'))" } else { dirs -v } }
+
+# Picks a dir from the stack with fzf, most recent first
+function Invoke-FuzzyDirStack {
+    $selected = dirs -v | Select-Object -Skip 1 | fzf --prompt "Dirs> " --no-sort
+    if ($selected -match '^\s*(\d+)') { Set-LocationWithStack "+$($Matches[1])" }
+}
+
+Set-PSReadLineKeyHandler -Chord 'Alt+d' -ScriptBlock {
+    Invoke-FuzzyDirStack
+    # Redraw the prompt for the new cwd, as for Alt+c
+    [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+}
 
 Set-Alias cd Set-LocationWithStack -Option AllScope -Force
 Set-Alias pushd Set-LocationWithStack -Option AllScope -Force
