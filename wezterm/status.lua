@@ -96,13 +96,17 @@ end
 --- Shows the result of an operation; falls back to a toast when disabled.
 -- @param ok boolean|string: true for success, false for failure, 'warning' for
 -- something that went wrong outside wezterm (drawn in the warning color)
-function M.notify(window, title, message, ok)
+-- @param toast boolean|nil: false skips the toast fallback, for a message that
+-- another wezterm instance already raises one for
+function M.notify(window, title, message, ok, toast)
   if not M.enabled or not status_line_visible(window) then
     if current then
       current = nil
       redraw(window)
     end
-    window:toast_notification(title, message, nil, M.toast_timeout_ms)
+    if toast ~= false then
+      window:toast_notification(title, message, nil, M.toast_timeout_ms)
+    end
     return
   end
 
