@@ -33,12 +33,14 @@ M.colors = {
   progress = '#83a598',
   success  = '#98971a',
   failure  = '#cc241d',
+  warning  = '#fe8019',
 }
 
 M.prefix = {
   progress = '',
   success  = '✓ ',
   failure  = '✗ ',
+  warning  = '⚠ ',
 }
 
 -- Current message: { text = ..., color = ..., expires_at = ..., window_id = ... }
@@ -92,7 +94,8 @@ function M.progress(window, message)
 end
 
 --- Shows the result of an operation; falls back to a toast when disabled.
--- @param ok boolean: true for success, false for failure
+-- @param ok boolean|string: true for success, false for failure, 'warning' for
+-- something that went wrong outside wezterm (drawn in the warning color)
 function M.notify(window, title, message, ok)
   if not M.enabled or not status_line_visible(window) then
     if current then
@@ -103,9 +106,10 @@ function M.notify(window, title, message, ok)
     return
   end
 
+  local kind = ok == 'warning' and 'warning' or (ok and 'success' or 'failure')
   current = {
-    text = (ok and M.prefix.success or M.prefix.failure) .. message,
-    color = ok and M.colors.success or M.colors.failure,
+    text = M.prefix[kind] .. message,
+    color = M.colors[kind],
     expires_at = os.time() + math.max(1, math.ceil(M.timeout_ms / 1000)),
     window_id = window:window_id(),
   }
