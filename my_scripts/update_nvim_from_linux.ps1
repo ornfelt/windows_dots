@@ -66,3 +66,22 @@ if (Test-Path -Path $weztermSourceFile) {
     Write-Output ".wezterm.lua file not found in $dotfilesDir."
 }
 
+# Sync wezterm lua modules into ~/.wezterm
+$weztermModulesSourceDir = Join-Path -Path $dotfilesDir -ChildPath "wezterm"
+$weztermModulesTargetDir = Join-Path -Path $userProfileDir -ChildPath ".wezterm"
+$weztermModuleFiles = @("bg_status.lua", "claude.lua", "nvim_server.lua", "status.lua")
+
+if (-Not (Test-Path -Path $weztermModulesTargetDir)) {
+    New-Item -ItemType Directory -Path $weztermModulesTargetDir | Out-Null
+}
+
+foreach ($moduleFile in $weztermModuleFiles) {
+    $moduleSourceFile = Join-Path -Path $weztermModulesSourceDir -ChildPath $moduleFile
+    if (Test-Path -Path $moduleSourceFile) {
+        Copy-Item -Path $moduleSourceFile -Destination $weztermModulesTargetDir -Force
+        Write-Output "$moduleFile has been copied to $weztermModulesTargetDir."
+    } else {
+        Write-Output "$moduleFile file not found in $weztermModulesSourceDir."
+    }
+}
+
