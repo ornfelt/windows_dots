@@ -53,6 +53,9 @@ M.failed_icon_color = status.colors.warning
 M.icon_width = 2
 
 M.notification_title = 'Claude Code'
+-- A finished response stays on the status line a second longer than the
+-- other status messages
+M.notification_timeout_ms = status.timeout_ms + 1000
 -- Prefixed to the notification text. Both the status line and the toast
 -- fallback take plain text, so a glyph/emoji is the only icon either can show.
 M.notification_icon = M.icon
@@ -248,7 +251,7 @@ local function announce(fresh, fallback_window)
     target = first.mine and gui_window_for_pane(first.pane_id, fallback_window) or fallback_window
   end
   status.notify(target, M.notification_title, table.concat(parts, M.notification_separator),
-    #fresh_failed > 0 and 'warning' or true, any_mine)
+    #fresh_failed > 0 and 'warning' or true, any_mine, M.notification_timeout_ms)
 end
 
 --- Drops the markers for a pane of this instance, in memory and on disk.

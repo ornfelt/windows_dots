@@ -98,7 +98,9 @@ end
 -- something that went wrong outside wezterm (drawn in the warning color)
 -- @param toast boolean|nil: false skips the toast fallback, for a message that
 -- another wezterm instance already raises one for
-function M.notify(window, title, message, ok, toast)
+-- @param timeout_ms number|nil: how long the status line message stays,
+-- defaults to M.timeout_ms
+function M.notify(window, title, message, ok, toast, timeout_ms)
   if not M.enabled or not status_line_visible(window) then
     if current then
       current = nil
@@ -114,7 +116,7 @@ function M.notify(window, title, message, ok, toast)
   current = {
     text = M.prefix[kind] .. message,
     color = M.colors[kind],
-    expires_at = os.time() + math.max(1, math.ceil(M.timeout_ms / 1000)),
+    expires_at = os.time() + math.max(1, math.ceil((timeout_ms or M.timeout_ms) / 1000)),
     window_id = window:window_id(),
   }
   redraw(window)
