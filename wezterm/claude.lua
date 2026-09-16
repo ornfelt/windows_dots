@@ -62,8 +62,8 @@ M.notification_icon = M.icon
 M.failed_notification_icon = M.failed_icon
 -- Between the sessions that just finished and the ones still waiting
 M.notification_separator = '  ·  '
--- Between the parts of "wezterm 5052 · tab 3 · pane 18"
-M.location_separator = ' · '
+-- Between the parts of "wezterm 5052, tab 3, pane 18"
+M.location_separator = ', '
 
 local home = (os.getenv('HOME') or os.getenv('USERPROFILE') or '.'):gsub('\\', '/')
 -- Kept in sync with the hook scripts in ~/.claude/hooks/
@@ -163,7 +163,7 @@ local function index_of(list, id, get_id)
   return nil
 end
 
---- "tab 3 · pane 18" for a pane of this instance, from the live mux (tabs may
+--- "tab 3, pane 18" for a pane of this instance, from the live mux (tabs may
 -- have moved since the hook ran), with the window only when there are several.
 local function live_location(entry)
   local parts = {}
@@ -182,7 +182,7 @@ local function live_location(entry)
   return table.concat(parts, M.location_separator)
 end
 
---- "wezterm 5052 · tab 3 · pane 18" for a pane of another instance, from what
+--- "wezterm 5052, tab 3, pane 18" for a pane of another instance, from what
 -- its hook wrote down.
 local function remote_location(entry)
   local parts = { 'wezterm ' .. entry.instance }
@@ -196,7 +196,7 @@ local function remote_location(entry)
   return table.concat(parts, M.location_separator)
 end
 
---- "gfx (rate_limit · tab 3 · pane 18)" for every entry, in a stable order.
+--- "gfx (rate_limit, tab 3, pane 18)" for every entry, in a stable order.
 local function describe(entries)
   table.sort(entries, function(a, b) return a.name < b.name end)
   local descriptions = {}
