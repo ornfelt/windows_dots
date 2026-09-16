@@ -24,10 +24,17 @@ if ($Action -eq 'clear') {
 
 # Claude Code passes the hook payload as JSON on stdin; cwd is the project dir
 $label = $null
+$data = $null
 try {
     $payload = [Console]::In.ReadToEnd()
-    if ($payload) { $label = ($payload | ConvertFrom-Json).cwd }
+    if ($payload) { $data = $payload | ConvertFrom-Json; $label = $data.cwd }
 } catch { }
+
+# Stop also fires when a turn ends only to wait for background work (shells,
+# agents, monitors); the payload lists those in background_tasks. Only mark the
+# pane once nothing is still running - the final Stop comes after they finish.
+$busyStatuses = @('running', 'pending')
+if ($data -and ($data.background_tasks | Where-Object { $busyStatuses -contains $_.status })) { exit 0 }
 if (-not $label) { $label = (Get-Location).Path }
 $label = Split-Path -Leaf $label
 

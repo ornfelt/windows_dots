@@ -29,6 +29,16 @@ payload="$(cat 2>/dev/null || true)"
 cwd="$(printf '%s' "$payload" | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
 [ -n "$cwd" ] || cwd="$PWD"
 
+# Stop also fires when a turn ends only to wait for background work (shells,
+# agents, monitors); the payload lists those in background_tasks. Only mark the
+# pane once nothing is still running - the final Stop comes after they finish.
+# Quotes inside last_assistant_message are escaped, so these patterns only match
+# the real keys.
+if printf '%s' "$payload" | sed -n 's/.*"background_tasks"[[:space:]]*:\(.*\)/\1/p' \
+    | grep -Eq '"status"[[:space:]]*:[[:space:]]*"(running|pending)"'; then
+  exit 0
+fi
+
 mkdir -p "$state_dir"
 label="$(basename "$cwd")"
 printf '%s' "$label" > "$marker"
