@@ -11,7 +11,9 @@ local function display_notification(message)
 end
 
 local function decode_url(url)
-  return url:gsub('%%20', ' ')
+  -- Every percent escape, not just %20: a dir like Code2/C#/BloogBot arrives
+  -- from OSC 7 as Code2/C%23/BloogBot and would be restored verbatim otherwise
+  return (url:gsub('%%(%x%x)', function(hex) return string.char(tonumber(hex, 16)) end))
 end
 
 --- Retrieves the current workspace data from the active window.

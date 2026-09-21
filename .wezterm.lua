@@ -1280,6 +1280,17 @@ table.insert(config.keys, {
   action = wezterm.action_callback(split_to_directory_with_delay),
 })
 
+-- Turns a pane cwd URI into a plain path. The OSC 7 payload is a URI, so a dir
+-- like C:/Users/jonas/Code2/C#/BloogBot arrives percent-encoded (%23) and has
+-- to be decoded here, or everything below looks at a path that does not exist.
+local function path_from_cwd_uri(cwd_uri)
+  local cwd = cwd_uri:gsub("file://ornf", "")
+  cwd = cwd:gsub("file://", "")
+  cwd = cwd:gsub("%%(%x%x)", function(hex) return string.char(tonumber(hex, 16)) end)
+  cwd = cwd:gsub("^/([A-Za-z]:)", "%1") -- handle /C: on Windows
+  return cwd
+end
+
 -- Open github repo in firefox
 local function open_github_repo(win, pane)
   local cwd_uri = tostring(pane:get_current_working_dir())
@@ -1291,9 +1302,7 @@ local function open_github_repo(win, pane)
     return
   end
 
-  local cwd = cwd_uri:gsub("file://ornf", "")
-  cwd = cwd:gsub("file://", "")
-  cwd = cwd:gsub("^/([A-Za-z]:)", "%1")
+  local cwd = path_from_cwd_uri(cwd_uri)
 
   if is_tmux(pane) then
     -- If tmux, use: tmux display -p -F "#{pane_current_path}"
@@ -1611,9 +1620,7 @@ wezterm.on("update-right-status", function(window, pane)
   end
 
   -- Normalize cwd from file:// URI
-  local cwd = cwd_uri:gsub("file://ornf", "")
-  cwd = cwd:gsub("file://", "")
-  cwd = cwd:gsub("^/([A-Za-z]:)", "%1") -- handle /C: on Windows
+  local cwd = path_from_cwd_uri(cwd_uri)
 
   local is_windows = wezterm.target_triple:find("windows") ~= nil
 

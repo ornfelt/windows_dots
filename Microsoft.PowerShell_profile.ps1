@@ -626,6 +626,13 @@ function prompt {
     if ($p.Provider.Name -eq "FileSystem") {
         $ansi_escape = [char]27
         $provider_path = $p.ProviderPath -Replace "\\", "/"
+        # WezTerm parses this payload as a URI, so a raw '#' (Code2/C#/...) would
+        # start a fragment and cut the path short - new panes/tabs then failed to
+        # inherit the cwd. Percent-encode all but unreserved chars, '/' and ':'
+        $provider_path = [regex]::Replace($provider_path, '[^A-Za-z0-9\-._~/:]', {
+            param($match)
+            ([Text.Encoding]::UTF8.GetBytes($match.Value) | ForEach-Object { '%{0:X2}' -f $_ }) -join ''
+        })
         $osc7 = "$ansi_escape]7;file://${env:COMPUTERNAME}/${provider_path}${ansi_escape}\"
     }
 
