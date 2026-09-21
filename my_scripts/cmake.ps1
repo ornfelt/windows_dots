@@ -240,11 +240,22 @@ function Get-MergedFlags {
     return $merged
 }
 
+# Quotes a -D value unless it is a plain bareword. Invoke-Expression parses the command
+# string with the PowerShell parser, which splits a bare -DFOO=3.5 into "-DFOO=3" and ".5"
+# because the 3 starts a number literal and the dot begins a new token. The same goes for
+# anything with a space in it. Values that are already quoted are left alone.
+function Quote-FlagValue {
+    param([string]$Value)
+    if ($Value -match '^[A-Za-z0-9_+-]+$') { return $Value }
+    if ($Value.Length -ge 2 -and $Value.StartsWith('"') -and $Value.EndsWith('"')) { return $Value }
+    return '"' + $Value + '"'
+}
+
 function Convert-FlagsToString {
     param($flagsOrderedDict)
     $parts = @()
     foreach ($key in $flagsOrderedDict.Keys) {
-        $val = Substitute-Tokens ([string]$flagsOrderedDict[$key])
+        $val = Quote-FlagValue (Substitute-Tokens ([string]$flagsOrderedDict[$key]))
         $parts += "-D$key=$val"
     }
     return ($parts -join ' ')
