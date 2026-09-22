@@ -1529,7 +1529,10 @@ if wezterm.target_triple == 'x86_64-pc-windows-msvc' or wezterm.target_triple ==
 end
 
 wezterm.on("format-tab-title", function(tab)
-  local new_title = tostring(tab.active_pane.current_working_dir):gsub("^file:///", "")
+  -- Percent-decode through the shared helper: a dir like C:/Users/jonas/Code2/C#/BloogBot
+  -- arrives as C%23 in the OSC 7 URI and was shown that way in the tab. The leading
+  -- slash is dropped so the home-dir match below (which also drops it) still works.
+  local new_title = path_from_cwd_uri(tab.active_pane.current_working_dir):gsub("^/", "")
   -- Normalize slashes
   new_title = new_title:gsub("\\", "/")
   new_title = new_title:gsub("//+", "/")
