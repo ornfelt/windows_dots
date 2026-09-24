@@ -86,11 +86,14 @@ if ($repoOwner -eq "ornfelt") {
             $commands.Add('git add -- diff_upstream.diff diff_bkp.diff diff_tarneaux.diff')
             $commands.Add('git commit -m "update diff files"')
         }
+        # git writes the diff files itself (--output): piping through Set-Content
+        # would turn LF into CRLF (and add a BOM in PowerShell 5.1), so the files
+        # would differ from the ones git_push.sh writes on Linux
         "stk-code" {
             Add-UpstreamIfMissing -UpstreamUrl "https://github.com/supertuxkart/stk-code"
             $commands.Add('git fetch upstream')
-            $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diffx')
-            $commands.Add('git diff 3f125f6^! | Set-Content -Encoding utf8 ./changes.diffx')
+            $commands.Add('git diff --output=diff_upstream.diffx upstream/master..HEAD -- . ":(exclude)*.diff"')
+            $commands.Add('git diff --output=changes.diffx 3f125f6^!')
             $commands.Add('git add -- diff_upstream.diffx changes.diffx')
             $commands.Add('git commit -m "update diff files"')
         }
@@ -102,9 +105,9 @@ if ($cleanedRepoName -eq 'AzerothCore-wotlk-with-NPCBots') {
     $commands.Add('git fetch upstream')
 
     if ($currentBranch -eq "linux") {
-        $commands.Add('git diff upstream/npcbots_3.3.5...linux -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 ./acore.diffx')
+        $commands.Add('git diff --output=acore.diffx upstream/npcbots_3.3.5...linux -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
     } else {
-        $commands.Add('git diff upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 ./acore.diffx')
+        $commands.Add('git diff --output=acore.diffx upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
     }
     $commands.Add('git add -- acore.diffx')
     $commands.Add('git commit -m "update diff files"')
@@ -114,7 +117,7 @@ if ($cleanedRepoName -eq 'AzerothCore-wotlk-with-NPCBots') {
 if ($cleanedRepoName -eq 'Trinitycore-3.3.5-with-NPCBots') {
     Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/TrinityCore-3.3.5-with-NPCBots"
     $commands.Add('git fetch upstream')
-    $commands.Add('git diff upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx" | Set-Content -Encoding utf8 ./tcore.diffx')
+    $commands.Add('git diff --output=tcore.diffx upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
     $commands.Add('git add -- tcore.diffx')
     $commands.Add('git commit -m "update diff files"')
 }
