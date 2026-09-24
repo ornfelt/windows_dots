@@ -156,8 +156,17 @@ if (-not $tokenValue) {
 $pushCommandActual  = "git push https://${tokenValue}@github.com/$repoOwner/$repoName $currentBranch"
 $pushCommandDisplay = "git push https://`$env:$($tokenEnvVarName)@github.com/$repoOwner/$repoName $currentBranch"
 
+# Pushing to a URL instead of to origin doesn't update origin/<branch>, so git
+# would keep saying the branch is ahead. Update it after a successful push,
+# like pushing to origin does.
+$syncCommand = "git update-ref refs/remotes/origin/$currentBranch refs/heads/$currentBranch"
+
 if ($OutputOnly) {
-    Write-Output $pushCommandDisplay
+    # no && in Windows PowerShell 5.1
+    Write-Output "$pushCommandDisplay; if (`$LASTEXITCODE -eq 0) { $syncCommand }"
 } else {
     Invoke-Expression $pushCommandActual
+    if ($LASTEXITCODE -eq 0) {
+        Invoke-Expression $syncCommand
+    }
 }
