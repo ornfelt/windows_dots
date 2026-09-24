@@ -1,6 +1,31 @@
 param(
-    [string]$OutputOnly
+    [string]$OutputOnly,
+    [Alias('h')]
+    [switch]$Help
 )
+
+function Show-Usage {
+    $scriptName = Split-Path -Leaf $PSCommandPath
+    Write-Host @"
+Usage: $scriptName [anything]
+       $scriptName help | --help | -h
+
+Pull the current branch from GitHub using a token from the environment
+(GITHUB_TOKEN, or ALT_GITHUB_TOKEN for archornf repos).
+
+Arguments:
+  (none)            Run the git pull.
+  anything else     Print the git pull command instead of running it.
+  -Help, -h, help   Show this help.
+"@
+}
+
+# `help` / `--help` bind to $OutputOnly (first positional argument).
+# -in and parameter names are case-insensitive, so HELP / -H also work.
+if ($Help -or $OutputOnly -in @('help', '--help')) {
+    Show-Usage
+    exit 0
+}
 
 $currentBranch = git rev-parse --abbrev-ref HEAD 2>$null
 $pushUrl       = git remote get-url --push origin 2>$null

@@ -1,6 +1,48 @@
 param(
-    [string]$OutputOnly
+    [switch]$Diff,
+    [switch]$OutputOnly,
+    [Alias('h')]
+    [switch]$Help
 )
+
+# Regenerate and commit the diff files for the repos listed below (dwm, dmenu,
+# st, awsm, ...) before pushing. Off by default; turn on with -Diff.
+$GenerateDiffs = $false
+
+function Show-Usage {
+    $scriptName = Split-Path -Leaf $PSCommandPath
+    Write-Host @"
+Usage: $scriptName [-Diff] [-OutputOnly]
+       $scriptName help | --help | -h
+
+Push the current branch to GitHub using a token from the environment
+(GITHUB_TOKEN, or ALT_GITHUB_TOKEN for archornf repos).
+
+Options:
+  -Diff (-d)        Regenerate and commit the diff files for repos that have
+                    them (dwm, dmenu, st, dwmblocks, awsm, stk-code,
+                    AzerothCore/TrinityCore NPCBots) before pushing.
+                    Default: $GenerateDiffs
+  -OutputOnly (-o)  Print the commands instead of running them.
+  -Help, -h, help   Show this help.
+"@
+}
+
+# `help` and `--help` are not parameter names, so they end up in $args
+if ($Help -or ($args.Count -gt 0 -and $args[0] -in @('help', '--help'))) {
+    Show-Usage
+    exit 0
+}
+
+if ($args.Count -gt 0) {
+    Write-Host "Unknown argument(s): $args" -ForegroundColor Red
+    Show-Usage
+    exit 1
+}
+
+if ($Diff) {
+    $GenerateDiffs = $true
+}
 
 #if (-not (Test-Path ".git")) {
 #    Write-Error "This is not a git repository."
@@ -43,83 +85,85 @@ function Add-UpstreamIfMissing {
 
 $cleanedRepoName = $repoName -replace '\.git$', ''
 
-if ($repoOwner -eq "ornfelt") {
-    switch ($cleanedRepoName) {
-        "dwm" {
-            Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/dwm"
-            $commands.Add('git fetch --all')
-            $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
-            $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
-            $commands.Add('git diff origin/new -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_new.diff')
-            $commands.Add('git add -- diff_upstream.diff diff_bkp.diff diff_new.diff')
-            $commands.Add('git commit -m "update diff files"')
-        }
-        "dmenu" {
-            Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/dmenu"
-            $commands.Add('git fetch --all')
-            $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
-            $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
-            $commands.Add('git add -- diff_upstream.diff diff_bkp.diff')
-            $commands.Add('git commit -m "update diff files"')
-        }
-        "st" {
-            Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/st"
-            $commands.Add('git fetch --all')
-            $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
-            $commands.Add('git diff bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
-            $commands.Add('git add -- diff_upstream.diff diff_bkp.diff')
-            $commands.Add('git commit -m "update diff files"')
-        }
-        "dwmblocks" {
-            Add-UpstreamIfMissing -UpstreamUrl "https://github.com/torrinfail/dwmblocks"
-            $commands.Add('git fetch --all')
-            $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
-            $commands.Add('git add -- diff_upstream.diff')
-            $commands.Add('git commit -m "update diff files"')
-        }
-        "awsm" {
-            Add-UpstreamIfMissing -UpstreamUrl "https://github.com/lcpz/awesome-copycats"
-            $commands.Add('git fetch --all')
-            $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
-            $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
-            $commands.Add('git diff origin/tarneaux -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_tarneaux.diff')
-            $commands.Add('git add -- diff_upstream.diff diff_bkp.diff diff_tarneaux.diff')
-            $commands.Add('git commit -m "update diff files"')
-        }
-        # git writes the diff files itself (--output): piping through Set-Content
-        # would turn LF into CRLF (and add a BOM in PowerShell 5.1), so the files
-        # would differ from the ones git_push.sh writes on Linux
-        "stk-code" {
-            Add-UpstreamIfMissing -UpstreamUrl "https://github.com/supertuxkart/stk-code"
-            $commands.Add('git fetch upstream')
-            $commands.Add('git diff --output=diff_upstream.diffx upstream/master..HEAD -- . ":(exclude)*.diff"')
-            $commands.Add('git diff --output=changes.diffx 3f125f6^!')
-            $commands.Add('git add -- diff_upstream.diffx changes.diffx')
-            $commands.Add('git commit -m "update diff files"')
+if ($GenerateDiffs) {
+    if ($repoOwner -eq "ornfelt") {
+        switch ($cleanedRepoName) {
+            "dwm" {
+                Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/dwm"
+                $commands.Add('git fetch --all')
+                $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
+                $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
+                $commands.Add('git diff origin/new -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_new.diff')
+                $commands.Add('git add -- diff_upstream.diff diff_bkp.diff diff_new.diff')
+                $commands.Add('git commit -m "update diff files"')
+            }
+            "dmenu" {
+                Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/dmenu"
+                $commands.Add('git fetch --all')
+                $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
+                $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
+                $commands.Add('git add -- diff_upstream.diff diff_bkp.diff')
+                $commands.Add('git commit -m "update diff files"')
+            }
+            "st" {
+                Add-UpstreamIfMissing -UpstreamUrl "https://git.suckless.org/st"
+                $commands.Add('git fetch --all')
+                $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
+                $commands.Add('git diff bkp -- . ":(exclude)*.diff" ":(exclude)config.def.h" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
+                $commands.Add('git add -- diff_upstream.diff diff_bkp.diff')
+                $commands.Add('git commit -m "update diff files"')
+            }
+            "dwmblocks" {
+                Add-UpstreamIfMissing -UpstreamUrl "https://github.com/torrinfail/dwmblocks"
+                $commands.Add('git fetch --all')
+                $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
+                $commands.Add('git add -- diff_upstream.diff')
+                $commands.Add('git commit -m "update diff files"')
+            }
+            "awsm" {
+                Add-UpstreamIfMissing -UpstreamUrl "https://github.com/lcpz/awesome-copycats"
+                $commands.Add('git fetch --all')
+                $commands.Add('git diff upstream/master..HEAD -- . ":(exclude)*.diff" | Set-Content -Encoding utf8 ./diff_upstream.diff')
+                $commands.Add('git diff origin/bkp -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_bkp.diff')
+                $commands.Add('git diff origin/tarneaux -- . ":(exclude)*.diff" ":(exclude).gitignore" ":(exclude)patches/**" ":(exclude)patches_git/**" | Set-Content -Encoding utf8 ./diff_tarneaux.diff')
+                $commands.Add('git add -- diff_upstream.diff diff_bkp.diff diff_tarneaux.diff')
+                $commands.Add('git commit -m "update diff files"')
+            }
+            # git writes the diff files itself (--output): piping through Set-Content
+            # would turn LF into CRLF (and add a BOM in PowerShell 5.1), so the files
+            # would differ from the ones git_push.sh writes on Linux
+            "stk-code" {
+                Add-UpstreamIfMissing -UpstreamUrl "https://github.com/supertuxkart/stk-code"
+                $commands.Add('git fetch upstream')
+                $commands.Add('git diff --output=diff_upstream.diffx upstream/master..HEAD -- . ":(exclude)*.diff"')
+                $commands.Add('git diff --output=changes.diffx 3f125f6^!')
+                $commands.Add('git add -- diff_upstream.diffx changes.diffx')
+                $commands.Add('git commit -m "update diff files"')
+            }
         }
     }
-}
 
-if ($cleanedRepoName -eq 'AzerothCore-wotlk-with-NPCBots') {
-    Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/AzerothCore-wotlk-with-NPCBots"
-    $commands.Add('git fetch upstream')
+    if ($cleanedRepoName -eq 'AzerothCore-wotlk-with-NPCBots') {
+        Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/AzerothCore-wotlk-with-NPCBots"
+        $commands.Add('git fetch upstream')
 
-    if ($currentBranch -eq "linux") {
-        $commands.Add('git diff --output=acore.diffx upstream/npcbots_3.3.5...linux -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
-    } else {
-        $commands.Add('git diff --output=acore.diffx upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
+        if ($currentBranch -eq "linux") {
+            $commands.Add('git diff --output=acore.diffx upstream/npcbots_3.3.5...linux -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
+        } else {
+            $commands.Add('git diff --output=acore.diffx upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
+        }
+        $commands.Add('git add -- acore.diffx')
+        $commands.Add('git commit -m "update diff files"')
     }
-    $commands.Add('git add -- acore.diffx')
-    $commands.Add('git commit -m "update diff files"')
-}
 
-#if ($cleanedRepoName -eq 'TrinityCore-3.3.5-with-NPCBots') {
-if ($cleanedRepoName -eq 'Trinitycore-3.3.5-with-NPCBots') {
-    Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/TrinityCore-3.3.5-with-NPCBots"
-    $commands.Add('git fetch upstream')
-    $commands.Add('git diff --output=tcore.diffx upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
-    $commands.Add('git add -- tcore.diffx')
-    $commands.Add('git commit -m "update diff files"')
+    #if ($cleanedRepoName -eq 'TrinityCore-3.3.5-with-NPCBots') {
+    if ($cleanedRepoName -eq 'Trinitycore-3.3.5-with-NPCBots') {
+        Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/TrinityCore-3.3.5-with-NPCBots"
+        $commands.Add('git fetch upstream')
+        $commands.Add('git diff --output=tcore.diffx upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
+        $commands.Add('git add -- tcore.diffx')
+        $commands.Add('git commit -m "update diff files"')
+    }
 }
 
 if ($OutputOnly) {
