@@ -3,7 +3,7 @@ param(
     [string[]]$PassthroughArgs
 )
 
-# script_helper.ps1 - launcher for the ScriptHelper GUI / CLI
+# db_helper.ps1 - launcher for the DbHelper GUI / CLI
 
 $ErrorActionPreference = "Stop"
 
@@ -14,11 +14,11 @@ if ([string]::IsNullOrWhiteSpace($codeRoot)) {
     exit 1
 }
 
-$projectDir = Join-Path $codeRoot "Code2/C#/my_csharp/ScriptHelper"
-$csproj = Join-Path $projectDir "ScriptHelper.csproj"
+$projectDir = Join-Path $codeRoot "Code2/C#/my_csharp/DbHelper"
+$csproj = Join-Path $projectDir "DbHelper.csproj"
 
 if (-not (Test-Path $csproj)) {
-    Write-Host "ScriptHelper.csproj not found at: $projectDir" -ForegroundColor Red
+    Write-Host "DbHelper.csproj not found at: $projectDir" -ForegroundColor Red
     exit 1
 }
 
@@ -48,7 +48,7 @@ function Find-Exe([int]$Major) {
         $tfmDirs = @(Get-ChildItem -LiteralPath $configDir -Directory -Filter "net*" -ErrorAction SilentlyContinue |
             Where-Object { (Get-TfmMajor $_.Name) -eq $Major })
         foreach ($tfmDir in $tfmDirs) {
-            $exe = Join-Path $tfmDir.FullName "ScriptHelper.exe"
+            $exe = Join-Path $tfmDir.FullName "DbHelper.exe"
             if (Test-Path $exe) { return $exe }
         }
     }
@@ -117,7 +117,7 @@ if (-not $exePath) {
 }
 
 if (-not $exePath) {
-    Write-Host "Building ScriptHelper for net$targetMajor.0..." -ForegroundColor Cyan
+    Write-Host "Building DbHelper for net$targetMajor.0..." -ForegroundColor Cyan
     $buildArgs = @("build", "-c", "Release", "--nologo", "-v", "quiet")
     if ($buildTfm) { $buildArgs += "-p:TargetFramework=$buildTfm" }
     Push-Location $projectDir
