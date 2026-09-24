@@ -123,7 +123,7 @@ if ($cleanedRepoName -eq 'Trinitycore-3.3.5-with-NPCBots') {
 }
 
 if ($OutputOnly) {
-    foreach ($cmd in $commands[0..($commands.Count - 1)]) {
+    foreach ($cmd in $commands) {
         Write-Output $cmd
     }
 }
