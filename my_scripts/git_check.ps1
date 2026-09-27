@@ -4,7 +4,7 @@
 # Also lists branches that are behind their upstream (or, without one, the
 # branch of the same name on the remote), i.e. that have something to pull.
 #
-#   git_check_repos.ps1 [-NoFetch] [-All] [CATEGORY|DIR...]
+#   git_check.ps1 [-NoFetch] [-All] [CATEGORY|DIR...]
 #
 #   CATEGORY  which of the known repos to check (case insensitive, can be combined)
 #               all          everything (the default without CATEGORY and DIR)
@@ -20,11 +20,11 @@
 #   -h, help  show this help
 #
 # Examples:
-#   git_check_repos.ps1                    check every known repo
-#   git_check_repos.ps1 wow -n             the WoW repos, without fetching first
-#   git_check_repos.ps1 -a dots            the dotfiles repos, clean ones too
-#   git_check_repos.ps1 wow other          two categories at once
-#   git_check_repos.ps1 C:\src             every repo under C:\src, 4 levels deep
+#   git_check.ps1                    check every known repo
+#   git_check.ps1 wow -n             the WoW repos, without fetching first
+#   git_check.ps1 -a dots            the dotfiles repos, clean ones too
+#   git_check.ps1 wow other          two categories at once
+#   git_check.ps1 C:\src             every repo under C:\src, 4 levels deep
 #
 # Known repos that don't exist (yet) or aren't git repos are skipped with a warning.
 # A fetch that takes longer than $env:GIT_CHECK_TIMEOUT seconds (default 60) is
@@ -109,7 +109,7 @@ $OTHER_REPOS = @(
     (Join-Path $codeRootDir 'Code2\C\ioq3')
     $myNotesPath
 )
-# git_check_repos.sh scans ~/.config here; nothing to scan on Windows
+# git_check.sh scans ~/.config here; nothing to scan on Windows
 $OTHER_DIRS = @()
 
 $fetch   = -not $NoFetch
@@ -127,7 +127,7 @@ foreach ($arg in $Targets) {
         { $_ -in 'term', 'terminal' } { $want['term'] = 1; break }
         'x'        { $want['other'] = 1; break }
         { $_.StartsWith('-') } {
-            # combined single-letter options like -na, as in git_check_repos.sh
+            # combined single-letter options like -na, as in git_check.sh
             foreach ($opt in $arg.Substring(1).ToCharArray()) {
                 switch ($opt) {
                     'n' { $fetch = $false }
