@@ -79,7 +79,7 @@ function Add-UpstreamIfMissing {
         $commands.Add("git remote add upstream $UpstreamUrl")
         Write-Output "upstream url did NOT exist... Added: $UpstreamUrl"
     } else {
-        #Write-Output "upstream url already added: $UpstreamUrl"
+        Write-Output "upstream url already added: $UpstreamUrl"
     }
 }
 
@@ -120,6 +120,9 @@ if ($GenerateDiffs) {
                 $commands.Add('git add -- diff_upstream.diff')
                 $commands.Add('git commit -m "update diff files"')
             }
+            # git_push.sh delegates to the repo's own gen_diffs.sh (which also covers
+            # the vendored claude_usage/ tree); that is a bash script, so the diffs
+            # are generated inline here
             "awsm" {
                 Add-UpstreamIfMissing -UpstreamUrl "https://github.com/lcpz/awesome-copycats"
                 $commands.Add('git fetch --all')
@@ -207,11 +210,20 @@ $pushCommandDisplay = "git push https://`$env:$($tokenEnvVarName)@github.com/$re
 # would keep saying the branch is ahead. Update it after a successful push,
 # like pushing to origin does.
 $syncCommand = "git update-ref refs/remotes/origin/$currentBranch refs/heads/$currentBranch"
+# A URL push never sets an upstream either, and without one git status doesn't
+# compare the branch with origin at all. Set it once origin/<branch> exists.
+git rev-parse -q --verify '@{u}' 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    $syncCommand += "; git branch --set-upstream-to=origin/$currentBranch"
+}
+
+# no && in Windows PowerShell 5.1
+$pushCommandDisplay = "$pushCommandDisplay; if (`$LASTEXITCODE -eq 0) { $syncCommand }"
 
 if ($OutputOnly) {
-    # no && in Windows PowerShell 5.1
-    Write-Output "$pushCommandDisplay; if (`$LASTEXITCODE -eq 0) { $syncCommand }"
+    Write-Output $pushCommandDisplay
 } else {
+    Write-Host "Executing: $pushCommandDisplay"
     Invoke-Expression $pushCommandActual
     if ($LASTEXITCODE -eq 0) {
         Invoke-Expression $syncCommand

@@ -229,12 +229,38 @@ $aliases = @(
     ".search", ".help_old", ".srclist", ".arg_tests", ".gr", ".gp", "nvcs", ".cmake_build",
     ".audit_diff_commit_info", ".audit_diff_restore", ".gen_commit_msg", ".kill_nvim_servers",
     ".gc", ".gcp", ".gd", ".do_the_thing", ".keycast", ".sql", ".ssms", ".ccs",
-    ".display_info", ".cmake_helper", ".module_sync", ".db_helper", ".script_helper"
+    ".display_info", ".cmake_helper", ".module_sync", ".db_helper", ".script_helper",
+    ".git_status", ".git_check_repos"
 )
 
 foreach ($alias in $aliases) {
     $scriptName = $alias.TrimStart(".")
     Set-Alias -Name $alias -Value "$PSScriptRoot\my_scripts\$scriptName.ps1"
+}
+
+# Tab completion for the categories of git_check_repos.ps1 (also through the
+# .git_check_repos alias), like the zsh _git_check_repos completion on Linux.
+# Directories complete as usual since the script also takes them.
+$GitCheckReposCategories = @(
+    @('all',      'everything (the default)'),
+    @('wow',      'WoW servers, cores and tools'),
+    @('term',     'terminals'),
+    @('terminal', 'terminals'),
+    @('dots',     'term + the dotfiles and WindowsPowerShell repos'),
+    @('other',    'everything in no other category'),
+    @('x',        'everything in no other category'),
+    @('help',     'show help')
+)
+Register-ArgumentCompleter -CommandName '.git_check_repos', 'git_check_repos.ps1' -ParameterName Targets -ScriptBlock {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+    foreach ($category in $GitCheckReposCategories) {
+        if ($category[0] -like "$wordToComplete*") {
+            [System.Management.Automation.CompletionResult]::new($category[0], $category[0], 'ParameterValue', $category[1])
+        }
+    }
+    Get-ChildItem -Directory -Path "$wordToComplete*" -ErrorAction SilentlyContinue | ForEach-Object {
+        [System.Management.Automation.CompletionResult]::new($_.Name, $_.Name, 'ProviderContainer', $_.FullName)
+    }
 }
 
 # `wez` runs the custom wezterm launcher from the wezterm checkout, the same way

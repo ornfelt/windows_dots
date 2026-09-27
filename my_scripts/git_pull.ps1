@@ -69,9 +69,27 @@ if (-not $tokenValue) {
 $pullCommandActual  = "git pull https://${tokenValue}@github.com/$repoOwner/$repoName $currentBranch"
 $pullCommandDisplay = "git pull https://`$env:$($tokenEnvVarName)@github.com/$repoOwner/$repoName $currentBranch"
 
+# Pulling from a URL instead of from origin doesn't update origin/<branch>, so
+# git would say the branch is ahead by the pulled commits. Point it at what was
+# fetched (FETCH_HEAD) after a successful pull, like pulling from origin does.
+$syncCommand = "git update-ref refs/remotes/origin/$currentBranch FETCH_HEAD"
+# A URL pull never sets an upstream either, and without one git status doesn't
+# compare the branch with origin at all. Set it once origin/<branch> exists.
+git rev-parse -q --verify '@{u}' 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    $syncCommand += "; git branch --set-upstream-to=origin/$currentBranch"
+}
+
+# no && in Windows PowerShell 5.1
+$pullCommandDisplay = "$pullCommandDisplay; if (`$LASTEXITCODE -eq 0) { $syncCommand }"
+
 if ($OutputOnly) {
     Write-Output $pullCommandDisplay
 } else {
+    Write-Host "Executing: $pullCommandDisplay"
     Invoke-Expression $pullCommandActual
+    if ($LASTEXITCODE -eq 0) {
+        Invoke-Expression $syncCommand
+    }
 }
 
