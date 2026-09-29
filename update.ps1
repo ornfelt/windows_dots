@@ -93,18 +93,18 @@ if (-not (Test-Path -Path $weztermSessionManagerDir)) {
 }
 
 # ------------------------------------------------------------
-# Copy WezTerm files
-$statusFile = ".\wezterm\status.lua"
+# Copy WezTerm files: every .lua module in .\wezterm (not recursive) goes to
+# %USERPROFILE%\.wezterm, except session-manager.lua, which lives in its own dir
 $sessionManagerFile = ".\wezterm\session-manager.lua"
-$claudeFile = ".\wezterm\claude.lua"
-$nvimServerFile = ".\wezterm\nvim_server.lua"
-$bgStatusFile = ".\wezterm\bg_status.lua"
 
-Copy-Item -Path $statusFile -Destination $weztermBaseDir -Force
 Copy-Item -Path $sessionManagerFile -Destination $weztermSessionManagerDir -Force
-Copy-Item -Path $claudeFile -Destination $weztermBaseDir -Force
-Copy-Item -Path $nvimServerFile -Destination $weztermBaseDir -Force
-Copy-Item -Path $bgStatusFile -Destination $weztermBaseDir -Force
+
+Get-ChildItem -Path ".\wezterm" -Filter "*.lua" -File |
+    Where-Object { $_.Name -ne "session-manager.lua" } |
+    ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination $weztermBaseDir -Force
+        Write-Host "  $($_.Name)" -ForegroundColor DarkGray
+    }
 
 Write-Host "`nWezTerm files copied successfully." -ForegroundColor Cyan
 

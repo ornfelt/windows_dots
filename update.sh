@@ -42,10 +42,14 @@ wezterm_dest="$HOME/.config/wezterm"
 if [ -d "$wezterm_dest" ]; then
     write_info "Copying additional WezTerm files..."
 
-    cp "./wezterm/claude.lua" "$wezterm_dest/"
-    cp "./wezterm/nvim_server.lua" "$wezterm_dest/"
-    cp "./wezterm/bg_status.lua" "$wezterm_dest/"
-    cp "./wezterm/status.lua" "$wezterm_dest/"
+    # Every .lua module in ./wezterm (not recursive), except session-manager.lua,
+    # which belongs in wezterm-session-manager/ and is not synced here
+    for file in ./wezterm/*.lua; do
+        [ -f "$file" ] || continue
+        [ "$(basename "$file")" = "session-manager.lua" ] && continue
+        cp "$file" "$wezterm_dest/"
+        echo -e "${DARKGRAY}  $(basename "$file")${RESET}"
+    done
 
     write_ok "WezTerm files copied successfully to $wezterm_dest"
 else

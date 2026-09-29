@@ -66,22 +66,22 @@ if (Test-Path -Path $weztermSourceFile) {
     Write-Output ".wezterm.lua file not found in $dotfilesDir."
 }
 
-# Sync wezterm lua modules into ~/.wezterm
+# Sync wezterm lua modules into ~/.wezterm: every .lua file directly in
+# .config/wezterm (not recursive, so wezterm-session-manager/ is left alone)
 $weztermModulesSourceDir = Join-Path -Path $dotfilesDir -ChildPath "wezterm"
 $weztermModulesTargetDir = Join-Path -Path $userProfileDir -ChildPath ".wezterm"
-$weztermModuleFiles = @("bg_status.lua", "claude.lua", "nvim_server.lua", "status.lua")
 
 if (-Not (Test-Path -Path $weztermModulesTargetDir)) {
     New-Item -ItemType Directory -Path $weztermModulesTargetDir | Out-Null
 }
 
+$weztermModuleFiles = @(Get-ChildItem -Path $weztermModulesSourceDir -Filter "*.lua" -File -ErrorAction SilentlyContinue)
+if ($weztermModuleFiles.Count -eq 0) {
+    Write-Output "No wezterm .lua files found in $weztermModulesSourceDir."
+}
+
 foreach ($moduleFile in $weztermModuleFiles) {
-    $moduleSourceFile = Join-Path -Path $weztermModulesSourceDir -ChildPath $moduleFile
-    if (Test-Path -Path $moduleSourceFile) {
-        Copy-Item -Path $moduleSourceFile -Destination $weztermModulesTargetDir -Force
-        Write-Output "$moduleFile has been copied to $weztermModulesTargetDir."
-    } else {
-        Write-Output "$moduleFile file not found in $weztermModulesSourceDir."
-    }
+    Copy-Item -Path $moduleFile.FullName -Destination $weztermModulesTargetDir -Force
+    Write-Output "$($moduleFile.Name) has been copied to $weztermModulesTargetDir."
 }
 
