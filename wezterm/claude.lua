@@ -41,9 +41,13 @@ local M = {}
 -- Hard-coded switch: set to false to disable the tab marker and notification
 M.enabled = true
 
+-- Sparkles (close to the starburst Claude Code spins) instead of the robot for
+-- a finished response, in the tab title and on the status line. The robot's
+-- antenna fills the top of its emoji box, so it reads lower than the text.
+M.use_sparkles = true
 -- Prefixed to the title of tabs with a finished, unvisited response.
 -- Nerd font alternatives: '󰚩 ' (nf-md-robot), '🤖 ', '● '
-M.icon = '🤖 '
+M.icon = M.use_sparkles and '✨ ' or '🤖 '
 -- Prefixed instead when that response ended on an API error.
 -- A colour emoji like M.icon, so the two match in size and style.
 -- Alternative: '\u{f16a1} ' (nf-md-robot_dead, tinted by failed_icon_color)
@@ -83,7 +87,7 @@ M.demo_error = 'rate_limit'
 -- "🤖 Finished in gfx (tab 3, pane 18)" - one letter per location part, no
 -- "Finished in" and the label cut to M.short_label_max_length. "Error in"
 -- stays, so a failure still reads as one next to a finished response.
-M.short_notification = true
+M.short_notification = false
 -- The one letter forms of the location parts, and what joins them
 M.short_location_labels = { wezterm = 'w', window = 'win', tab = 't', pane = 'p' }
 M.short_location_separator = ' '
