@@ -71,6 +71,10 @@ M.notification_separator = '  ·  '
 -- Between the parts of "wezterm 5052, tab 3, pane 18"
 M.location_separator = ', '
 
+-- Put status.lua's ✓ / ⚠ in front of the status line message as well. Off
+-- by default: the robot and failed icons already say how it ended.
+M.notification_prefix = false
+
 -- Session name and error of the mocked notifications from M.demo
 M.demo_label = 'demo'
 M.demo_error = 'rate_limit'
@@ -310,7 +314,8 @@ local function announce(fresh, fallback_window)
   end
 
   status.notify(target, M.notification_title, table.concat(parts, M.notification_separator),
-    #fresh_failed > 0 and 'warning' or true, any_mine, M.notification_timeout_ms)
+    #fresh_failed > 0 and 'warning' or true, any_mine, M.notification_timeout_ms,
+    M.notification_prefix)
 end
 
 --- Shows a mocked failed notification for the given pane, then a finished one
