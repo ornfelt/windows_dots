@@ -570,6 +570,14 @@ function Go-Up-Twice {
 }
 Set-Alias ... Go-Up-Twice
 
+# mkdir, bash `mkdir -p` style: creates any missing parent dirs and succeeds when the dir
+# already exists. -p is accepted (it's always on) so `mkdir -p a/b/c` works as on Linux.
+function New-DirRecursive {
+    param([switch]$p, [Parameter(Mandatory, ValueFromRemainingArguments)][string[]]$Path)
+    foreach ($dir in $Path) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+}
+Set-Alias mkdir New-DirRecursive -Option AllScope -Force
+
 # ---------------------------------------------------------------------------
 # Directory stack, bash/zsh style
 #
