@@ -19,6 +19,10 @@
 # with named parameters:
 # .\mpq_server.ps1 -Expansion tbc -Lang js
 #
+# only listen on localhost (127.0.0.1), not on the network ip (default is both):
+# .\mpq_server.ps1 tbc js -Localhost
+# .\mpq_server.ps1 tbc js --localhost
+#
 # print the commands instead of running them:
 # .\mpq_server.ps1 tbc js -ShowCmd
 #
@@ -37,6 +41,8 @@ param(
     [switch]$Help,
 
     [switch]$ShowCmd,
+
+    [switch]$Localhost,
 
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$Rest
@@ -68,6 +74,8 @@ $ScriptName    = if ($PSCommandPath) { Split-Path -Leaf $PSCommandPath } else { 
 
 # Help asked for as a plain word rather than as the -Help switch
 $HelpTokens  = @('help', '--help', '-h', '-help', '/help', '/?', '-?')
+# --localhost is not parsed as a parameter by PowerShell, it arrives as a plain word
+$LocalhostTokens = @('--localhost')
 
 function Write-ExpansionList {
     Write-InfoAlt "Expansions:"
@@ -80,7 +88,7 @@ function Show-Usage {
     Write-Info "$ScriptName - sync and launch the mpq file server for a WoW expansion"
     Write-Host ""
     Write-InfoAlt "Usage:"
-    Write-Host "  $ScriptName [expansion] [$($Languages -join '|')] [-ShowCmd]"
+    Write-Host "  $ScriptName [expansion] [$($Languages -join '|')] [-Localhost] [-ShowCmd]"
     Write-Host "  $ScriptName -Expansion <expansion> -Lang <lang>"
     Write-Host "  $ScriptName help | -h"
     Write-Host ""
@@ -94,6 +102,8 @@ function Show-Usage {
     Write-Host "  $($SyncFiles -join ', ')"
     Write-Host ""
     Write-InfoAlt "Options:"
+    Write-Host "  -Localhost   only listen on 127.0.0.1 (default: all interfaces, i.e. also the network ip)"
+    Write-Host "               --localhost works too"
     Write-Host "  -ShowCmd     print the commands that would be run, then exit"
     Write-Host "  -h, help     show this help"
     Write-Host ""
@@ -103,6 +113,7 @@ function Show-Usage {
     Write-Host "  $ScriptName classic js"
     Write-Host "  $ScriptName js"
     Write-Host "  $ScriptName -Expansion tbc -Lang js"
+    Write-Host "  $ScriptName tbc js -Localhost"
     Write-Host "  $ScriptName tbc js -ShowCmd"
 }
 
@@ -123,17 +134,17 @@ function Get-ExpansionName ([string]$wanted) {
     return $null
 }
 
-$tokens = @($Expansion, $Lang) | Where-Object { $_ }
+$tokens = @($Expansion, $Lang) + @($Rest) | Where-Object { $_ }
+
+if ($tokens | Where-Object { $LocalhostTokens -contains $_.ToLower() }) {
+    $Localhost = $true
+    $tokens    = @($tokens | Where-Object { $LocalhostTokens -notcontains $_.ToLower() })
+}
 
 # -h / -Help, or 'help' / '--help' typed where an argument goes
 if ($Help -or ($tokens | Where-Object { $HelpTokens -contains $_.ToLower() })) {
     Show-Usage
     exit 0
-}
-
-# Anything the parameters above did not take is an argument we do not understand
-if ($Rest -and $Rest.Count -gt 0) {
-    Show-UsageAndExit ("Unknown argument(s): " + ($Rest -join ' '))
 }
 
 # Expansion and language may come in either order, so sort the tokens by what they are
@@ -209,11 +220,12 @@ switch ($langName) {
     'py' { $runExe = 'python'; $runArgs = @("$ServerName.py") }
     'js' { $runExe = 'node';   $runArgs = @("$ServerName.js") }
 }
+if ($Localhost) { $runArgs += '--localhost' }
 $runCmd = "$runExe $($runArgs -join ' ')"
 
 if ($ShowCmd) {
     Write-Info "Equivalent PowerShell command:"
-    Write-Host "# $ScriptName $exp $langName"
+    Write-Host "# $ScriptName $exp $langName$(if ($Localhost) { ' -Localhost' })"
     foreach ($file in $toCopy) {
         Write-Host "Copy-Item -Force '$(Join-Path $sourceDir $file)' '$(Join-Path $mpqDir $file)'"
     }
