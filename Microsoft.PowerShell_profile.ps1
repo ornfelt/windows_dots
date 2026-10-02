@@ -271,6 +271,13 @@ if (Test-Path $WeztermRunScript) {
     Set-Alias -Name wez -Value $WeztermRunScript
 }
 
+# `wec` does the same for WecTerm, the C port of wezterm, from its checkout.
+# `wec help` prints its usage.
+$WectermRunScript = Join-Path $env:code_root_dir 'Code2\C\WecTerm\run-custom-wecterm.ps1'
+if (Test-Path $WectermRunScript) {
+    Set-Alias -Name wec -Value $WectermRunScript
+}
+
 function RunChatGPT {
 	# python -m revChatGPT.V3 --api_key $env:OPENAI_API_KEY --submit_key enter
     python -m revChatGPT.V3 --api_key $env:OPENAI_API_KEY
