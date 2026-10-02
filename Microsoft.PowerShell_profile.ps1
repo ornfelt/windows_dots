@@ -3,6 +3,18 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 # Note: to reload profile, run:
 # . $PROFILE
 
+# Setup hints: parts of this profile that need something installed or set are
+# skipped when it is missing, and a hint says what to install/set to enable
+# them. Set to $false to silence the hints on a machine that lacks them on purpose
+$ProfileShowSetupHints = $true
+
+function Write-ProfileSetupHint([string]$Message) {
+    # Not when stdout is redirected (`powershell -Command ...` from scripts or
+    # wezterm), where the hint would end up in the output of the command
+    if (-not $ProfileShowSetupHints -or [Console]::IsOutputRedirected) { return }
+    Write-Host "profile: $Message" -ForegroundColor Magenta
+}
+
 # Oh-My-Posh
 #oh-my-posh init pwsh | Invoke-Expression
 #$omp_config = Join-Path $PSScriptRoot ".\custom_cobalt.omp.json"
@@ -12,30 +24,54 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 #Install-Module -Name PSReadLine -Force -Scope CurrentUser
 Import-Module PSReadLine
 Set-PSReadLineOption -BellStyle None
+# PredictionSource/PredictionViewStyle and the NextSuggestion/PreviousSuggestion
+# functions need PSReadLine 2.2.0+, while Windows PowerShell 5.1 ships with 2.0.0
+$PSReadLineVersion = (Get-Module PSReadLine | Sort-Object Version -Descending | Select-Object -First 1).Version
+$PSReadLineHasPrediction = $PSReadLineVersion -ge [version]'2.2.0'
+if (-not $PSReadLineHasPrediction) {
+    Write-ProfileSetupHint ("PSReadLine $PSReadLineVersion is too old for predictions and Ctrl+n/Ctrl+p (needs 2.2.0+). " +
+        "Install a newer one with: Install-Module PSReadLine -Scope CurrentUser -Force -SkipPublisherCheck (then restart the shell)")
+}
 # Both of these throw when stdout is redirected - which is the case for every
 # `powershell -Command ...` started from a script or from wezterm - printing
 # two errors and paying for the exceptions on each such run
-if (-not [Console]::IsOutputRedirected) {
+if ($PSReadLineHasPrediction -and -not [Console]::IsOutputRedirected) {
     Set-PSReadLineOption -PredictionSource History
     Set-PSReadLineOption -PredictionViewStyle ListView
 }
 Set-PSReadLineOption -EditMode Vi
 #Set-PSReadLineOption -EditMode Windows
 
-Set-PSReadLineKeyHandler -Chord 'Ctrl+n' -Function NextSuggestion
-Set-PSReadLineKeyHandler -Chord 'Ctrl+p' -Function PreviousSuggestion
+if ($PSReadLineHasPrediction) {
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+n' -Function NextSuggestion
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+p' -Function PreviousSuggestion
+}
 
 # Fzf
+# fzf.exe is needed by PSFzf and by the Ctrl+t and Alt+d handlers below
+$HasFzf = [bool](Get-Command fzf -ErrorAction SilentlyContinue)
+if (-not $HasFzf) {
+    Write-ProfileSetupHint "fzf not found on PATH - Ctrl+t, Alt+d and the PSFzf bindings are disabled. Install it with: winget install junegunn.fzf"
+}
 #Install-Module -Name PSFzf -Force -Scope CurrentUser
-Import-Module PSFzf
+$HasPSFzfModule = $true
+try { Import-Module PSFzf -ErrorAction Stop }
+catch [System.IO.FileNotFoundException] { $HasPSFzfModule = $false }
+catch { }  # installed but failed to load, e.g. because fzf is not on PATH
+if (-not $HasPSFzfModule) {
+    Write-ProfileSetupHint "PSFzf module not installed - Alt+t, Ctrl+r, Alt+c, Ctrl+f, Ctrl+g and Ctrl+k are disabled. Install it with: Install-Module -Name PSFzf -Scope CurrentUser -Force"
+}
+$HasPSFzf = $HasFzf -and [bool](Get-Module PSFzf)
 # Make FZF be case insensitive
 $env:_PSFZF_FZF_DEFAULT_OPTS = '-i'
 #Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory 'Ctrl+r'
 
 # alt 1: PSFzf with built-in provider
 #Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
-Set-PsFzfOption -PSReadlineChordProvider 'Alt+t'
-Set-PsFzfOption -PSReadlineChordReverseHistory 'Ctrl+r'
+if ($HasPSFzf) {
+    Set-PsFzfOption -PSReadlineChordProvider 'Alt+t'
+    Set-PsFzfOption -PSReadlineChordReverseHistory 'Ctrl+r'
+}
 
 # alt 2: custom normalizing, but slow due to Get-ChildItem recursion 
 function Test-IsHomeDirPath {
@@ -123,45 +159,50 @@ function Invoke-FuzzyProviderNormalized {
 #}
 
 # alt 3: plain fzf
-Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
-    $selected = fzf --prompt "Files> "
+if ($HasFzf) {
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
+        $selected = fzf --prompt "Files> "
 
-    if ([string]::IsNullOrWhiteSpace($selected)) {
-        return
+        if ([string]::IsNullOrWhiteSpace($selected)) {
+            return
+        }
+
+        # Quote paths with spaces
+        if ($selected -match '\s') {
+            $selected = '"' + $selected.Replace('"', '\"') + '"'
+        }
+
+        [Microsoft.PowerShell.PSConsoleReadLine]::Insert($selected)
+    }
+}
+
+# These all call PSFzf functions, so they are only bound when PSFzf is loaded
+if ($HasPSFzf) {
+    Set-PSReadLineKeyHandler -Chord 'Alt+c' -ScriptBlock {
+        Invoke-FuzzySetLocation
+        # Set-Location inside a key handler doesn't redraw the prompt, so it kept
+        # showing the old dir until Enter was pressed. InvokePrompt re-runs prompt
+        # in place, which also sends the new cwd to wezterm via OSC 7
+        [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
     }
 
-    # Quote paths with spaces
-    if ($selected -match '\s') {
-        $selected = '"' + $selected.Replace('"', '\"') + '"'
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+f' -ScriptBlock {
+        Invoke-PsFzfRipgrep
     }
 
-    [Microsoft.PowerShell.PSConsoleReadLine]::Insert($selected)
-}
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+g' -ScriptBlock {
+        Invoke-FuzzyGitStatus
+        #Invoke-FuzzyEdit
+        #Invoke-FuzzyFasd
+        #Invoke-FuzzyZLocation
+        #Invoke-FuzzyHistory
+        #Invoke-FuzzyScoop
+        #Set-LocationFuzzyEverything
+    }
 
-Set-PSReadLineKeyHandler -Chord 'Alt+c' -ScriptBlock {
-    Invoke-FuzzySetLocation
-    # Set-Location inside a key handler doesn't redraw the prompt, so it kept
-    # showing the old dir until Enter was pressed. InvokePrompt re-runs prompt
-    # in place, which also sends the new cwd to wezterm via OSC 7
-    [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
-}
-
-Set-PSReadLineKeyHandler -Chord 'Ctrl+f' -ScriptBlock {
-    Invoke-PsFzfRipgrep
-}
-
-Set-PSReadLineKeyHandler -Chord 'Ctrl+g' -ScriptBlock {
-    Invoke-FuzzyGitStatus
-    #Invoke-FuzzyEdit
-    #Invoke-FuzzyFasd
-    #Invoke-FuzzyZLocation
-    #Invoke-FuzzyHistory
-    #Invoke-FuzzyScoop
-    #Set-LocationFuzzyEverything
-}
-
-Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
-    Invoke-FuzzyKillProcess
+    Set-PSReadLineKeyHandler -Chord 'Ctrl+k' -ScriptBlock {
+        Invoke-FuzzyKillProcess
+    }
 }
 
 # disable v -> vim
@@ -263,18 +304,23 @@ Register-ArgumentCompleter -CommandName '.git_check_repos', 'git_check_repos.ps1
     }
 }
 
+# wez, wec and keepawake build their paths from $env:code_root_dir
+if (-not $env:code_root_dir) {
+    Write-ProfileSetupHint "env var code_root_dir is not set - wez and wec are disabled and keepawake will not work. Set it with: setx code_root_dir <dir holding Code2> (then restart the shell)"
+}
+
 # `wez` runs the custom wezterm launcher from the wezterm checkout, the same way
 # `nvcs` runs its script. It lives outside my_scripts, so it gets its own alias.
 # `wez help` prints its usage.
-$WeztermRunScript = Join-Path $env:code_root_dir 'Code2\Rust\wezterm\run-custom-wezterm.ps1'
-if (Test-Path $WeztermRunScript) {
+$WeztermRunScript = if ($env:code_root_dir) { Join-Path $env:code_root_dir 'Code2\Rust\wezterm\run-custom-wezterm.ps1' }
+if ($WeztermRunScript -and (Test-Path $WeztermRunScript)) {
     Set-Alias -Name wez -Value $WeztermRunScript
 }
 
 # `wec` does the same for WecTerm, the C port of wezterm, from its checkout.
 # `wec help` prints its usage.
-$WectermRunScript = Join-Path $env:code_root_dir 'Code2\C\WecTerm\run-custom-wecterm.ps1'
-if (Test-Path $WectermRunScript) {
+$WectermRunScript = if ($env:code_root_dir) { Join-Path $env:code_root_dir 'Code2\C\WecTerm\run-custom-wecterm.ps1' }
+if ($WectermRunScript -and (Test-Path $WectermRunScript)) {
     Set-Alias -Name wec -Value $WectermRunScript
 }
 
@@ -284,10 +330,13 @@ function RunChatGPT {
 }
 Set-Alias -Name chatgpt -Value RunChatGPT
 
-$nvimPath = (Get-Command nvim).Source
+$nvimPath = (Get-Command nvim -ErrorAction SilentlyContinue).Source
 if ($nvimPath) {
     Set-Alias -Name vim -Value $nvimPath
     Set-Alias -Name vi -Value $nvimPath
+}
+else {
+    Write-ProfileSetupHint "nvim not found on PATH - the vim/vi aliases are disabled and vimu/EDITOR will not work. Install it with: winget install Neovim.Neovim"
 }
 
 function run_vimu {
@@ -505,7 +554,8 @@ function Invoke-NvimServer {
 
 # Overrides the plain `vim` alias set further up; `nvim` and `vi` are left
 # alone, so there is always a way to start an editor without a server
-if ($VimUseNvimServer) {
+# (only when nvim is installed, see the hint printed further up otherwise)
+if ($VimUseNvimServer -and $nvimPath) {
     Set-Alias -Name vim -Value Invoke-NvimServer
     Set-Alias -Name vi -Value Invoke-NvimServer
 }
@@ -616,10 +666,12 @@ function Invoke-FuzzyDirStack {
     if ($selected -match '^\s*(\d+)') { Set-LocationWithStack "+$($Matches[1])" }
 }
 
-Set-PSReadLineKeyHandler -Chord 'Alt+d' -ScriptBlock {
-    Invoke-FuzzyDirStack
-    # Redraw the prompt for the new cwd, as for Alt+c
-    [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+if ($HasFzf) {
+    Set-PSReadLineKeyHandler -Chord 'Alt+d' -ScriptBlock {
+        Invoke-FuzzyDirStack
+        # Redraw the prompt for the new cwd, as for Alt+c
+        [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+    }
 }
 
 Set-Alias cd Set-LocationWithStack -Option AllScope -Force
@@ -712,4 +764,9 @@ function prompt {
 $Env:EDITOR = "nvim"
 $Env:YAZI_FILE_ONE = "C:\Program Files\Git\usr\bin\file.exe"
 
-. "$PSScriptRoot\env.ps1"
+if (Test-Path -LiteralPath "$PSScriptRoot\env.ps1") {
+    . "$PSScriptRoot\env.ps1"
+}
+else {
+    Write-ProfileSetupHint "$PSScriptRoot\env.ps1 not found - create it for this machine's env vars (an empty file is fine)"
+}
