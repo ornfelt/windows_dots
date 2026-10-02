@@ -42,8 +42,13 @@ wezterm_dest="$HOME/.config/wezterm"
 if [ -d "$wezterm_dest" ]; then
     write_info "Copying additional WezTerm files..."
 
-    # Every .lua module in ./wezterm (not recursive), except session-manager.lua,
-    # which belongs in wezterm-session-manager/ and is not synced here
+    # session-manager.lua goes to its own dir (it is shared with Windows, which
+    # keeps it in %USERPROFILE%\.wezterm\wezterm-session-manager)
+    mkdir -p "$wezterm_dest/wezterm-session-manager"
+    cp "./wezterm/session-manager.lua" "$wezterm_dest/wezterm-session-manager/"
+    echo -e "${DARKGRAY}  wezterm-session-manager/session-manager.lua${RESET}"
+
+    # Every other .lua module in ./wezterm (not recursive)
     for file in ./wezterm/*.lua; do
         [ -f "$file" ] || continue
         [ "$(basename "$file")" = "session-manager.lua" ] && continue
