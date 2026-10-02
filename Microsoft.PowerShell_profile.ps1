@@ -215,7 +215,7 @@ Set-PSReadLineKeyHandler -ViMode Command -Chord 'y','y' -ScriptBlock {
 # {ps_profile_path}/my_scripts/unblock_files.ps1
 $aliases = @(
     ".cdn", ".cdc", ".cdp", ".ioq3", ".show_wifi", ".list_files", ".list_files_gui", 
-    ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".openmw", 
+    ".list_p", ".list_pm", ".acore", ".tcore", ".wcell", ".playermap", ".mpq_server", ".openmw", 
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos", ".llama", ".sync_dots", ".docs", ".down", ".cdh", ".clean_shada",
     ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
