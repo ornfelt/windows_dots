@@ -307,7 +307,6 @@ config.colors = {
   tab_bar = {
     active_tab = {
       fg_color = '#3c3836',
-      --bg_color = '#8ec07c',
       bg_color = '#458588',
     }
   }
@@ -317,9 +316,13 @@ config.colors = {
 -- its selected tab the wezterm website's deep purple (#7e56c2, in place of the blue
 -- above) so it is easy to tell apart from the real wezterm.
 -- Both export WEZTERM_EXECUTABLE, and only wecterm's binary is wecterm-gui.
-local is_wecterm = (os.getenv('WEZTERM_EXECUTABLE') or ''):lower():find('wecterm%-gui') ~= nil
+local wezterm_exe = (os.getenv('WEZTERM_EXECUTABLE') or ''):lower():gsub('\\', '/')
+local is_wecterm = wezterm_exe:find('wecterm%-gui') ~= nil
+local is_rust_fork = wezterm_exe:find('code2/rust/wezterm/target/', 1, true) ~= nil
 if is_wecterm then
   config.colors.tab_bar.active_tab.bg_color = '#7e56c2'
+elseif is_rust_fork then
+  config.colors.tab_bar.active_tab.bg_color = '#689d6a'
 end
 
 config.force_reverse_video_cursor = true
