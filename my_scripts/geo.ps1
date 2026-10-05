@@ -3,7 +3,7 @@ $path = Join-Path -Path $env:code_root_dir -ChildPath "Code2\Javascript\my_js\ge
 if (Test-Path $path) {
     cd $path
 } else {
-    Write-Host "Couldn't find geo-quiz path." -ForegroundColor Red
+    Write-Host "Couldn't find geo-quiz path: $path" -ForegroundColor Red
     exit 1
 }
 
