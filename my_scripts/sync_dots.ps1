@@ -1,9 +1,17 @@
 $codeRootDir = $env:code_root_dir
 
+# -- Color helpers -------------------------------------------------------------
+
+function Write-Ok      ([string]$m) { Write-Host $m -ForegroundColor Green }
+function Write-Err     ([string]$m) { Write-Host $m -ForegroundColor Red }
+function Write-Warn    ([string]$m) { Write-Host $m -ForegroundColor DarkYellow }
+function Write-Info    ([string]$m) { Write-Host $m -ForegroundColor Cyan }
+
 # Prompt for confirmation before proceeding
-$confirmation = Read-Host "Do you want to proceed? (y/n)"
+Write-Host "Do you want to proceed? " -ForegroundColor DarkYellow -NoNewline
+$confirmation = Read-Host "(y/n)"
 if ($confirmation -notmatch "^(?i)y(?:es)?$") {
-    Write-Output "Operation canceled by the user."
+    Write-Warn "Operation canceled by the user."
     exit 0
 }
 
@@ -15,20 +23,20 @@ $nvimTargetDir = Join-Path -Path $localAppDataDir -ChildPath "nvim"
 
 # Check if Git is installed
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Write-Output "Git is not installed. Please install Git and try again."
+    Write-Err "Git is not installed. Please install Git and try again."
     exit 1
 }
 
 # Clone the repository if dotfilesDir doesn't exist
 if (-Not (Test-Path -Path $dotfilesDir)) {
-    Write-Output "dotfiles directory does not exist. Cloning repository..."
+    Write-Info "dotfiles directory does not exist. Cloning repository..."
     $repoUrl = "https://github.com/archornf/dotfiles"
     $cloneTargetDir = Join-Path -Path $codeRootDir -ChildPath "Code2/General/dotfiles"
     git clone $repoUrl $cloneTargetDir
 }
 
 # Perform a git pull in the repo
-Write-Output "Updating dotfiles repository..."
+Write-Info "Updating dotfiles repository..."
 Push-Location -Path $dotfilesDir
 git pull
 Pop-Location
@@ -50,9 +58,9 @@ if (Test-Path -Path $dotfilesDir) {
             Copy-Item -Path $_.FullName -Destination $targetPath -Force
         }
     }
-    Write-Output "nvim directory has been copied to $nvimTargetDir."
+    Write-Ok "nvim directory has been copied to $nvimTargetDir."
 } else {
-    Write-Output "dotfiles directory does not exist."
+    Write-Err "dotfiles directory does not exist."
 }
 
 $weztermSourceFile = Join-Path -Path (Split-Path -Path $dotfilesDir -Parent) -ChildPath ".wezterm.lua"
@@ -61,9 +69,9 @@ $weztermTargetFile = Join-Path -Path $userProfileDir -ChildPath ".wezterm.lua"
 
 if (Test-Path -Path $weztermSourceFile) {
     Copy-Item -Path $weztermSourceFile -Destination $weztermTargetFile -Force
-    Write-Output ".wezterm.lua has been copied to $weztermTargetFile."
+    Write-Ok ".wezterm.lua has been copied to $weztermTargetFile."
 } else {
-    Write-Output ".wezterm.lua file not found in $dotfilesDir."
+    Write-Warn ".wezterm.lua file not found in $dotfilesDir."
 }
 
 # Sync wezterm lua modules into ~/.wezterm: every .lua file directly in
@@ -77,11 +85,11 @@ if (-Not (Test-Path -Path $weztermModulesTargetDir)) {
 
 $weztermModuleFiles = @(Get-ChildItem -Path $weztermModulesSourceDir -Filter "*.lua" -File -ErrorAction SilentlyContinue)
 if ($weztermModuleFiles.Count -eq 0) {
-    Write-Output "No wezterm .lua files found in $weztermModulesSourceDir."
+    Write-Warn "No wezterm .lua files found in $weztermModulesSourceDir."
 }
 
 foreach ($moduleFile in $weztermModuleFiles) {
     Copy-Item -Path $moduleFile.FullName -Destination $weztermModulesTargetDir -Force
-    Write-Output "$($moduleFile.Name) has been copied to $weztermModulesTargetDir."
+    Write-Ok "$($moduleFile.Name) has been copied to $weztermModulesTargetDir."
 }
 
