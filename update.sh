@@ -72,6 +72,11 @@ if [ -d "$claude_dest" ]; then
     cp -r "./.claude/hooks" "$claude_dest/"
 
     write_ok "Claude hooks copied successfully to $claude_dest/hooks"
+
+    if [ -f "./.claude/keybindings.json" ]; then
+        cp "./.claude/keybindings.json" "$claude_dest/"
+        write_ok "Claude keybindings copied successfully to $claude_dest/keybindings.json"
+    fi
 else
     write_warn "Skipping Claude hooks: $claude_dest does not exist."
 fi

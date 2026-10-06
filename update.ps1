@@ -114,10 +114,15 @@ $claudeDir = Join-Path $env:USERPROFILE ".claude"
 
 if (Test-Path -Path $claudeDir) {
     $claudeSettingsFile = ".\.claude\settings.json"
+    $claudeKeybindingsFile = ".\.claude\keybindings.json"
     $claudeHooksDir = ".\.claude\hooks"
 
     if (Test-Path -Path $claudeSettingsFile) {
         Copy-Item -Path $claudeSettingsFile -Destination $claudeDir -Force
+    }
+
+    if (Test-Path -Path $claudeKeybindingsFile) {
+        Copy-Item -Path $claudeKeybindingsFile -Destination $claudeDir -Force
     }
 
     if (Test-Path -Path $claudeHooksDir) {
