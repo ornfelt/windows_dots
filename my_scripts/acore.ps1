@@ -13,7 +13,9 @@ function Write-Info ([string]$m) { Write-Host $m -ForegroundColor Cyan }
 
 # Copied next to worldserver.exe by update_conf.py.
 $UpdateConfScript = Join-Path -Path $env:my_notes_path -ChildPath "scripts\wow\update_conf.py"
-$RequiredFiles = @("libmysql.dll", "libcrypto-3-x64.dll", "libssl-3-x64.dll", "legacy.dll", "overwrite.py")
+$RequiredFiles = @("libmysql.dll", "libcrypto-3-x64.dll", "libssl-3-x64.dll", "legacy.dll")
+# Only copied for the npcbots build.
+$OverwriteScript = "overwrite.py"
 
 function Show-Help {
     Write-Info "Usage: .acore [variant]"
@@ -30,6 +32,7 @@ if ($Variant -match '^(help|--help|-h)$') {
     return
 } elseif ($Variant -match '^(|n|npc|npcbot|npcbots)$') {
     $repo = "AzerothCore-wotlk-with-NPCBots"
+    $RequiredFiles += $OverwriteScript
 } elseif ($Variant -match '^(p|pbot|pbots|playerbot|playerbots)$') {
     $repo = "azerothcore-wotlk-playerbots"
 } elseif ($Variant -match '^(plain|vanilla|0|classic)$') {
@@ -74,6 +77,10 @@ if ($missing.Count -gt 0) {
 #echo "$path\worldserver.exe"
 #Invoke-Expression "$path\worldserver.exe"
 
-echo "python $path\overwrite.py; $path\worldserver.exe"
+if ($RequiredFiles -contains $OverwriteScript) {
+    echo "python $path\$OverwriteScript; $path\worldserver.exe"
+} else {
+    echo "$path\worldserver.exe"
+}
 #Invoke-Expression "python $path\overwrite.py; $path\worldserver.exe"
 
