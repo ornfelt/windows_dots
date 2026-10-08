@@ -545,10 +545,43 @@ function Test-MySqlClient($exePath, $expectedDll) {
 	Repair-DbAuthPlugins $exePath
 }
 
-$server = $args[0]
+# Usage (no server name = vmangos):
+#   mangos.ps1
+#   mangos.ps1 tbc        (same as t, mangos-tbc, mangostbc, cmangos-tbc)
+#   mangos.ps1 classic    (same as c, cm, cmangos, mangos-classic)
+#   mangos.ps1 zero       (same as 0, z, mz, mangos0, mangoszero)
+# Server name -> accepted names, matched lower-cased with '-', '_', '.' and spaces dropped.
+# Keep in sync with {my_notes_path}/scripts/wow/update_conf_classic.py and dotfiles/bin/my_scripts/mangos.sh.
+$SERVER_ALIASES = [ordered]@{
+	"vmangos"     = @("v", "vm", "vmangos")
+	"cmangos"     = @("c", "cm", "classic", "cmangos", "cmangosclassic", "mangosclassic")
+	"cmangos-tbc" = @("t", "tbc", "mangostbc", "cmangostbc")
+	"mangoszero"  = @("0", "z", "zero", "mz", "mangos0", "mangoszero")
+}
+$SERVER_NAMES_HELP = "vmangos (v, vm), cmangos (c, cm, classic, mangos-classic), cmangos-tbc (t, tbc, mangos-tbc), mangoszero (0, z, zero, mz, mangos0)"
+$DEFAULT_SERVER = "vmangos"
+
+function Resolve-ServerName($name) {
+	$key = "$name".ToLowerInvariant() -replace '[-_.\s]', ''
+	foreach ($canonical in $SERVER_ALIASES.Keys) {
+		if ($SERVER_ALIASES[$canonical] -contains $key) { return $canonical }
+	}
+	return $null
+}
+
+# "$(...)": a bare 0 arrives as the int 0, which would otherwise count as "no argument"
+if ($args.Count -eq 0 -or "$($args[0])" -eq "") {
+	$server = $DEFAULT_SERVER
+} else {
+	$server = Resolve-ServerName $args[0]
+	if (-not $server) {
+		Write-Err "Unknown server '$($args[0])'. Accepted: $SERVER_NAMES_HELP"
+		exit 1
+	}
+}
 
 # MangosZero
-if ($server -ieq "0" -or $server -ieq "z") {
+if ($server -eq "mangoszero") {
 	Write-Alt "MangosZero chosen..."
 	$repoRoots = @(
 		(Join-Path -Path $env:code_root_dir -ChildPath "Code2/C++/server"),
@@ -560,7 +593,7 @@ if ($server -ieq "0" -or $server -ieq "z") {
 	$localDataPath = "$LOCAL_DATA_ROOT/mangos_zero_win"
 
 # Cmangos
-} elseif ($server -ieq "c") {
+} elseif ($server -eq "cmangos") {
 	Write-Alt "Cmangos chosen..."
 	$repoRoots = @(
 		(Join-Path -Path $env:code_root_dir -ChildPath "Code2/C++/mangos-classic"),
@@ -571,7 +604,7 @@ if ($server -ieq "0" -or $server -ieq "z") {
 	$optionalDirs = $NO_OPTIONAL_DIRS
 	$localDataPath = $null
 
-} elseif ($server -ieq "tbc") {
+} elseif ($server -eq "cmangos-tbc") {
 	Write-Alt "Cmangos tbc chosen..."
 	$repoRoots = @(
 		(Join-Path -Path $env:code_root_dir -ChildPath "Code2/C++/mangos-tbc"),
@@ -608,11 +641,11 @@ Test-RequiredDirs $dataPath $requiredDirs $optionalDirs
 Test-ConfDataDir $path $dataPath
 
 $expectedMySqlDll = $null
-if ($server -ieq "0" -or $server -ieq "z") {
+if ($server -eq "mangoszero") {
 	Write-Host
 	$expectedMySqlDll = Copy-MySqlDll $path
 	Copy-OpenSslLegacyProvider $path
-} elseif ($server -ine "c" -and $server -ine "tbc") {
+} elseif ($server -eq "vmangos") {
 	Write-Host
 	$expectedMySqlDll = Copy-VmangosDlls $path $repoRoots
 }
@@ -620,7 +653,7 @@ if ($server -ieq "0" -or $server -ieq "z") {
 Write-Host
 Test-MySqlClient $path $expectedMySqlDll
 
-if ($server -ieq "tbc") {
+if ($server -eq "cmangos-tbc") {
     Write-Host
 
 	if (Test-Path "anticheat.conf") {
@@ -652,7 +685,7 @@ if ($server -ieq "tbc") {
 	} else {
 		Write-Warn "realmd.conf was not found."
 	}
-} elseif ($server -ine "0" -and $server -ine "z" -and $server -ine "c") {
+} elseif ($server -eq "vmangos") {
     Write-Host
 
 	if (Test-Path "realmd.conf") {
