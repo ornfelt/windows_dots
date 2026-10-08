@@ -367,7 +367,7 @@ if ($server -ieq "0" -or $server -ieq "z") {
 		(Join-Path -Path $env:code_root_dir -ChildPath "Code2/C++/server"),
 		(Join-Path -Path $env:code_root_dir -ChildPath "Code2/C++/mangoszero/server")
 	)
-	$fallbackPath = "~/mangoszero/bin"
+	$fallbackPath = $null
 	$requiredDirs = $MANGOSZERO_REQUIRED_DIRS
 	$optionalDirs = $NO_OPTIONAL_DIRS
 	$localDataPath = "$LOCAL_DATA_ROOT/mangos_zero_win"
