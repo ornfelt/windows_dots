@@ -47,6 +47,21 @@ $VMANGOS_DEP_LIB_SUBPATH = "dep/windows/lib"   # then <arch>_<config>, e.g. x64_
 $VMANGOS_DLLS = @("libeay32.dll", "libmySQL.dll")
 $PE_MACHINE_ARCH = @{ 0x8664 = "x64"; 0x014C = "win32" }
 
+# libmysql check: the libmysql mangosd/realmd load has to log in as the confs' db users.
+# libmysql before 8.0 (vmangos ships 5.5) only knows mysql_native_password, not MySQL 8's
+# default caching_sha2_password - such a db user is switched to mysql_native_password.
+$REALMD_EXE = "realmd.exe"
+$REALMD_CONF = "realmd.conf"
+$MYSQL_DLL_IMPORT_PATTERN = 'libmysql\.dll'
+$MYSQL_SHA2_MIN_MAJOR = 8
+$MYSQL_NATIVE_PLUGIN = "mysql_native_password"
+$MYSQL_SHA2_PLUGINS = @("caching_sha2_password", "sha256_password")
+$MYSQL_CLI = "mysql.exe"
+$DB_INFO_PATTERN = '^\s*\w*Database\.?Info\s*=\s*"([^"]*)"'   # host;port;user;password;db
+$LOCAL_CONFIG_FILE = "C:/local/config.txt"     # root_user / root_pwd, as the db setup scripts use
+$CONFIG_KEY_ROOT_USER = "root_user"
+$CONFIG_KEY_ROOT_PWD = "root_pwd"
+
 function Find-ServerBuilds($repoRoots) {
 	# Every <root>/build*/**/<config>/mangosd.exe and <root>/bin/**/<config>/mangosd.exe,
 	# newest build first.
@@ -253,7 +268,7 @@ function Copy-MySqlDll($exePath) {
 			if (Test-Path -Path $source -PathType Leaf) {
 				Write-Label "$MYSQL_DLL from $($server.Name) ($((Get-Item $source).VersionInfo.ProductVersion))"
 				Copy-IfChanged $source (Join-Path -Path $exePath -ChildPath $MYSQL_DLL)
-				return
+				return $source
 			}
 		}
 	}
@@ -348,14 +363,186 @@ function Copy-VmangosDlls($exePath, $repoRoots) {
 	}
 
 	Write-Label "From $($depDir.FullName)"
+	$mysqlSource = $null
 	foreach ($dll in $VMANGOS_DLLS) {
 		$source = Join-Path -Path $depDir.FullName -ChildPath $dll
 		if (Test-Path -Path $source -PathType Leaf) {
 			Copy-IfChanged $source (Join-Path -Path $exePath -ChildPath $dll)
+			if ($dll -match $MYSQL_DLL_IMPORT_PATTERN) { $mysqlSource = $source }
 		} else {
 			Write-Err "$dll is missing from $($depDir.FullName)"
 		}
 	}
+	# The libmysql the exes should load, for Test-MySqlClient
+	return $mysqlSource
+}
+
+function Get-DllMajor($file) {
+	# "5.5.62.0" -> 5, or $null when the DLL carries no version
+	$version = $file.VersionInfo.ProductVersion
+	if (-not $version) { $version = $file.VersionInfo.FileVersion }
+	if ($version -match '^\s*(\d+)') { return [int]$matches[1] }
+	return $null
+}
+
+function Get-LocalConfigValue($key) {
+	# "key: value" lines, the format config_reader.py reads
+	if (-not (Test-Path -Path $LOCAL_CONFIG_FILE -PathType Leaf)) { return $null }
+	$prefix = "$($key.ToLowerInvariant()):"
+	foreach ($line in (Get-Content $LOCAL_CONFIG_FILE)) {
+		$trimmed = $line.Trim()
+		if ($trimmed.ToLowerInvariant().StartsWith($prefix)) { return $trimmed.Substring($prefix.Length).Trim() }
+	}
+	return $null
+}
+
+function Find-MySqlCli {
+	$command = Get-Command $MYSQL_CLI -ErrorAction SilentlyContinue | Select-Object -First 1
+	if ($command) { return $command.Source }
+
+	$mysqlRoot = Join-Path -Path $PROGRAM_FILES -ChildPath "MySQL"
+	$servers = Get-ChildItem -Path $mysqlRoot -Directory -Filter $MYSQL_SERVER_DIR_PATTERN -ErrorAction SilentlyContinue |
+		Sort-Object { Get-FolderVersion $_.Name } -Descending
+	foreach ($server in $servers) {
+		$candidate = Join-Path -Path $server.FullName -ChildPath "bin/$MYSQL_CLI"
+		if (Test-Path -Path $candidate -PathType Leaf) { return $candidate }
+	}
+	return $null
+}
+
+function ConvertTo-SqlString($value) {
+	return "'" + $value.Replace('\', '\\').Replace("'", "''") + "'"
+}
+
+function Invoke-MySqlRoot($cli, $rootUser, $rootPwd, $sql) {
+	# Result rows as tab-separated strings; throws with mysql's message on failure.
+	# The password goes through MYSQL_PWD so it is not on the command line.
+	$previousPwd = $env:MYSQL_PWD
+	$env:MYSQL_PWD = $rootPwd
+	try {
+		$output = & $cli -u $rootUser -N -B -e $sql 2>&1 | ForEach-Object { "$_" }
+		$exitCode = $LASTEXITCODE
+	} finally {
+		if ($null -eq $previousPwd) { Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue } else { $env:MYSQL_PWD = $previousPwd }
+	}
+	if ($exitCode -ne 0) { throw ($output -join " ") }
+	return @($output | Where-Object { $_ -and $_ -notmatch '^mysql: \[Warning\]' })
+}
+
+function Get-DbLogins($exePath) {
+	# user -> password from the *Database*Info lines of the confs beside the exe
+	$logins = [ordered]@{}
+	foreach ($conf in @($SERVER_CONF, $REALMD_CONF)) {
+		$confPath = Join-Path -Path $exePath -ChildPath $conf
+		if (-not (Test-Path -Path $confPath -PathType Leaf)) { continue }
+		foreach ($line in (Get-Content $confPath)) {
+			if ($line -notmatch $DB_INFO_PATTERN) { continue }
+			$parts = $matches[1] -split ';'
+			if ($parts.Count -ge 4 -and -not $logins.Contains($parts[2])) { $logins[$parts[2]] = $parts[3] }
+		}
+	}
+	return $logins
+}
+
+function Repair-DbAuthPlugins($exePath) {
+	# Switch the confs' db users to mysql_native_password, which a pre-8.0 libmysql can use.
+	$logins = Get-DbLogins $exePath
+	if ($logins.Count -eq 0) {
+		Write-Warn "No *DatabaseInfo lines in $SERVER_CONF / $REALMD_CONF - cannot check the db users."
+		return
+	}
+
+	$cli = Find-MySqlCli
+	$rootUser = Get-LocalConfigValue $CONFIG_KEY_ROOT_USER
+	$rootPwd = Get-LocalConfigValue $CONFIG_KEY_ROOT_PWD
+	if (-not $cli -or -not $rootUser -or $null -eq $rootPwd) {
+		Write-Warn "Cannot check the db users (needs $MYSQL_CLI and $CONFIG_KEY_ROOT_USER / $CONFIG_KEY_ROOT_PWD in $LOCAL_CONFIG_FILE). If the login fails, run as root:"
+		foreach ($user in $logins.Keys) {
+			Write-Extra "  ALTER USER '$user'@'localhost' IDENTIFIED WITH $MYSQL_NATIVE_PLUGIN BY '<password>';"
+		}
+		return
+	}
+
+	try {
+		$status = @(Invoke-MySqlRoot $cli $rootUser $rootPwd "SELECT PLUGIN_STATUS FROM information_schema.PLUGINS WHERE PLUGIN_NAME = '$MYSQL_NATIVE_PLUGIN';")
+		if (-not $status -or $status[0] -ne "ACTIVE") {
+			Write-Err "The server's $MYSQL_NATIVE_PLUGIN plugin is not active - set $MYSQL_NATIVE_PLUGIN=ON under [mysqld] in my.ini (MySQL 8.4) and restart MySQL."
+			return
+		}
+
+		foreach ($user in $logins.Keys) {
+			$rows = @(Invoke-MySqlRoot $cli $rootUser $rootPwd "SELECT host, plugin FROM mysql.user WHERE user = $(ConvertTo-SqlString $user);")
+			if (-not $rows) {
+				Write-Err "The db user '$user' from the confs does not exist."
+				continue
+			}
+			foreach ($row in $rows) {
+				$userHost, $plugin = $row -split "`t"
+				$account = "'$user'@'$userHost'"
+				if ($plugin -eq $MYSQL_NATIVE_PLUGIN) {
+					Write-Ok "$account uses $plugin."
+				} elseif ($MYSQL_SHA2_PLUGINS -contains $plugin) {
+					$alter = "ALTER USER $(ConvertTo-SqlString $user)@$(ConvertTo-SqlString $userHost) IDENTIFIED WITH $MYSQL_NATIVE_PLUGIN BY $(ConvertTo-SqlString $logins[$user]);"
+					Invoke-MySqlRoot $cli $rootUser $rootPwd $alter | Out-Null
+					Write-Ok "$account switched from $plugin to $MYSQL_NATIVE_PLUGIN (password from the conf)."
+				} else {
+					Write-Warn "$account uses $plugin - left as it is."
+				}
+			}
+		}
+	} catch {
+		Write-Err "MySQL check failed: $($_.Exception.Message)"
+	}
+}
+
+function Test-MySqlClient($exePath, $expectedDll) {
+	# The libmysql mangosd/realmd really load: the expected file, the exe's arch, and a version
+	# that can log in with the db users' auth plugin (the users are fixed when it cannot).
+	$checked = 0
+	$oldClient = $null
+	foreach ($exeName in @($SERVER_EXE, $REALMD_EXE)) {
+		$exe = Join-Path -Path $exePath -ChildPath $exeName
+		if (-not (Test-Path -Path $exe -PathType Leaf)) { continue }
+
+		$dllName = Get-ImportedDll $exe $MYSQL_DLL_IMPORT_PATTERN
+		if (-not $dllName) {
+			Write-Label "$exeName does not import libmysql."
+			continue
+		}
+		$dll = Find-LoadedDll $exePath $dllName
+		if (-not $dll) {
+			Write-Err "$exeName imports $dllName but it was not found beside the exe, in System32 or on PATH."
+			continue
+		}
+		$checked++
+
+		$version = $dll.VersionInfo.ProductVersion
+		$exeArch = Get-PeArch $exe
+		$dllArch = Get-PeArch $dll.FullName
+		Write-Label "$exeName loads $($dll.FullName) ($version, $dllArch)"
+		if ($exeArch -and $dllArch -and $exeArch -ne $dllArch) {
+			Write-Err "$dllName is $dllArch but $exeName is $exeArch - it cannot be loaded."
+		}
+		if ($expectedDll -and (Test-Path -Path $expectedDll -PathType Leaf) -and
+			((Get-FileHash $dll.FullName).Hash -ne (Get-FileHash $expectedDll).Hash)) {
+			Write-Err "$($dll.FullName) is not $expectedDll ($((Get-Item $expectedDll).VersionInfo.ProductVersion)) - stop mangosd/realmd and run this again so it gets copied."
+		}
+
+		$major = Get-DllMajor $dll
+		if ($null -eq $major) {
+			Write-Warn "$($dll.FullName) carries no version - cannot tell which auth plugins it supports."
+		} elseif ($major -lt $MYSQL_SHA2_MIN_MAJOR) {
+			$oldClient = "$dllName $version"
+		}
+	}
+
+	if ($checked -eq 0) { return }
+	if (-not $oldClient) {
+		Write-Ok "libmysql supports MySQL 8's caching_sha2_password."
+		return
+	}
+	Write-Warn "$oldClient predates MySQL 8 - the db users need $MYSQL_NATIVE_PLUGIN, not caching_sha2_password."
+	Repair-DbAuthPlugins $exePath
 }
 
 $server = $args[0]
@@ -420,14 +607,18 @@ $dataPath = Resolve-DataPath $localDataPath $path $requiredDirs
 Test-RequiredDirs $dataPath $requiredDirs $optionalDirs
 Test-ConfDataDir $path $dataPath
 
+$expectedMySqlDll = $null
 if ($server -ieq "0" -or $server -ieq "z") {
 	Write-Host
-	Copy-MySqlDll $path
+	$expectedMySqlDll = Copy-MySqlDll $path
 	Copy-OpenSslLegacyProvider $path
 } elseif ($server -ine "c" -and $server -ine "tbc") {
 	Write-Host
-	Copy-VmangosDlls $path $repoRoots
+	$expectedMySqlDll = Copy-VmangosDlls $path $repoRoots
 }
+
+Write-Host
+Test-MySqlClient $path $expectedMySqlDll
 
 if ($server -ieq "tbc") {
     Write-Host
