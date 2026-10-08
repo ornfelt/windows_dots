@@ -15,14 +15,37 @@ $SERVER_EXE = "mangosd.exe"
 $BUILD_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
 # Data dirs each server needs next to its exe
-$VMANGOS_REQUIRED_DIRS        = @("5875", "Cameras", "maps", "mmaps", "vmaps")
+# vmangos never reads a Cameras/ dir (no file access to it in src/)
+$VMANGOS_REQUIRED_DIRS        = @("5875", "maps", "mmaps", "vmaps")
 $MANGOS_CLASSIC_REQUIRED_DIRS = @("Cameras", "dbc", "maps", "mmaps", "vmaps")
-$MANGOS_TBC_REQUIRED_DIRS     = @("Buildings", "Cameras", "dbc", "maps")
-$MANGOSZERO_REQUIRED_DIRS     = @("dbc", "maps", "mmaps", "vmaps")
+# Buildings/ is only extractor scratch (vmapextract -> vmap_assembler), the server never reads it
+$MANGOS_TBC_REQUIRED_DIRS     = @("Cameras", "dbc", "maps")
+# Current mangoszero reads tiles/ + gomodels/ (World.cpp) instead of maps/ + vmaps/
+$MANGOSZERO_REQUIRED_DIRS     = @("dbc", "gomodels", "mmaps", "tiles")
 
 # Reported but not treated as an error - older mangos-tbc builds ran without these
 $MANGOS_TBC_OPTIONAL_DIRS     = @("mmaps", "vmaps")
 $NO_OPTIONAL_DIRS             = @()
+
+# Extracted data (finish_*_extraction.py output) is looked for here first; the exe dir is
+# the fallback. Each server's dir name is set in its branch below.
+$LOCAL_DATA_ROOT = "C:/local"
+$SERVER_CONF = "mangosd.conf"
+
+# mangoszero runtime DLLs, searched for under any installed version
+$PROGRAM_FILES = if ($env:ProgramW6432) { $env:ProgramW6432 } else { $env:ProgramFiles }
+$MYSQL_SERVER_DIR_PATTERN = "MySQL Server *"   # below <Program Files>\MySQL
+$MYSQL_DLL_SUBDIRS = @("lib", "bin")
+$MYSQL_DLL = "libmysql.dll"
+$OPENSSL_DIR_PATTERN = "OpenSSL*"              # e.g. OpenSSL-Win64, OpenSSL-Win64_v4
+$OPENSSL_PROVIDER_SUBDIRS = @("bin", "bin/ossl-modules", "lib/ossl-modules", "lib")
+$OPENSSL_LEGACY_DLL = "legacy.dll"
+$OPENSSL_MODULES_DIR = "ossl-modules"          # where mangosd looks, beside the exe
+
+# vmangos runtime DLLs: the prebuilt deps its own CMake install step copies
+$VMANGOS_DEP_LIB_SUBPATH = "dep/windows/lib"   # then <arch>_<config>, e.g. x64_release
+$VMANGOS_DLLS = @("libeay32.dll", "libmySQL.dll")
+$PE_MACHINE_ARCH = @{ 0x8664 = "x64"; 0x014C = "win32" }
 
 function Find-ServerBuilds($repoRoots) {
 	# Every <root>/build*/**/<config>/mangosd.exe and <root>/bin/**/<config>/mangosd.exe,
@@ -126,6 +149,215 @@ function Test-DisabledSetting($lines, $setting, $fileName, $clientName) {
 	Write-Warn "$setting was not found in $fileName."
 }
 
+function Resolve-DataPath($localDataPath, $exePath, $requiredDirs) {
+	# The local extracted-data dir if it holds any of the required dirs, else the exe dir.
+	if ($localDataPath -and (Test-Path -Path $localDataPath -PathType Container)) {
+		$present = @($requiredDirs | Where-Object {
+			Test-Path -Path (Join-Path -Path $localDataPath -ChildPath $_) -PathType Container
+		})
+		if ($present.Count -gt 0) {
+			Write-Label "Using extracted data dir: $localDataPath"
+			return $localDataPath
+		}
+		Write-Warn "$localDataPath holds none of: $($requiredDirs -join ', ') - falling back to the exe dir."
+	} elseif ($localDataPath) {
+		Write-Warn "$localDataPath not found - falling back to the exe dir."
+	}
+
+	Write-Label "Using data in the exe dir: $exePath"
+	return $exePath
+}
+
+function ConvertTo-ComparablePath($path) {
+	$full = [System.IO.Path]::GetFullPath($path)
+	return $full.TrimEnd('\', '/').ToLowerInvariant()
+}
+
+function Test-ConfDataDir($exePath, $dataPath) {
+	# The server only reads DataDir from its conf, so say so when it points elsewhere.
+	$confPath = Join-Path -Path $exePath -ChildPath $SERVER_CONF
+	if (-not (Test-Path $confPath)) {
+		Write-Warn "$SERVER_CONF was not found - cannot check DataDir."
+		return
+	}
+
+	$line = Get-Content $confPath | Where-Object { $_ -match '^\s*DataDir\s*=\s*"?([^"#]*)"?' } | Select-Object -First 1
+	if (-not $line) {
+		Write-Warn "DataDir was not found in $SERVER_CONF."
+		return
+	}
+
+	$null = $line -match '^\s*DataDir\s*=\s*"?([^"#]*)"?'
+	$confDataDir = $matches[1].Trim()
+	$resolved = if ([System.IO.Path]::IsPathRooted($confDataDir)) { $confDataDir } else { Join-Path -Path $exePath -ChildPath $confDataDir }
+
+	if ((ConvertTo-ComparablePath $resolved) -eq (ConvertTo-ComparablePath $dataPath)) {
+		Write-Ok "DataDir in $SERVER_CONF points at the data dir: $confDataDir"
+	} else {
+		Write-Err "DataDir in $SERVER_CONF is `"$confDataDir`" but the data was found in $dataPath."
+	}
+}
+
+function Get-FolderVersion($name) {
+	# "MySQL Server 8.0" -> 8.0, so the newest install sorts first
+	if ($name -match '(\d+(\.\d+)+)') { return [version]$matches[1] }
+	if ($name -match '(\d+)') { return [version]"$($matches[1]).0" }
+	return [version]"0.0"
+}
+
+function Get-ImportedDll($exePath, $pattern) {
+	# DLL names an exe imports are plain ASCII in its import table
+	$text = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($exePath))
+	$match = [regex]::Match($text, $pattern, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+	if ($match.Success) { return $match.Value }
+	return $null
+}
+
+function Find-LoadedDll($exeDir, $dllName) {
+	# Same order the Windows loader uses for a desktop app: exe dir, System32, then PATH
+	$dirs = @($exeDir, (Join-Path -Path $env:windir -ChildPath "System32")) + ($env:Path -split ';' | Where-Object { $_ })
+	foreach ($dir in $dirs) {
+		$candidate = Join-Path -Path $dir -ChildPath $dllName
+		if (Test-Path -Path $candidate -PathType Leaf) { return Get-Item $candidate }
+	}
+	return $null
+}
+
+function Copy-IfChanged($source, $destination) {
+	if ((Test-Path -Path $destination -PathType Leaf) -and
+		((Get-FileHash $source).Hash -eq (Get-FileHash $destination).Hash)) {
+		Write-Ok "$destination is up to date."
+		return
+	}
+
+	$destinationDir = Split-Path -Path $destination -Parent
+	if (-not (Test-Path $destinationDir)) { New-Item -ItemType Directory -Path $destinationDir | Out-Null }
+
+	try {
+		Copy-Item -Path $source -Destination $destination -Force -ErrorAction Stop
+		Write-Ok "Copied $source -> $destination"
+	} catch {
+		# Usually mangosd/realmd still running and holding the DLL open
+		Write-Err "Could not copy $source -> ${destination}: $($_.Exception.Message)"
+	}
+}
+
+function Copy-MySqlDll($exePath) {
+	$mysqlRoot = Join-Path -Path $PROGRAM_FILES -ChildPath "MySQL"
+	$servers = Get-ChildItem -Path $mysqlRoot -Directory -Filter $MYSQL_SERVER_DIR_PATTERN -ErrorAction SilentlyContinue |
+		Sort-Object { Get-FolderVersion $_.Name } -Descending
+
+	foreach ($server in $servers) {
+		foreach ($subDir in $MYSQL_DLL_SUBDIRS) {
+			$source = Join-Path -Path $server.FullName -ChildPath "$subDir/$MYSQL_DLL"
+			if (Test-Path -Path $source -PathType Leaf) {
+				Write-Label "$MYSQL_DLL from $($server.Name) ($((Get-Item $source).VersionInfo.ProductVersion))"
+				Copy-IfChanged $source (Join-Path -Path $exePath -ChildPath $MYSQL_DLL)
+				return
+			}
+		}
+	}
+
+	Write-Err "No $MYSQL_DLL found under $mysqlRoot\$MYSQL_SERVER_DIR_PATTERN\{$($MYSQL_DLL_SUBDIRS -join ',')}"
+}
+
+function Copy-OpenSslLegacyProvider($exePath) {
+	# legacy.dll has to match the libcrypto mangosd really loads; a newer OpenSSL install
+	# (e.g. 4.x next to 3.x) ships a provider that libcrypto-3 cannot load.
+	$exe = Join-Path -Path $exePath -ChildPath $SERVER_EXE
+	$cryptoName = Get-ImportedDll $exe 'libcrypto-\d+(-x64)?\.dll'
+	if (-not $cryptoName) {
+		Write-Label "$SERVER_EXE does not import libcrypto - no OpenSSL provider needed."
+		return
+	}
+
+	$crypto = Find-LoadedDll $exePath $cryptoName
+	if (-not $crypto) {
+		Write-Err "$SERVER_EXE imports $cryptoName but it was not found beside the exe, in System32 or on PATH."
+		return
+	}
+	$cryptoVersion = $crypto.VersionInfo.ProductVersion
+	$cryptoMajor = ($cryptoVersion -split '\.')[0]
+	Write-Label "$SERVER_EXE loads $($crypto.FullName) ($cryptoVersion)"
+
+	$candidates = foreach ($root in (Get-ChildItem -Path $PROGRAM_FILES -Directory -Filter $OPENSSL_DIR_PATTERN -ErrorAction SilentlyContinue)) {
+		foreach ($subDir in $OPENSSL_PROVIDER_SUBDIRS) {
+			$path = Join-Path -Path $root.FullName -ChildPath "$subDir/$OPENSSL_LEGACY_DLL"
+			if (Test-Path -Path $path -PathType Leaf) { Get-Item $path }
+		}
+	}
+
+	$exact = @($candidates | Where-Object { $_.VersionInfo.ProductVersion -eq $cryptoVersion })
+	$sameMajor = @($candidates | Where-Object { ($_.VersionInfo.ProductVersion -split '\.')[0] -eq $cryptoMajor })
+	if ($exact.Count -gt 0) {
+		$source = $exact[0]
+	} elseif ($sameMajor.Count -gt 0) {
+		$source = $sameMajor[0]
+		Write-Warn "No $OPENSSL_LEGACY_DLL $cryptoVersion found; using $($source.VersionInfo.ProductVersion) from the same major version."
+	} else {
+		$seen = ($candidates | ForEach-Object { "$($_.FullName) ($($_.VersionInfo.ProductVersion))" }) -join ', '
+		Write-Err "No $OPENSSL_LEGACY_DLL matching OpenSSL $cryptoVersion under $PROGRAM_FILES\$OPENSSL_DIR_PATTERN. Found: $(if ($seen) { $seen } else { 'none' })"
+		return
+	}
+
+	Write-Label "$OPENSSL_LEGACY_DLL from $($source.FullName) ($($source.VersionInfo.ProductVersion))"
+	Copy-IfChanged $source.FullName (Join-Path -Path $exePath -ChildPath "$OPENSSL_MODULES_DIR/$OPENSSL_LEGACY_DLL")
+}
+
+function Get-PeArch($exePath) {
+	# "x64" / "win32" from the PE header's machine field, or $null
+	$stream = [System.IO.File]::OpenRead($exePath)
+	try {
+		$header = New-Object byte[] 4096
+		$read = $stream.Read($header, 0, $header.Length)
+	} finally {
+		$stream.Dispose()
+	}
+	if ($read -lt 0x40 -or $header[0] -ne 0x4D -or $header[1] -ne 0x5A) { return $null }
+	$peOffset = [System.BitConverter]::ToInt32($header, 0x3C)
+	if ($peOffset -lt 0 -or $peOffset + 6 -gt $read) { return $null }
+	if ([System.Text.Encoding]::ASCII.GetString($header, $peOffset, 4) -ne "PE`0`0") { return $null }
+	return $PE_MACHINE_ARCH[[int][System.BitConverter]::ToUInt16($header, $peOffset + 4)]
+}
+
+function Copy-VmangosDlls($exePath, $repoRoots) {
+	# libeay32.dll + libmySQL.dll from the repo's prebuilt deps, matching the exe's arch and config
+	$arch = Get-PeArch (Join-Path -Path $exePath -ChildPath $SERVER_EXE)
+	if (-not $arch) {
+		Write-Err "Could not read the architecture of $SERVER_EXE in $exePath."
+		return
+	}
+	# The deps only come in release/debug; RelWithDebInfo uses the release DLLs like CMake does
+	$config = if ((Split-Path -Path $exePath -Leaf) -ieq "debug") { "debug" } else { "release" }
+
+	$exeFull = ConvertTo-ComparablePath $exePath
+	$repoRoot = $repoRoots | Where-Object {
+		(Test-Path $_) -and $exeFull.StartsWith((ConvertTo-ComparablePath $_) + [System.IO.Path]::DirectorySeparatorChar)
+	} | Select-Object -First 1
+	if (-not $repoRoot) {
+		Write-Err "$exePath is not inside any of: $($repoRoots -join ', ')"
+		return
+	}
+
+	$depRoot = Join-Path -Path $repoRoot -ChildPath $VMANGOS_DEP_LIB_SUBPATH
+	$depDir = Get-ChildItem -Path $depRoot -Directory -ErrorAction SilentlyContinue |
+		Where-Object { $_.Name -ieq "${arch}_$config" } | Select-Object -First 1
+	if (-not $depDir) {
+		Write-Err "No ${arch}_$config dir under $depRoot"
+		return
+	}
+
+	Write-Label "From $($depDir.FullName)"
+	foreach ($dll in $VMANGOS_DLLS) {
+		$source = Join-Path -Path $depDir.FullName -ChildPath $dll
+		if (Test-Path -Path $source -PathType Leaf) {
+			Copy-IfChanged $source (Join-Path -Path $exePath -ChildPath $dll)
+		} else {
+			Write-Err "$dll is missing from $($depDir.FullName)"
+		}
+	}
+}
+
 $server = $args[0]
 
 # MangosZero
@@ -138,6 +370,7 @@ if ($server -ieq "0" -or $server -ieq "z") {
 	$fallbackPath = "~/mangoszero/bin"
 	$requiredDirs = $MANGOSZERO_REQUIRED_DIRS
 	$optionalDirs = $NO_OPTIONAL_DIRS
+	$localDataPath = "$LOCAL_DATA_ROOT/mangos_zero_win"
 
 # Cmangos
 } elseif ($server -ieq "c") {
@@ -149,6 +382,7 @@ if ($server -ieq "0" -or $server -ieq "z") {
 	$fallbackPath = "~/cmangos/run/bin"
 	$requiredDirs = $MANGOS_CLASSIC_REQUIRED_DIRS
 	$optionalDirs = $NO_OPTIONAL_DIRS
+	$localDataPath = $null
 
 } elseif ($server -ieq "tbc") {
 	Write-Alt "Cmangos tbc chosen..."
@@ -159,6 +393,7 @@ if ($server -ieq "0" -or $server -ieq "z") {
 	$fallbackPath = $null
 	$requiredDirs = $MANGOS_TBC_REQUIRED_DIRS
 	$optionalDirs = $MANGOS_TBC_OPTIONAL_DIRS
+	$localDataPath = "$LOCAL_DATA_ROOT/mangos_tbc_win"
 
 # Default to Vmangos
 } else {
@@ -170,6 +405,7 @@ if ($server -ieq "0" -or $server -ieq "z") {
 	$fallbackPath = "~/vmangos/bin"
 	$requiredDirs = $VMANGOS_REQUIRED_DIRS
 	$optionalDirs = $NO_OPTIONAL_DIRS
+	$localDataPath = "$LOCAL_DATA_ROOT/vmangos_win"
 }
 
 $path = Resolve-ServerPath $repoRoots $fallbackPath
@@ -180,7 +416,18 @@ Write-Label "Current directory: $path"
 
 Write-Host
 
-Test-RequiredDirs $path $requiredDirs $optionalDirs
+$dataPath = Resolve-DataPath $localDataPath $path $requiredDirs
+Test-RequiredDirs $dataPath $requiredDirs $optionalDirs
+Test-ConfDataDir $path $dataPath
+
+if ($server -ieq "0" -or $server -ieq "z") {
+	Write-Host
+	Copy-MySqlDll $path
+	Copy-OpenSslLegacyProvider $path
+} elseif ($server -ine "c" -and $server -ine "tbc") {
+	Write-Host
+	Copy-VmangosDlls $path $repoRoots
+}
 
 if ($server -ieq "tbc") {
     Write-Host
