@@ -68,6 +68,8 @@ if (-not $tokenValue) {
 
 $pullCommandActual  = "git pull https://${tokenValue}@github.com/$repoOwner/$repoName $currentBranch"
 $pullCommandDisplay = "git pull https://`$env:$($tokenEnvVarName)@github.com/$repoOwner/$repoName $currentBranch"
+$rebaseCommandActual  = "git pull --rebase https://${tokenValue}@github.com/$repoOwner/$repoName $currentBranch"
+$rebaseCommandDisplay = "git pull --rebase https://`$env:$($tokenEnvVarName)@github.com/$repoOwner/$repoName $currentBranch"
 
 # Pulling from a URL instead of from origin doesn't update origin/<branch>, so
 # git would say the branch is ahead by the pulled commits. Point it at what was
@@ -82,12 +84,32 @@ if ($LASTEXITCODE -ne 0) {
 
 # no && in Windows PowerShell 5.1
 $pullCommandDisplay = "$pullCommandDisplay; if (`$LASTEXITCODE -eq 0) { $syncCommand }"
+$rebaseCommandDisplay = "$rebaseCommandDisplay; if (`$LASTEXITCODE -eq 0) { $syncCommand }"
 
 if ($OutputOnly) {
     Write-Output $pullCommandDisplay
 } else {
     Write-Host "Executing: $pullCommandDisplay"
-    Invoke-Expression $pullCommandActual
+    # git's stderr is shown as usual and also kept in $pullOutput, so a
+    # divergent-branches failure can be told apart from other failures.
+    # 2>&1 turns native stderr into error records in Windows PowerShell 5.1,
+    # which would stop the script under ErrorActionPreference = Stop.
+    $ErrorActionPreference = 'Continue'
+    $pullOutput = Invoke-Expression "$pullCommandActual 2>&1" | ForEach-Object {
+        $line = "$_"
+        Write-Host $line
+        $line
+    }
+    if ($LASTEXITCODE -ne 0 -and ($pullOutput -join "`n") -match 'reconcile divergent branches') {
+        $answer = Read-Host "Branches have diverged. Pull via rebase? [y/N]"
+        # -in is case-insensitive, so Y / YES also work
+        if ("$answer".Trim() -in @('y', 'yes')) {
+            Write-Host "Executing: $rebaseCommandDisplay"
+            Invoke-Expression $rebaseCommandActual
+        } else {
+            Write-Host "Rebase declined, nothing pulled."
+        }
+    }
     if ($LASTEXITCODE -eq 0) {
         Invoke-Expression $syncCommand
     }
