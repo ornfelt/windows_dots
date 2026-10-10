@@ -270,8 +270,8 @@ $aliases = @(
     ".search", ".help_old", ".srclist", ".arg_tests", ".gr", ".gp", "nvcs", ".cmake_build",
     ".audit_diff_commit_info", ".audit_diff_restore", ".gen_commit_msg", ".kill_nvim_servers",
     ".gc", ".gcp", ".gd", ".do_the_thing", ".keycast", ".sql", ".ssms", ".ccs",
-    ".display_info", ".cmake_helper", ".module_sync", ".db_helper", ".script_helper",
-    ".git_status", ".git_check", "wezswitch"
+    ".display_info", ".cmake_helper", ".module_sync", ".db_helper", ".git_status",
+    ".git_check", ".hash_pc", ".script_helper", "wezswitch"
 )
 
 foreach ($alias in $aliases) {
