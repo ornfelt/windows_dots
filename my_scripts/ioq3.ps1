@@ -121,7 +121,7 @@ function Sync-Baseq3($baseq3Dir) {
 		if ($toCopy.Count -gt 0) {
 			Write-Warn "$($toCopy.Count) pk3 file(s) missing from ${baseq3Dir}: $($toCopy -join ', ')"
 
-			if (Confirm-Copy "Copy them from $hddBaseq3?") {
+			if (Confirm-Copy "Copy them from ${hddBaseq3}?") {
 				if (-not (Test-Path $baseq3Dir)) { New-Item -ItemType Directory -Path $baseq3Dir | Out-Null }
 
 				foreach ($name in $toCopy) {
