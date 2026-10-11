@@ -64,6 +64,16 @@ $PE_MACHINE_DIRS = @{ "x64" = "win64"; "x86" = "win32" }
 $STARTUP_CHECK_MS = 5000
 $STATUS_INVALID_IMAGE_FORMAT = -1073741701
 
+# The exe is a GUI app, so its output is lost unless redirected: stdout carries gfx's lines
+# ("[gfx] using SDL Vulkan window backend (release)", "[gfx] using vk device (release)"),
+# stderr the game console. Both go to
+# per-run files (older ones are removed once no game holds them open), stdin comes from an empty
+# file so the game's console input does not read this terminal.
+$GAME_LOG_DIR = Join-Path -Path $env:TEMP -ChildPath "ioq3rs-logs"
+$GAME_LOG_TIME_FORMAT = "yyyyMMdd-HHmmss"
+$GFX_LINE_PATTERN = '^\[gfx\]'
+$CONSOLE_TAIL_LINES = 15
+
 # Launch options (Show-Help). The gfx backends only reach a client built with use_gfx: one whose
 # exe imports gfx.dll and has renderer_gfx.dll next to it (a dist dir keeps a renderer_gfx.dll
 # from an earlier gfx build, so that dll alone says nothing). The branch only decides it for
@@ -511,22 +521,52 @@ function Sync-SdlDll($exe) {
 	}
 }
 
+function New-GameLogs {
+	# The stdout / stderr / stdin files of this run (see GAME_LOG_DIR)
+	if (-not (Test-Path $GAME_LOG_DIR)) { New-Item -ItemType Directory -Path $GAME_LOG_DIR | Out-Null }
+	Get-ChildItem -Path $GAME_LOG_DIR -File | Remove-Item -Force -ErrorAction SilentlyContinue
+
+	$stamp = Get-Date -Format $GAME_LOG_TIME_FORMAT
+	$logs = @{
+		Stdout = Join-Path -Path $GAME_LOG_DIR -ChildPath "$stamp-gfx.txt"
+		Stderr = Join-Path -Path $GAME_LOG_DIR -ChildPath "$stamp-console.txt"
+		Stdin  = Join-Path -Path $GAME_LOG_DIR -ChildPath "$stamp-stdin.txt"
+	}
+	New-Item -ItemType File -Path $logs.Stdin -Force | Out-Null
+	return $logs
+}
+
+function Show-GfxLines($logs) {
+	# gfx's "[gfx] using ... window backend / device (debug|release)" lines so far
+	$gfxLines = @(Get-Content -Path $logs.Stdout -ErrorAction SilentlyContinue | Where-Object { $_ -match $GFX_LINE_PATTERN })
+	if ($gfxLines.Count -eq 0) {
+		Write-Label "No [gfx] line yet (a GL renderer, or the window is not up yet): $($logs.Stdout)"
+		return
+	}
+	foreach ($line in $gfxLines) { Write-Ok $line }
+}
+
 function Start-Client($exe, $clientArgs) {
 	# Starts the game detached (as `& exe` does for a GUI app) and reports it when it exits
 	# right away, which otherwise looks like nothing happening
 	# Start-Process joins the args with spaces, so one holding a space is quoted
 	$quotedArgs = @($clientArgs | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } })
-	$process = Start-Process -FilePath $exe.FullName -ArgumentList $quotedArgs -WorkingDirectory $exe.Directory.FullName -PassThru
+	$logs = New-GameLogs
+	$process = Start-Process -FilePath $exe.FullName -ArgumentList $quotedArgs -WorkingDirectory $exe.Directory.FullName -PassThru `
+		-RedirectStandardOutput $logs.Stdout -RedirectStandardError $logs.Stderr -RedirectStandardInput $logs.Stdin
 	$null = $process.Handle  # Windows PowerShell only fills in ExitCode when the handle was read
 
 	if (-not $process.WaitForExit($STARTUP_CHECK_MS)) {
+		Show-GfxLines $logs
 		Write-Ok "Running (pid $($process.Id))."
+		Write-Label "Game console: $($logs.Stderr)"
 		return
 	}
 
+	Show-GfxLines $logs
 	$code = $process.ExitCode
 	if ($code -eq 0) {
-		Write-Label "The game exited (exit code 0)."
+		Write-Label "The game exited (exit code 0). Game console: $($logs.Stderr)"
 		return
 	}
 
@@ -534,7 +574,8 @@ function Start-Client($exe, $clientArgs) {
 	if ($code -eq $STATUS_INVALID_IMAGE_FORMAT) {
 		Write-Err "0xC000007B: a dll next to the exe has the wrong architecture (32 vs 64-bit)."
 	}
-	Write-Err "See the console log: $env:APPDATA\Quake3\$BASEQ3_DIR_NAME\qconsole.log (start with +set logfile 2)."
+	Write-Err "The end of the game console ($($logs.Stderr)):"
+	Get-Content -Path $logs.Stderr -Tail $CONSOLE_TAIL_LINES -ErrorAction SilentlyContinue | ForEach-Object { Write-Label "  $_" }
 	exit 1
 }
 
