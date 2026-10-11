@@ -1,3 +1,24 @@
+# Usage examples (args in any order, case insensitive; `.ioq3 help` lists them all):
+# start like before:
+# .ioq3
+#
+# dev map (q3dm0) in a window:
+# .ioq3 dev win
+#
+# another map with bots, on a fresh config, writing qconsole.log:
+# .ioq3 map=q3dm17 bots fresh log
+#
+# timedemo benchmark on renderer_opengl1:
+# .ioq3 bench opengl1
+#
+# the QVMs instead of the game dlls, raw game args after them (from the first + arg on):
+# .ioq3 qvm dev +set r_mode 6
+#
+# print the PowerShell line for this run instead of running it:
+# .ioq3 dev print
+#
+# the gfx backend args of .ioq3rs (vk, glfw, ...) are accepted but ignored: C ioq3 has no gfx
+
 function Write-Label($text) { Write-Host "$text" -ForegroundColor DarkGray }
 function Write-Alt  ($text) { Write-Host "$text" -ForegroundColor Magenta  }
 function Write-Extra($text) { Write-Host "$text" -ForegroundColor Blue     }
@@ -23,6 +44,162 @@ $BASEQ3_DIR_NAME = "baseq3"
 $HDD_BASEQ3_SUBPATH = "2024/$BASEQ3_DIR_NAME"
 $PK3_PATTERN = "*.pk3"
 $REQUIRED_PK3S = 0..8 | ForEach-Object { "pak$_.pk3" }
+
+# Launch options (Show-Help). The gfx ones are those of ioq3rs.ps1, accepted so the same args
+# work for both scripts, but ignored: the C ioq3 has no gfx renderer.
+$SCRIPT_INVOCATION = $MyInvocation.InvocationName
+$HELP_TOKENS = @("help", "h")
+$PRINT_TOKENS = @("print", "onlyprint", "showcmd")
+$GFX_DEVICES = @("gl4", "gl3", "gles3", "vk", "d3d11", "d3d12")
+$GFX_DEVICE_ALIASES = @{ "vulkan" = "vk"; "dx11" = "d3d11"; "dx12" = "d3d12" }
+$GFX_WINDOWS = @("sdl", "glfw", "win32")
+$GFX_RENDERER = "gfx"
+$RENDERERS = @("opengl1", "opengl2")
+$OPTION_VALUE_SEPARATOR = "="
+$PASSTHROUGH_PREFIX = "+"
+$DEV_MAP = "q3dm0"
+$BOTS = @("sarge", "doom")
+$BOT_SKILL = "2"
+$BOT_WAIT_FRAMES = "200"
+$WINDOWED_ARGS = @("+set", "r_fullscreen", "0", "+set", "r_mode", "4")
+$QVM_ARGS = @("+set", "vm_game", "2", "+set", "vm_cgame", "2", "+set", "vm_ui", "2")
+$LOG_ARGS = @("+set", "logfile", "2")
+$NO_BOTS_ARGS = @("+set", "bot_enable", "0")
+$TEAM_ARENA_ARGS = @("+set", "fs_game", "missionpack")
+$BENCH_ARGS = @("+set", "r_mode", "-1", "+set", "r_customwidth", "1920", "+set", "r_customheight", "1080",
+	"+set", "r_swapInterval", "0", "+set", "com_maxfps", "0", "+timedemo", "1", "+demo", "four")
+$FRESH_HOME_DIR = Join-Path -Path $env:TEMP -ChildPath "ioq3-fresh"
+
+function Show-Help {
+	Write-Alt "ioq3 - start the newest C ioq3 build under $REPO_ROOT/$BUILD_DIR_PATTERN"
+	Write-Host @"
+
+Usage: $SCRIPT_INVOCATION [options] [+game args...]
+Options are case insensitive, in any order, with or without leading dashes.
+
+Renderer:
+  $($RENDERERS -join ' | ')      cl_renderer
+
+Starting:
+  dev                    +devmap $DEV_MAP (skips the menu)
+  dev=<map>, map=<map>   +devmap <map>
+  bots                   +addbot $($BOTS -join ', ') (skill $BOT_SKILL) on the map (dev map if none given)
+  nobots                 bot_enable 0
+  connect=<address>      +connect <address> (instead of a map)
+  bench                  timedemo 1 of demo four at 1920x1080, vsync / fps cap off, logfile on
+  win                    windowed 800x600 (r_fullscreen 0, r_mode 4)
+  qvm                    run the QVMs from the paks instead of the game dlls
+  ta                     Team Arena (fs_game missionpack; needs its paks in missionpack/)
+  fresh                  empty fs_homepath at $FRESH_HOME_DIR (cleared each run)
+  log                    logfile 2 (qconsole.log in <home>/baseq3)
+
+Other:
+  +...                   this arg and all after it go to the game as they are
+  $($PRINT_TOKENS -join ' | ')  print the PowerShell line for this run instead of running it
+  $($HELP_TOKENS -join ' | ') (also -help, --help)  this help
+
+The gfx backend args of .ioq3rs ($($GFX_DEVICES -join ', '), $($GFX_WINDOWS -join ', '), $GFX_RENDERER) are
+accepted and ignored: the C ioq3 has no gfx renderer.
+
+Examples:
+  $SCRIPT_INVOCATION dev win
+  $SCRIPT_INVOCATION map=q3dm17 bots fresh log
+  $SCRIPT_INVOCATION bench opengl1
+  $SCRIPT_INVOCATION qvm dev +set r_mode 6
+"@
+}
+
+function Read-Options($argList) {
+	# The launch options from the script args; exits on an unknown one. The gfx ones are only
+	# collected, to be reported as ignored.
+	$opts = @{
+		Help = $false; PrintOnly = $false; IgnoredGfx = @(); Renderer = $null
+		Map = $null; Bots = $false; NoBots = $false; Connect = $null; Bench = $false
+		Windowed = $false; Qvm = $false; TeamArena = $false; Fresh = $false; Log = $false
+		Extra = @()
+	}
+
+	for ($i = 0; $i -lt $argList.Count; $i++) {
+		$raw = [string]$argList[$i]
+		if ($raw.StartsWith($PASSTHROUGH_PREFIX)) {
+			$opts.Extra = @($argList | Select-Object -Skip $i | ForEach-Object { [string]$_ })
+			break
+		}
+
+		$name, $value = $raw.TrimStart("-") -split $OPTION_VALUE_SEPARATOR, 2
+		$name = $name.ToLowerInvariant()
+
+		if ($HELP_TOKENS -contains $name) { $opts.Help = $true }
+		elseif ($PRINT_TOKENS -contains $name) { $opts.PrintOnly = $true }
+		elseif ($GFX_DEVICE_ALIASES.ContainsKey($name) -or $GFX_DEVICES -contains $name -or
+			$GFX_WINDOWS -contains $name -or $name -eq $GFX_RENDERER) { $opts.IgnoredGfx += $raw }
+		elseif ($RENDERERS -contains $name) { $opts.Renderer = $name }
+		elseif ($name -eq "dev") { $opts.Map = $(if ($value) { $value } else { $DEV_MAP }) }
+		elseif ($name -eq "map" -and $value) { $opts.Map = $value }
+		elseif ($name -eq "connect" -and $value) { $opts.Connect = $value }
+		elseif ($name -eq "bots") { $opts.Bots = $true }
+		elseif ($name -eq "nobots") { $opts.NoBots = $true }
+		elseif ($name -eq "bench") { $opts.Bench = $true }
+		elseif ($name -eq "win") { $opts.Windowed = $true }
+		elseif ($name -eq "qvm") { $opts.Qvm = $true }
+		elseif ($name -eq "ta") { $opts.TeamArena = $true }
+		elseif ($name -eq "fresh") { $opts.Fresh = $true }
+		elseif ($name -eq "log") { $opts.Log = $true }
+		else {
+			Write-Err "Unknown arg: $raw (map= / dev= / connect= need a value) - see '$SCRIPT_INVOCATION help'."
+			exit 1
+		}
+	}
+
+	if ($opts.Bots -and -not $opts.Map) { $opts.Map = $DEV_MAP }
+	return $opts
+}
+
+function Get-LaunchArgs($opts) {
+	# The game args: the defaults, then the cvars of the options, then the commands
+	if ($opts.IgnoredGfx.Count -gt 0) {
+		Write-Warn "C ioq3 has no gfx - ignoring the gfx arg(s): $($opts.IgnoredGfx -join ', ')"
+	}
+
+	$launchArgs = @($CLIENT_ARGS)
+	if ($opts.Qvm) { $launchArgs += $QVM_ARGS }
+	if ($opts.TeamArena) { $launchArgs += $TEAM_ARENA_ARGS }
+	if ($opts.Fresh) { $launchArgs += @("+set", "fs_homepath", $FRESH_HOME_DIR) }
+	if ($opts.Renderer) { $launchArgs += @("+set", "cl_renderer", $opts.Renderer) }
+	if ($opts.Windowed) { $launchArgs += $WINDOWED_ARGS }
+	if ($opts.Log -or $opts.Bench) { $launchArgs += $LOG_ARGS }
+	if ($opts.NoBots) { $launchArgs += $NO_BOTS_ARGS }
+
+	if ($opts.Bench) {
+		if ($opts.Map -or $opts.Connect) { Write-Warn "bench plays a demo - ignoring the map / connect." }
+		$launchArgs += $BENCH_ARGS
+	} elseif ($opts.Connect) {
+		if ($opts.Map) { Write-Warn "connect joins a server - ignoring the map." }
+		$launchArgs += @("+connect", $opts.Connect)
+	} elseif ($opts.Map) {
+		$launchArgs += @("+devmap", $opts.Map)
+		if ($opts.Bots) {
+			$launchArgs += @("+wait", $BOT_WAIT_FRAMES)
+			foreach ($bot in $BOTS) { $launchArgs += @("+addbot", $bot, $BOT_SKILL) }
+		}
+	}
+
+	return @($launchArgs + $opts.Extra)
+}
+
+function Reset-FreshHome {
+	# The `fresh` fs_homepath is emptied first, so no q3config.cfg or *.pid carries over
+	if (Test-Path -Path $FRESH_HOME_DIR) {
+		Remove-Item -Path $FRESH_HOME_DIR -Recurse -Force -ErrorAction SilentlyContinue
+	}
+	Write-Label "Fresh home: $FRESH_HOME_DIR"
+}
+
+function Format-ShellArg($arg) {
+	# Single-quotes an arg PowerShell would split or expand
+	if ($arg -match '^[\w.\-+:\\/=]+$') { return $arg }
+	return "'" + ($arg -replace "'", "''") + "'"
+}
 
 function Find-ClientBuilds($repoRoot) {
 	# Every <root>/build*/**/<config>/ioquake3*.exe, newest build first.
@@ -153,16 +330,35 @@ function Sync-Baseq3($baseq3Dir) {
 	Write-Ok "All $($REQUIRED_PK3S.Count) required pk3 files found in $baseq3Dir."
 }
 
+$options = Read-Options $args
+if ($options.Help) {
+	Show-Help
+	exit 0
+}
+
 Write-Alt "ioq3..."
 
 $exe = Resolve-ClientExe $REPO_ROOT
 $baseq3Dir = Join-Path -Path $exe.Directory.FullName -ChildPath $BASEQ3_DIR_NAME
+$clientArgs = Get-LaunchArgs $options
+
+if ($options.PrintOnly) {
+	# The PowerShell lines reproducing this run (the pk3 check is left out)
+	Write-Host
+	Write-Extra "# $SCRIPT_INVOCATION $(($args | ForEach-Object { Format-ShellArg ([string]$_) }) -join ' ')"
+	if ($options.Fresh) {
+		Write-Extra "Remove-Item -Recurse -Force $(Format-ShellArg $FRESH_HOME_DIR) -ErrorAction SilentlyContinue"
+	}
+	Write-Extra "& $(Format-ShellArg $exe.FullName) $(($clientArgs | ForEach-Object { Format-ShellArg $_ }) -join ' ')"
+	exit 0
+}
 
 Write-Host
 
 Sync-Baseq3 $baseq3Dir
+if ($options.Fresh) { Reset-FreshHome }
 
 Write-Host
 
-Write-Extra "$($exe.FullName) $($CLIENT_ARGS -join ' ')"
-& $exe.FullName @CLIENT_ARGS
+Write-Extra "$($exe.FullName) $($clientArgs -join ' ')"
+& $exe.FullName @clientArgs

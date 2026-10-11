@@ -1,3 +1,26 @@
+# Usage examples (args in any order, case insensitive; `.ioq3rs help` lists them all):
+# start like before (the backends / renderer last used are remembered in q3config.cfg):
+# .ioq3rs
+#
+# pick the gfx device and / or window (ignored by a build without gfx):
+# .ioq3rs vk glfw
+# .ioq3rs d3d11
+#
+# dev map (q3dm0) in a window:
+# .ioq3rs dev win
+#
+# another map with bots, on a fresh config, writing qconsole.log:
+# .ioq3rs map=q3dm17 bots fresh log
+#
+# timedemo benchmark on d3d12:
+# .ioq3rs bench d3d12
+#
+# the QVMs instead of the Rust modules, raw game args after them (from the first + arg on):
+# .ioq3rs qvm dev +set r_mode 6
+#
+# print the PowerShell lines for this run instead of running it:
+# .ioq3rs vk dev print
+
 function Write-Label($text) { Write-Host "$text" -ForegroundColor DarkGray }
 function Write-Alt  ($text) { Write-Host "$text" -ForegroundColor Magenta  }
 function Write-Extra($text) { Write-Host "$text" -ForegroundColor Blue     }
@@ -40,6 +63,223 @@ $PE_MACHINE_DIRS = @{ "x64" = "win64"; "x86" = "win32" }
 # The game is started detached; when it exits within this many ms its exit code is reported
 $STARTUP_CHECK_MS = 5000
 $STATUS_INVALID_IMAGE_FORMAT = -1073741701
+
+# Launch options (Show-Help). The gfx backends only reach a client built with use_gfx: one whose
+# exe imports gfx.dll and has renderer_gfx.dll next to it (a dist dir keeps a renderer_gfx.dll
+# from an earlier gfx build, so that dll alone says nothing). The branch only decides it for
+# `print` when nothing is built yet.
+$SCRIPT_INVOCATION = $MyInvocation.InvocationName
+$HELP_TOKENS = @("help", "h")
+$PRINT_TOKENS = @("print", "onlyprint", "showcmd")
+$GFX_DEVICES = @("gl4", "gl3", "gles3", "vk", "d3d11", "d3d12")
+$GFX_DEVICE_ALIASES = @{ "vulkan" = "vk"; "dx11" = "d3d11"; "dx12" = "d3d12" }
+$GFX_WINDOWS = @("sdl", "glfw", "win32")
+$GFX_RENDERER = "gfx"
+$RENDERERS = @($GFX_RENDERER, "opengl1", "opengl2")
+$GFX_RENDERER_DLL_NAME = "renderer_gfx.dll"
+$GFX_IMPORT_PATTERN = '(?i)\x00gfx\.dll\x00'
+$GFX_BRANCH = "gfx"
+$OPTION_VALUE_SEPARATOR = "="
+$PASSTHROUGH_PREFIX = "+"
+$DEV_MAP = "q3dm0"
+$BOTS = @("sarge", "doom")
+$BOT_SKILL = "2"
+$BOT_WAIT_FRAMES = "200"
+$WINDOWED_ARGS = @("+set", "r_fullscreen", "0", "+set", "r_mode", "4")
+$QVM_ARGS = @("+set", "vm_game", "2", "+set", "vm_cgame", "2", "+set", "vm_ui", "2")
+$LOG_ARGS = @("+set", "logfile", "2")
+$NO_BOTS_ARGS = @("+set", "bot_enable", "0")
+$TEAM_ARENA_ARGS = @("+set", "fs_game", "missionpack")
+$BENCH_ARGS = @("+set", "r_mode", "-1", "+set", "r_customwidth", "1920", "+set", "r_customheight", "1080",
+	"+set", "r_swapInterval", "0", "+set", "com_maxfps", "0", "+timedemo", "1", "+demo", "four")
+$FRESH_HOME_DIR = Join-Path -Path $env:TEMP -ChildPath "ioq3rs-fresh"
+
+function Show-Help {
+	Write-Alt "ioq3rs - build (when missing) and start the ioq3-rs client from $REPO_ROOT/$DIST_SUBPATH"
+	Write-Host @"
+
+Usage: $SCRIPT_INVOCATION [options] [+game args...]
+Options are case insensitive, in any order, with or without leading dashes.
+
+gfx backends (used only when the built client supports gfx, ignored otherwise):
+  $($GFX_DEVICES -join ' | ')   r_gfxDevice (vulkan = vk, dx11 / dx12 = d3d11 / d3d12)
+  $($GFX_WINDOWS -join ' | ')               r_gfxWindow (d3d11 / d3d12 always use win32)
+  Either one also sets cl_renderer $GFX_RENDERER. Both cvars are remembered in q3config.cfg, so a
+  start without them uses the last ones; vk / d3d12 can hang the GPU driver - keep runs short.
+
+Renderer:
+  $($RENDERERS -join ' | ')     cl_renderer ($GFX_RENDERER only on a gfx build)
+
+Starting:
+  dev                    +devmap $DEV_MAP (skips the menu)
+  dev=<map>, map=<map>   +devmap <map>
+  bots                   +addbot $($BOTS -join ', ') (skill $BOT_SKILL) on the map (dev map if none given)
+  nobots                 bot_enable 0
+  connect=<address>      +connect <address> (instead of a map)
+  bench                  timedemo 1 of demo four at 1920x1080, vsync / fps cap off, logfile on
+  win                    windowed 800x600 (r_fullscreen 0, r_mode 4)
+  qvm                    run the QVMs from the paks instead of the Rust game modules
+  ta                     Team Arena (fs_game missionpack; needs its paks in missionpack/)
+  fresh                  empty fs_homepath at $FRESH_HOME_DIR (cleared each run)
+  log                    logfile 2 (qconsole.log in <home>/baseq3)
+
+Other:
+  +...                   this arg and all after it go to the game as they are
+  $($PRINT_TOKENS -join ' | ')  print the PowerShell lines for this run instead of running it
+  $($HELP_TOKENS -join ' | ') (also -help, --help)  this help
+
+Examples:
+  $SCRIPT_INVOCATION vk glfw dev win
+  $SCRIPT_INVOCATION map=q3dm17 bots fresh log
+  $SCRIPT_INVOCATION bench d3d11
+  $SCRIPT_INVOCATION opengl1 dev +set r_mode 6
+"@
+}
+
+function Read-Options($argList) {
+	# The launch options from the script args; exits on an unknown one
+	$opts = @{
+		Help = $false; PrintOnly = $false; Device = $null; Window = $null; Renderer = $null
+		Map = $null; Bots = $false; NoBots = $false; Connect = $null; Bench = $false
+		Windowed = $false; Qvm = $false; TeamArena = $false; Fresh = $false; Log = $false
+		Extra = @()
+	}
+
+	for ($i = 0; $i -lt $argList.Count; $i++) {
+		$raw = [string]$argList[$i]
+		if ($raw.StartsWith($PASSTHROUGH_PREFIX)) {
+			$opts.Extra = @($argList | Select-Object -Skip $i | ForEach-Object { [string]$_ })
+			break
+		}
+
+		$name, $value = $raw.TrimStart("-") -split $OPTION_VALUE_SEPARATOR, 2
+		$name = $name.ToLowerInvariant()
+		if ($GFX_DEVICE_ALIASES.ContainsKey($name)) { $name = $GFX_DEVICE_ALIASES[$name] }
+
+		if ($HELP_TOKENS -contains $name) { $opts.Help = $true }
+		elseif ($PRINT_TOKENS -contains $name) { $opts.PrintOnly = $true }
+		elseif ($GFX_DEVICES -contains $name) { $opts.Device = $name }
+		elseif ($GFX_WINDOWS -contains $name) { $opts.Window = $name }
+		elseif ($RENDERERS -contains $name) { $opts.Renderer = $name }
+		elseif ($name -eq "dev") { $opts.Map = $(if ($value) { $value } else { $DEV_MAP }) }
+		elseif ($name -eq "map" -and $value) { $opts.Map = $value }
+		elseif ($name -eq "connect" -and $value) { $opts.Connect = $value }
+		elseif ($name -eq "bots") { $opts.Bots = $true }
+		elseif ($name -eq "nobots") { $opts.NoBots = $true }
+		elseif ($name -eq "bench") { $opts.Bench = $true }
+		elseif ($name -eq "win") { $opts.Windowed = $true }
+		elseif ($name -eq "qvm") { $opts.Qvm = $true }
+		elseif ($name -eq "ta") { $opts.TeamArena = $true }
+		elseif ($name -eq "fresh") { $opts.Fresh = $true }
+		elseif ($name -eq "log") { $opts.Log = $true }
+		else {
+			Write-Err "Unknown arg: $raw (map= / dev= / connect= need a value) - see '$SCRIPT_INVOCATION help'."
+			exit 1
+		}
+	}
+
+	if ($opts.Bots -and -not $opts.Map) { $opts.Map = $DEV_MAP }
+	return $opts
+}
+
+function Test-GfxBuild($exePath) {
+	# True when the client was built with use_gfx (see the launch options above)
+	$rendererPath = Join-Path -Path (Split-Path -Path $exePath -Parent) -ChildPath $GFX_RENDERER_DLL_NAME
+	if (-not (Test-Path -Path $rendererPath -PathType Leaf)) { return $false }
+	$exeText = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($exePath))
+	return ($exeText -match $GFX_IMPORT_PATTERN)
+}
+
+function Resolve-GfxOptions($opts, $gfxBuild) {
+	# Drops the gfx options on a build without gfx; on a gfx build a backend also picks renderer_gfx
+	if (-not $gfxBuild) {
+		$ignored = @(@($opts.Device, $opts.Window) | Where-Object { $_ })
+		if ($opts.Renderer -eq $GFX_RENDERER) { $ignored += $opts.Renderer; $opts.Renderer = $null }
+		Write-Label "The client is built without gfx."
+		if ($ignored.Count -gt 0) { Write-Warn "Ignoring the gfx arg(s): $($ignored -join ', ')" }
+		$opts.Device = $null
+		$opts.Window = $null
+		return
+	}
+
+	Write-Label "The client is built with gfx."
+	if (-not ($opts.Device -or $opts.Window)) { return }
+	if (-not $opts.Renderer) {
+		$opts.Renderer = $GFX_RENDERER
+	} elseif ($opts.Renderer -ne $GFX_RENDERER) {
+		Write-Warn "cl_renderer $($opts.Renderer) ignores r_gfxDevice / r_gfxWindow."
+	}
+}
+
+function Get-LaunchArgs($opts) {
+	# The game args: the defaults, then the cvars of the options, then the commands
+	$launchArgs = @($CLIENT_ARGS)
+	if ($opts.Qvm) { $launchArgs += $QVM_ARGS }
+	if ($opts.TeamArena) { $launchArgs += $TEAM_ARENA_ARGS }
+	if ($opts.Fresh) { $launchArgs += @("+set", "fs_homepath", $FRESH_HOME_DIR) }
+	if ($opts.Renderer) { $launchArgs += @("+set", "cl_renderer", $opts.Renderer) }
+	if ($opts.Device) { $launchArgs += @("+set", "r_gfxDevice", $opts.Device) }
+	if ($opts.Window) { $launchArgs += @("+set", "r_gfxWindow", $opts.Window) }
+	if ($opts.Windowed) { $launchArgs += $WINDOWED_ARGS }
+	if ($opts.Log -or $opts.Bench) { $launchArgs += $LOG_ARGS }
+	if ($opts.NoBots) { $launchArgs += $NO_BOTS_ARGS }
+
+	if ($opts.Bench) {
+		if ($opts.Map -or $opts.Connect) { Write-Warn "bench plays a demo - ignoring the map / connect." }
+		$launchArgs += $BENCH_ARGS
+	} elseif ($opts.Connect) {
+		if ($opts.Map) { Write-Warn "connect joins a server - ignoring the map." }
+		$launchArgs += @("+connect", $opts.Connect)
+	} elseif ($opts.Map) {
+		$launchArgs += @("+devmap", $opts.Map)
+		if ($opts.Bots) {
+			$launchArgs += @("+wait", $BOT_WAIT_FRAMES)
+			foreach ($bot in $BOTS) { $launchArgs += @("+addbot", $bot, $BOT_SKILL) }
+		}
+	}
+
+	return @($launchArgs + $opts.Extra)
+}
+
+function Reset-FreshHome {
+	# The `fresh` fs_homepath is emptied first, so no q3config.cfg or *.pid carries over
+	if (Test-Path -Path $FRESH_HOME_DIR) {
+		Remove-Item -Path $FRESH_HOME_DIR -Recurse -Force -ErrorAction SilentlyContinue
+	}
+	Write-Label "Fresh home: $FRESH_HOME_DIR"
+}
+
+function Format-ShellArg($arg) {
+	# Single-quotes an arg PowerShell would split or expand
+	if ($arg -match '^[\w.\-+:\\/=]+$') { return $arg }
+	return "'" + ($arg -replace "'", "''") + "'"
+}
+
+function Show-LaunchCommand($repoRoot, $opts, $scriptArgs) {
+	# Prints the PowerShell lines reproducing this run (the pk3 / SDL2.dll checks are left out)
+	$distDir = Join-Path -Path $repoRoot -ChildPath $DIST_SUBPATH
+	$exePath = Join-Path -Path $distDir -ChildPath $CLIENT_EXE_NAME
+	$lines = @("# $SCRIPT_INVOCATION $(($scriptArgs | ForEach-Object { Format-ShellArg ([string]$_) }) -join ' ')")
+
+	if (Test-Path -Path $exePath -PathType Leaf) {
+		$gfxBuild = Test-GfxBuild $exePath
+	} else {
+		$lines += "Push-Location $(Format-ShellArg $repoRoot); $BUILD_COMMAND $($BUILD_ARGS -join ' '); Pop-Location"
+		$branch = git -C $repoRoot branch --show-current 2>$null
+		$gfxBuild = ($branch -eq $GFX_BRANCH)
+		Write-Label "No $CLIENT_EXE_NAME yet - going by the branch ($branch) for gfx support."
+	}
+
+	Resolve-GfxOptions $opts $gfxBuild
+	$launchArgs = Get-LaunchArgs $opts
+	if ($opts.Fresh) {
+		$lines += "Remove-Item -Recurse -Force $(Format-ShellArg $FRESH_HOME_DIR) -ErrorAction SilentlyContinue"
+	}
+	$lines += "Push-Location $(Format-ShellArg $distDir); .\$CLIENT_EXE_NAME $(($launchArgs | ForEach-Object { Format-ShellArg $_ }) -join ' '); Pop-Location"
+
+	Write-Host
+	foreach ($line in $lines) { Write-Extra $line }
+}
 
 function Build-Client($repoRoot) {
 	if (-not (Get-Command $BUILD_COMMAND -ErrorAction SilentlyContinue)) {
@@ -274,7 +514,9 @@ function Sync-SdlDll($exe) {
 function Start-Client($exe, $clientArgs) {
 	# Starts the game detached (as `& exe` does for a GUI app) and reports it when it exits
 	# right away, which otherwise looks like nothing happening
-	$process = Start-Process -FilePath $exe.FullName -ArgumentList $clientArgs -WorkingDirectory $exe.Directory.FullName -PassThru
+	# Start-Process joins the args with spaces, so one holding a space is quoted
+	$quotedArgs = @($clientArgs | ForEach-Object { if ($_ -match '\s') { "`"$_`"" } else { $_ } })
+	$process = Start-Process -FilePath $exe.FullName -ArgumentList $quotedArgs -WorkingDirectory $exe.Directory.FullName -PassThru
 	$null = $process.Handle  # Windows PowerShell only fills in ExitCode when the handle was read
 
 	if (-not $process.WaitForExit($STARTUP_CHECK_MS)) {
@@ -296,7 +538,18 @@ function Start-Client($exe, $clientArgs) {
 	exit 1
 }
 
+$options = Read-Options $args
+if ($options.Help) {
+	Show-Help
+	exit 0
+}
+
 Write-Alt "ioq3-rs..."
+
+if ($options.PrintOnly) {
+	Show-LaunchCommand $REPO_ROOT $options $args
+	exit 0
+}
 
 $exe = Resolve-ClientExe $REPO_ROOT
 $baseq3Dir = Join-Path -Path $exe.Directory.FullName -ChildPath $BASEQ3_DIR_NAME
@@ -306,7 +559,11 @@ Write-Host
 Sync-Baseq3 $baseq3Dir
 Sync-SdlDll $exe
 
+Resolve-GfxOptions $options (Test-GfxBuild $exe.FullName)
+$clientArgs = Get-LaunchArgs $options
+if ($options.Fresh) { Reset-FreshHome }
+
 Write-Host
 
-Write-Extra "$($exe.FullName) $($CLIENT_ARGS -join ' ')"
-Start-Client $exe $CLIENT_ARGS
+Write-Extra "$($exe.FullName) $($clientArgs -join ' ')"
+Start-Client $exe $clientArgs
