@@ -44,8 +44,8 @@ $BUILD_ARGS = @("xtask", "dist", "--release")
 $BUILD_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 $CLIENT_ARGS = @("+set", "sv_pure", "0", "+set", "vm_game", "0", "+set", "vm_cgame", "0", "+set", "vm_ui", "0")
 
-# Game data: <exe dir>/baseq3 needs these. They are reused from a C ioq3 build's baseq3 first,
-# then from <any drive>/2024/baseq3
+# Game data: <exe dir>/baseq3 needs these. They are reused from another build's baseq3 first (a
+# C ioq3 build or another dist dir of this port), then from <any drive>/2024/baseq3
 $BASEQ3_DIR_NAME = "baseq3"
 $HDD_BASEQ3_SUBPATH = "2024/$BASEQ3_DIR_NAME"
 $PK3_PATTERN = "*.pk3"
@@ -53,6 +53,7 @@ $REQUIRED_PK3S = 0..8 | ForEach-Object { "pak$_.pk3" }
 $C_REPO_ROOT = Join-Path -Path $env:code_root_dir -ChildPath "Code2/C/ioq3"
 $C_BUILD_DIR_PATTERN = "build*"
 $C_BASEQ3_SEARCH_DEPTH = 3
+$DIST_ROOT = Join-Path -Path $REPO_ROOT -ChildPath (Split-Path -Path $DIST_SUBPATH -Parent)
 
 # SDL2.dll next to the exe must match its architecture (a 32-bit one makes a 64-bit exe exit at
 # once with 0xC000007B); the right one is taken from the C tree's thirdparty libs
@@ -342,12 +343,14 @@ function Get-MissingFiles($dir, $fileNames) {
 	})
 }
 
-function Find-CBaseq3Dirs {
-	# Every <C repo>/build*/**/baseq3 (a C build's game data), newest first
+function Find-BuildBaseq3Dirs {
+	# Every <C repo>/build*/**/baseq3 and <this repo>/target/dist/**/baseq3 (a build's game
+	# data), newest first
 	$found = New-Object System.Collections.Generic.List[object]
 
-	$searchRoots = Get-ChildItem -Path $C_REPO_ROOT -Directory -ErrorAction SilentlyContinue |
-		Where-Object { $_.Name -like $C_BUILD_DIR_PATTERN }
+	$searchRoots = @(Get-ChildItem -Path $C_REPO_ROOT -Directory -ErrorAction SilentlyContinue |
+		Where-Object { $_.Name -like $C_BUILD_DIR_PATTERN }) +
+		@(Get-Item -Path $DIST_ROOT -ErrorAction SilentlyContinue)
 
 	foreach ($searchRoot in $searchRoots) {
 		Get-ChildItem -Path $searchRoot.FullName -Directory -Recurse -Depth $C_BASEQ3_SEARCH_DEPTH -ErrorAction SilentlyContinue |
@@ -369,9 +372,9 @@ function Find-HddBaseq3Dirs {
 }
 
 function Find-SourceBaseq3($targetDir) {
-	# First baseq3 (C builds first, then the drives) that holds every required pk3
+	# First baseq3 (builds first, then the drives) that holds every required pk3
 	$targetFull = [System.IO.Path]::GetFullPath($targetDir)
-	$candidates = @(Find-CBaseq3Dirs) + @(Find-HddBaseq3Dirs)
+	$candidates = @(Find-BuildBaseq3Dirs) + @(Find-HddBaseq3Dirs)
 
 	foreach ($candidate in $candidates) {
 		if ([System.IO.Path]::GetFullPath($candidate) -ieq $targetFull) { continue }
@@ -452,7 +455,7 @@ function Sync-Baseq3($baseq3Dir) {
 			}
 		}
 	} elseif ($missingRequired.Count -gt 0) {
-		Write-Warn "No C build baseq3 under $C_REPO_ROOT and no mounted drive's $HDD_BASEQ3_SUBPATH holds $($REQUIRED_PK3S -join ', ')."
+		Write-Warn "No build baseq3 under $C_REPO_ROOT/$C_BUILD_DIR_PATTERN or $DIST_ROOT and no mounted drive's $HDD_BASEQ3_SUBPATH holds $($REQUIRED_PK3S -join ', ')."
 	}
 
 	$stillMissing = Get-MissingFiles $baseq3Dir $REQUIRED_PK3S

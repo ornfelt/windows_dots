@@ -26,8 +26,11 @@ function Write-Warn ($text) { Write-Host "$text" -ForegroundColor DarkYellow }
 function Write-Ok   ($text) { Write-Host "$text" -ForegroundColor Green    }
 function Write-Err  ($text) { Write-Host "$text" -ForegroundColor Red      }
 
-# When true, missing pk3 files are copied from the HDD without asking first
+# When true, missing pk3 files are linked / copied without asking first
 $AUTO_COPY_DATA = $false
+# When true, a pk3 found on the same volume is hard-linked instead of copied (no extra disk
+# space; falls back to a copy when linking fails)
+$LINK_SAME_VOLUME = $true
 
 # Build dirs are searched for these config folders; the newest ioquake3 exe wins
 # (old builds: ioquake3.x86_64.exe / ioquake3.x86.exe, CMake builds: ioquake3.exe)
@@ -39,8 +42,11 @@ $CLIENT_EXE_PATTERN = "ioquake3*.exe"
 $BUILD_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 $CLIENT_ARGS = @("+set", "sv_pure", "0", "+set", "vm_game", "0", "+set", "vm_cgame", "0", "+set", "vm_ui", "0")
 
-# Game data: <exe dir>/baseq3 needs these, copied from <any drive>/2024/baseq3 when missing
+# Game data: <exe dir>/baseq3 needs these. When missing they are reused from another build's
+# baseq3 first (a C build here or an ioq3-rs dist dir), then from <any drive>/2024/baseq3
 $BASEQ3_DIR_NAME = "baseq3"
+$RS_DIST_ROOT = Join-Path -Path $env:code_root_dir -ChildPath "Code2/Rust/ioq3-rs/target/dist"
+$BUILD_BASEQ3_SEARCH_DEPTH = 3
 $HDD_BASEQ3_SUBPATH = "2024/$BASEQ3_DIR_NAME"
 $PK3_PATTERN = "*.pk3"
 $REQUIRED_PK3S = 0..8 | ForEach-Object { "pak$_.pk3" }
@@ -256,15 +262,45 @@ function Get-MissingFiles($dir, $fileNames) {
 	})
 }
 
-function Find-HddBaseq3 {
-	# First <drive>:/2024/baseq3 that holds every required pk3
+function Find-BuildBaseq3Dirs {
+	# Every <C repo>/build*/**/baseq3 and <ioq3-rs>/target/dist/**/baseq3 (a build's game data),
+	# newest first
+	$found = New-Object System.Collections.Generic.List[object]
+
+	$searchRoots = @(Get-ChildItem -Path $REPO_ROOT -Directory -ErrorAction SilentlyContinue |
+		Where-Object { $_.Name -like $BUILD_DIR_PATTERN }) +
+		@(Get-Item -Path $RS_DIST_ROOT -ErrorAction SilentlyContinue)
+
+	foreach ($searchRoot in $searchRoots) {
+		Get-ChildItem -Path $searchRoot.FullName -Directory -Recurse -Depth $BUILD_BASEQ3_SEARCH_DEPTH -ErrorAction SilentlyContinue |
+			Where-Object { $_.Name -ieq $BASEQ3_DIR_NAME } |
+			ForEach-Object { $found.Add($_) }
+	}
+
+	return @($found.ToArray() | Sort-Object LastWriteTime -Descending | ForEach-Object { $_.FullName })
+}
+
+function Find-HddBaseq3Dirs {
+	# Every <drive>:/2024/baseq3
+	$found = @()
 	foreach ($drive in (Get-PSDrive -PSProvider FileSystem | Sort-Object Name)) {
 		$candidate = Join-Path -Path $drive.Root -ChildPath $HDD_BASEQ3_SUBPATH
-		if (-not (Test-Path -Path $candidate -PathType Container)) { continue }
+		if (Test-Path -Path $candidate -PathType Container) { $found += $candidate }
+	}
+	return $found
+}
+
+function Find-SourceBaseq3($targetDir) {
+	# First baseq3 (builds first, then the drives) that holds every required pk3
+	$targetFull = [System.IO.Path]::GetFullPath($targetDir)
+	$candidates = @(Find-BuildBaseq3Dirs) + @(Find-HddBaseq3Dirs)
+
+	foreach ($candidate in $candidates) {
+		if ([System.IO.Path]::GetFullPath($candidate) -ieq $targetFull) { continue }
 
 		$missing = Get-MissingFiles $candidate $REQUIRED_PK3S
 		if ($missing.Count -eq 0) {
-			Write-Ok "Found baseq3 data on drive: $candidate"
+			Write-Ok "Found baseq3 data: $candidate"
 			return $candidate
 		}
 		Write-Warn "$candidate is missing $($missing -join ', ') - skipping it."
@@ -275,20 +311,49 @@ function Find-HddBaseq3 {
 
 function Confirm-Copy($question) {
 	if ($AUTO_COPY_DATA) {
-		Write-Label "AUTO_COPY_DATA is set - copying without asking."
+		Write-Label "AUTO_COPY_DATA is set - going ahead without asking."
 		return $true
 	}
 	$answer = Read-Host "$question [y/N]"
 	return ($answer -ieq "y" -or $answer -ieq "yes")
 }
 
-function Sync-Baseq3($baseq3Dir) {
-	# Copies the HDD's missing pk3 files into baseq3 (after one confirmation), then checks
-	# the required ones. Exits when a required pk3 is still missing.
-	$hddBaseq3 = Find-HddBaseq3
+function Add-DataFile($source, $destDir) {
+	# Hard-links the file when source and destination share a volume (and LINK_SAME_VOLUME is
+	# set), copies it otherwise or when linking fails
+	$dest = Join-Path -Path $destDir -ChildPath (Split-Path -Path $source -Leaf)
+	$sameVolume = [System.IO.Path]::GetPathRoot($source) -ieq [System.IO.Path]::GetPathRoot($dest)
 
-	if ($hddBaseq3) {
-		$sourceNames = @(Get-ChildItem -Path $hddBaseq3 -File -Filter $PK3_PATTERN | Select-Object -ExpandProperty Name)
+	if ($LINK_SAME_VOLUME -and $sameVolume) {
+		try {
+			New-Item -ItemType HardLink -Path $dest -Target $source -ErrorAction Stop | Out-Null
+			Write-Ok "Linked $source -> $dest"
+			return
+		} catch {
+			Write-Warn "Could not link $source ($($_.Exception.Message)) - copying instead."
+		}
+	}
+
+	try {
+		Copy-Item -Path $source -Destination $destDir -ErrorAction Stop
+		Write-Ok "Copied $source -> $destDir"
+	} catch {
+		Write-Err "Could not copy $source -> ${destDir}: $($_.Exception.Message)"
+	}
+}
+
+function Sync-Baseq3($baseq3Dir) {
+	# Links / copies the source's missing pk3 files into baseq3 (after one confirmation), then
+	# checks the required ones. Exits when a required pk3 is still missing.
+	$missingRequired = Get-MissingFiles $baseq3Dir $REQUIRED_PK3S
+	$sourceBaseq3 = $null
+
+	if ($missingRequired.Count -gt 0) {
+		$sourceBaseq3 = Find-SourceBaseq3 $baseq3Dir
+	}
+
+	if ($sourceBaseq3) {
+		$sourceNames = @(Get-ChildItem -Path $sourceBaseq3 -File -Filter $PK3_PATTERN | Select-Object -ExpandProperty Name)
 		$toCopy = Get-MissingFiles $baseq3Dir $sourceNames
 
 		foreach ($name in ($sourceNames | Where-Object { $toCopy -notcontains $_ })) {
@@ -298,31 +363,25 @@ function Sync-Baseq3($baseq3Dir) {
 		if ($toCopy.Count -gt 0) {
 			Write-Warn "$($toCopy.Count) pk3 file(s) missing from ${baseq3Dir}: $($toCopy -join ', ')"
 
-			if (Confirm-Copy "Copy them from ${hddBaseq3}?") {
+			if (Confirm-Copy "Link / copy them from ${sourceBaseq3}?") {
 				if (-not (Test-Path $baseq3Dir)) { New-Item -ItemType Directory -Path $baseq3Dir | Out-Null }
 
 				foreach ($name in $toCopy) {
-					$source = Join-Path -Path $hddBaseq3 -ChildPath $name
-					try {
-						Copy-Item -Path $source -Destination $baseq3Dir -ErrorAction Stop
-						Write-Ok "Copied $name -> $baseq3Dir"
-					} catch {
-						Write-Err "Could not copy $source -> ${baseq3Dir}: $($_.Exception.Message)"
-					}
+					Add-DataFile (Join-Path -Path $sourceBaseq3 -ChildPath $name) $baseq3Dir
 				}
 			} else {
 				Write-Warn "Skipped copying."
 			}
 		}
-	} else {
-		Write-Warn "No mounted drive has a valid $HDD_BASEQ3_SUBPATH (needs $($REQUIRED_PK3S -join ', '))."
+	} elseif ($missingRequired.Count -gt 0) {
+		Write-Warn "No build baseq3 under $REPO_ROOT/$BUILD_DIR_PATTERN or $RS_DIST_ROOT and no mounted drive's $HDD_BASEQ3_SUBPATH holds $($REQUIRED_PK3S -join ', ')."
 	}
 
 	$stillMissing = Get-MissingFiles $baseq3Dir $REQUIRED_PK3S
 	if ($stillMissing.Count -gt 0) {
 		Write-Err "Required file(s) missing from ${baseq3Dir}: $($stillMissing -join ', ')"
-		if (-not $hddBaseq3) {
-			Write-Err "Plug in / map a drive with $HDD_BASEQ3_SUBPATH holding them, or copy them in by hand."
+		if (-not $sourceBaseq3) {
+			Write-Err "Build ioq3 / ioq3-rs with its data, plug in / map a drive with $HDD_BASEQ3_SUBPATH, or copy them in by hand."
 		}
 		exit 1
 	}
