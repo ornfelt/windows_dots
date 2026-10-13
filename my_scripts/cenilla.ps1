@@ -74,8 +74,11 @@ $GFX_DIR_NAMES = @("gfx_benilla", "gfx")
 $GFX_CONFIGURATIONS = @("Release", "Debug")
 $GFX_LIB_NAME = "gfx.dll"
 
-# The install is read from $env:WOW_DATA, else the repo's WoW link; WOW_DATA is set to this when unset
-$WOW_DATA_DIR = $(if ($env:wow_classic_dir) { Join-Path -Path $env:wow_classic_dir -ChildPath "Data" } else { $null })
+# The install's Data dir, always passed as WOW_DATA: data= (or a WOW_DATA= arg), else
+# $env:WOW_DATA, else $env:wow_classic_dir/Data; the run stops when it does not exist (an empty
+# WOW_DATA is "no install", as the client reads it)
+$WOW_DATA_VAR = "WOW_DATA"
+$WOW_DATA_SUBDIR = "Data"
 # A scripted login only as this account (WOW_USER=, WOW_PASS=, WOW_CHAR=, one per line)
 $PROBE_IDENTITY_NAME = ".probe-identity"
 $PROBE_FIELDS = @("WOW_USER", "WOW_PASS", "WOW_CHAR")
@@ -143,12 +146,13 @@ Testing:
   validate               the Vulkan validation layer (needs the Vulkan SDK)
 
 Other:
+  data=<dir>             the WoW install's Data dir (WOW_DATA; default `$env:wow_classic_dir/Data, or `$env:WOW_DATA when set)
   VAR_NAME=value         any env var with an upper-case name holding an underscore, as it is
   $($PRINT_TOKENS -join ' | ')  print the PowerShell lines for this run instead of running it
   $($HELP_TOKENS -join ' | ') (also -help, --help)  this help
 
 The gfx library must be built first: $GFX_DLL_ROOT/$($GFX_DIR_NAMES[0])/bin/<Release|Debug>_x64/$GFX_LIB_NAME.
-WOW_DATA is set to $(if ($WOW_DATA_DIR) { $WOW_DATA_DIR } else { '$env:wow_classic_dir/Data' }) when unset; a sanitized tree gets ASAN_OPTIONS=detect_leaks=0.
+A sanitized tree gets ASAN_OPTIONS=detect_leaks=0.
 Windows is written but not built in cenilla yet (docs/RUNNING.md).
 
 Examples:
@@ -166,11 +170,16 @@ function Read-Options($argList) {
 		Device = $null; Window = $null; Panel = $false; Hud = $false; Worldview = $false; At = $null
 		Host = $null; Realm = $null; Char = $null; Probe = $false; NoSound = $false; Unattended = $false
 		Capture = $null; Out = $null; Fps = $null; Exit = $null; Soft = $false; Validate = $false
-		Env = @()
+		Data = $null; DataSet = $false; Env = @()
 	}
 
 	foreach ($item in $argList) {
 		$raw = [string]$item
+		if ($raw.StartsWith("$WOW_DATA_VAR$OPTION_VALUE_SEPARATOR")) {
+			$opts.Data = $raw.Substring($WOW_DATA_VAR.Length + $OPTION_VALUE_SEPARATOR.Length)
+			$opts.DataSet = $true
+			continue
+		}
 		if ($raw -cmatch $ENV_ARG_PATTERN) {
 			$opts.Env += $raw
 			continue
@@ -204,6 +213,10 @@ function Read-Options($argList) {
 		elseif ($name -eq "exit" -and $value) { $opts.Exit = $value }
 		elseif ($name -eq "soft") { $opts.Soft = $true }
 		elseif ($name -eq "validate") { $opts.Validate = $true }
+		elseif ($name -eq "data" -and $value) {
+			$opts.Data = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($value)
+			$opts.DataSet = $true
+		}
 		else {
 			Write-Err "Unknown arg: $raw (tree= / at= / host= / realm= / char= / capture= / out= / fps= / exit= need a value) - see '$SCRIPT_INVOCATION help'."
 			exit 1
@@ -351,6 +364,32 @@ function Build-Tree($tree) {
 	Write-Ok "Build done."
 }
 
+function Resolve-WowData($opts) {
+	# data= / a WOW_DATA= arg, else $env:WOW_DATA, else $env:wow_classic_dir/Data; exits when that
+	# dir does not exist
+	if ($opts.DataSet) {
+		$wowData = $opts.Data; $source = "the args"
+	} elseif (Test-Path -Path "Env:$WOW_DATA_VAR") {
+		$wowData = [Environment]::GetEnvironmentVariable($WOW_DATA_VAR); $source = "`$env:$WOW_DATA_VAR"
+	} elseif ($env:wow_classic_dir) {
+		$wowData = Join-Path -Path $env:wow_classic_dir -ChildPath $WOW_DATA_SUBDIR; $source = "`$env:wow_classic_dir"
+	} else {
+		Write-Warn "wow_classic_dir is not set - set it to the WoW install, or pass data=<WoW Data dir>."
+		exit 1
+	}
+
+	if (-not $wowData) {
+		Write-Label "WoW data: none ($WOW_DATA_VAR is empty, from $source)"
+		return ""
+	}
+	if (-not (Test-Path -Path $wowData -PathType Container)) {
+		Write-Warn "The WoW Data dir does not exist: $wowData (from $source) - pass data=<WoW Data dir>."
+		exit 1
+	}
+	Write-Label "WoW data: $wowData (from $source)"
+	return $wowData
+}
+
 function Read-ProbeIdentity {
 	# The fields of .probe-identity (quotes stripped), as tools/smoke.sh reads them
 	$path = Join-Path -Path $REPO_ROOT -ChildPath $PROBE_IDENTITY_NAME
@@ -374,7 +413,7 @@ function Get-RunEnv($opts, $tree) {
 	# The env vars of the options, in order (a later one wins); ProbeKeys marks the probe's
 	$runEnv = [ordered]@{}
 	$probeKeys = @()
-	if (-not (Test-Path Env:WOW_DATA) -and $WOW_DATA_DIR) { $runEnv["WOW_DATA"] = $WOW_DATA_DIR }
+	$runEnv[$WOW_DATA_VAR] = $opts.WowData
 	if ((Test-SanitizedTree $tree) -and -not (Test-Path Env:ASAN_OPTIONS)) {
 		foreach ($key in $SANITIZER_ENV.Keys) { $runEnv[$key] = $SANITIZER_ENV[$key] }
 	}
@@ -496,6 +535,7 @@ if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
 }
 
 $tree = Resolve-Tree $options
+$options.WowData = Resolve-WowData $options
 $gfx = Resolve-GfxLibrary $tree
 $runEnv = Get-RunEnv $options $tree
 
