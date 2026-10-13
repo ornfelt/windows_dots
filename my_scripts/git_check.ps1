@@ -93,6 +93,8 @@ $WOW_REPOS = @(
     (Join-Path $codeRootDir 'Code2\C++\azerothcore-wotlk')
     (Join-Path $codeRootDir 'Code2\C++\azerothcore-wotlk-playerbots')
     (Join-Path $codeRootDir 'Code2\C++\azerothcore-wotlk-playerbots\modules\mod-playerbots')
+    (Join-Path $codeRootDir 'Code2\Wow\tools\benilla')
+    (Join-Path $codeRootDir 'Code2\Wow\tools\cenilla')
 )
 # 'other' is these plus the repos in OTHER_DIRS that are in no other category
 $OTHER_REPOS = @(
@@ -107,6 +109,7 @@ $OTHER_REPOS = @(
     (Join-Path $codeRootDir 'Code2\C++\stk-code')
     (Join-Path $codeRootDir 'Code2\Sql\my_sql')
     (Join-Path $codeRootDir 'Code2\C\ioq3')
+    (Join-Path $codeRootDir 'Code2\Rust\ioq3-rs')
     $myNotesPath
 )
 # git_check.sh scans ~/.config here; nothing to scan on Windows

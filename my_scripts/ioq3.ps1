@@ -1,6 +1,10 @@
 # Usage examples (args in any order, case insensitive; `.ioq3 help` lists them all):
-# start like before:
+# start like before (the backends / renderer last used are remembered in q3config.cfg):
 # .ioq3
+#
+# pick the gfx device and / or window (the newest build with gfx; ignored when none has it):
+# .ioq3 vk glfw
+# .ioq3 d3d11
 #
 # dev map (q3dm0) in a window:
 # .ioq3 dev win
@@ -15,9 +19,7 @@
 # .ioq3 qvm dev +set r_mode 6
 #
 # print the PowerShell line for this run instead of running it:
-# .ioq3 dev print
-#
-# the gfx backend args of .ioq3rs (vk, glfw, ...) are accepted but ignored: C ioq3 has no gfx
+# .ioq3 vk dev print
 
 function Write-Label($text) { Write-Host "$text" -ForegroundColor DarkGray }
 function Write-Alt  ($text) { Write-Host "$text" -ForegroundColor Magenta  }
@@ -51,8 +53,9 @@ $HDD_BASEQ3_SUBPATH = "2024/$BASEQ3_DIR_NAME"
 $PK3_PATTERN = "*.pk3"
 $REQUIRED_PK3S = 0..8 | ForEach-Object { "pak$_.pk3" }
 
-# Launch options (Show-Help). The gfx ones are those of ioq3rs.ps1, accepted so the same args
-# work for both scripts, but ignored: the C ioq3 has no gfx renderer.
+# Launch options (Show-Help). The gfx backends only reach a client built with USE_GFX (the gfx
+# branch): renderer_gfx is built into its exe, so the exe holds its cvar names. A gfx arg picks
+# the newest build with gfx over a newer one without.
 $SCRIPT_INVOCATION = $MyInvocation.InvocationName
 $HELP_TOKENS = @("help", "h")
 $PRINT_TOKENS = @("print", "onlyprint", "showcmd")
@@ -60,7 +63,8 @@ $GFX_DEVICES = @("gl4", "gl3", "gles3", "vk", "d3d11", "d3d12")
 $GFX_DEVICE_ALIASES = @{ "vulkan" = "vk"; "dx11" = "d3d11"; "dx12" = "d3d12" }
 $GFX_WINDOWS = @("sdl", "glfw", "win32")
 $GFX_RENDERER = "gfx"
-$RENDERERS = @("opengl1", "opengl2")
+$RENDERERS = @($GFX_RENDERER, "opengl1", "opengl2")
+$GFX_EXE_MARKER = "r_gfxDevice"
 $OPTION_VALUE_SEPARATOR = "="
 $PASSTHROUGH_PREFIX = "+"
 $DEV_MAP = "q3dm0"
@@ -83,8 +87,14 @@ function Show-Help {
 Usage: $SCRIPT_INVOCATION [options] [+game args...]
 Options are case insensitive, in any order, with or without leading dashes.
 
+gfx backends (used only when the built client supports gfx, ignored otherwise):
+  $($GFX_DEVICES -join ' | ')   r_gfxDevice (vulkan = vk, dx11 / dx12 = d3d11 / d3d12)
+  $($GFX_WINDOWS -join ' | ')               r_gfxWindow (d3d11 / d3d12 always use win32)
+  Either one also sets cl_renderer $GFX_RENDERER and picks the newest build with gfx (USE_GFX). Both
+  cvars are remembered in q3config.cfg, so a start without them uses the last ones.
+
 Renderer:
-  $($RENDERERS -join ' | ')      cl_renderer
+  $($RENDERERS -join ' | ')     cl_renderer ($GFX_RENDERER only on a gfx build)
 
 Starting:
   dev                    +devmap $DEV_MAP (skips the menu)
@@ -104,22 +114,18 @@ Other:
   $($PRINT_TOKENS -join ' | ')  print the PowerShell line for this run instead of running it
   $($HELP_TOKENS -join ' | ') (also -help, --help)  this help
 
-The gfx backend args of .ioq3rs ($($GFX_DEVICES -join ', '), $($GFX_WINDOWS -join ', '), $GFX_RENDERER) are
-accepted and ignored: the C ioq3 has no gfx renderer.
-
 Examples:
-  $SCRIPT_INVOCATION dev win
+  $SCRIPT_INVOCATION vk glfw dev win
   $SCRIPT_INVOCATION map=q3dm17 bots fresh log
-  $SCRIPT_INVOCATION bench opengl1
-  $SCRIPT_INVOCATION qvm dev +set r_mode 6
+  $SCRIPT_INVOCATION bench d3d12
+  $SCRIPT_INVOCATION opengl1 dev +set r_mode 6
 "@
 }
 
 function Read-Options($argList) {
-	# The launch options from the script args; exits on an unknown one. The gfx ones are only
-	# collected, to be reported as ignored.
+	# The launch options from the script args; exits on an unknown one
 	$opts = @{
-		Help = $false; PrintOnly = $false; IgnoredGfx = @(); Renderer = $null
+		Help = $false; PrintOnly = $false; Device = $null; Window = $null; Renderer = $null
 		Map = $null; Bots = $false; NoBots = $false; Connect = $null; Bench = $false
 		Windowed = $false; Qvm = $false; TeamArena = $false; Fresh = $false; Log = $false
 		Extra = @()
@@ -134,11 +140,12 @@ function Read-Options($argList) {
 
 		$name, $value = $raw.TrimStart("-") -split $OPTION_VALUE_SEPARATOR, 2
 		$name = $name.ToLowerInvariant()
+		if ($GFX_DEVICE_ALIASES.ContainsKey($name)) { $name = $GFX_DEVICE_ALIASES[$name] }
 
 		if ($HELP_TOKENS -contains $name) { $opts.Help = $true }
 		elseif ($PRINT_TOKENS -contains $name) { $opts.PrintOnly = $true }
-		elseif ($GFX_DEVICE_ALIASES.ContainsKey($name) -or $GFX_DEVICES -contains $name -or
-			$GFX_WINDOWS -contains $name -or $name -eq $GFX_RENDERER) { $opts.IgnoredGfx += $raw }
+		elseif ($GFX_DEVICES -contains $name) { $opts.Device = $name }
+		elseif ($GFX_WINDOWS -contains $name) { $opts.Window = $name }
 		elseif ($RENDERERS -contains $name) { $opts.Renderer = $name }
 		elseif ($name -eq "dev") { $opts.Map = $(if ($value) { $value } else { $DEV_MAP }) }
 		elseif ($name -eq "map" -and $value) { $opts.Map = $value }
@@ -161,17 +168,47 @@ function Read-Options($argList) {
 	return $opts
 }
 
-function Get-LaunchArgs($opts) {
-	# The game args: the defaults, then the cvars of the options, then the commands
-	if ($opts.IgnoredGfx.Count -gt 0) {
-		Write-Warn "C ioq3 has no gfx - ignoring the gfx arg(s): $($opts.IgnoredGfx -join ', ')"
+function Test-GfxBuild($exePath) {
+	# True when the client was built with USE_GFX (see the launch options above)
+	$exeText = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($exePath))
+	return $exeText.Contains($GFX_EXE_MARKER)
+}
+
+function Test-GfxWanted($opts) {
+	# True when a gfx arg was given
+	return [bool]($opts.Device -or $opts.Window -or $opts.Renderer -eq $GFX_RENDERER)
+}
+
+function Resolve-GfxOptions($opts, $gfxBuild) {
+	# Drops the gfx options on a build without gfx; on a gfx build a backend also picks renderer_gfx
+	if (-not $gfxBuild) {
+		$ignored = @(@($opts.Device, $opts.Window) | Where-Object { $_ })
+		if ($opts.Renderer -eq $GFX_RENDERER) { $ignored += $opts.Renderer; $opts.Renderer = $null }
+		Write-Label "The client is built without gfx."
+		if ($ignored.Count -gt 0) { Write-Warn "Ignoring the gfx arg(s): $($ignored -join ', ')" }
+		$opts.Device = $null
+		$opts.Window = $null
+		return
 	}
 
+	Write-Label "The client is built with gfx."
+	if (-not ($opts.Device -or $opts.Window)) { return }
+	if (-not $opts.Renderer) {
+		$opts.Renderer = $GFX_RENDERER
+	} elseif ($opts.Renderer -ne $GFX_RENDERER) {
+		Write-Warn "cl_renderer $($opts.Renderer) ignores r_gfxDevice / r_gfxWindow."
+	}
+}
+
+function Get-LaunchArgs($opts) {
+	# The game args: the defaults, then the cvars of the options, then the commands
 	$launchArgs = @($CLIENT_ARGS)
 	if ($opts.Qvm) { $launchArgs += $QVM_ARGS }
 	if ($opts.TeamArena) { $launchArgs += $TEAM_ARENA_ARGS }
 	if ($opts.Fresh) { $launchArgs += @("+set", "fs_homepath", $FRESH_HOME_DIR) }
 	if ($opts.Renderer) { $launchArgs += @("+set", "cl_renderer", $opts.Renderer) }
+	if ($opts.Device) { $launchArgs += @("+set", "r_gfxDevice", $opts.Device) }
+	if ($opts.Window) { $launchArgs += @("+set", "r_gfxWindow", $opts.Window) }
 	if ($opts.Windowed) { $launchArgs += $WINDOWED_ARGS }
 	if ($opts.Log -or $opts.Bench) { $launchArgs += $LOG_ARGS }
 	if ($opts.NoBots) { $launchArgs += $NO_BOTS_ARGS }
@@ -233,7 +270,8 @@ function Find-ClientBuilds($repoRoot) {
 	return $found.ToArray() | Sort-Object LastWriteTime -Descending
 }
 
-function Resolve-ClientExe($repoRoot) {
+function Resolve-ClientExe($repoRoot, $opts) {
+	# The newest build (the newest with gfx when a gfx arg was given and one has it)
 	if (-not (Test-Path $repoRoot)) {
 		Write-Err "ioq3 repo not found: $repoRoot"
 		exit 1
@@ -246,6 +284,14 @@ function Resolve-ClientExe($repoRoot) {
 	}
 
 	$newest = $builds[0]
+	if ((Test-GfxWanted $opts) -and -not (Test-GfxBuild $newest.FullName)) {
+		$gfxBuild = $builds | Select-Object -Skip 1 | Where-Object { Test-GfxBuild $_.FullName } | Select-Object -First 1
+		if ($gfxBuild) {
+			Write-Label "The newest build has no gfx - using the newest one with gfx."
+			$builds = @($gfxBuild) + @($builds | Where-Object { $_.FullName -ne $gfxBuild.FullName })
+			$newest = $gfxBuild
+		}
+	}
 	Write-Label "Using newest build: $($newest.FullName)"
 	Write-Label "  built $($newest.LastWriteTime.ToString($BUILD_TIME_FORMAT))"
 
@@ -397,8 +443,9 @@ if ($options.Help) {
 
 Write-Alt "ioq3..."
 
-$exe = Resolve-ClientExe $REPO_ROOT
+$exe = Resolve-ClientExe $REPO_ROOT $options
 $baseq3Dir = Join-Path -Path $exe.Directory.FullName -ChildPath $BASEQ3_DIR_NAME
+Resolve-GfxOptions $options (Test-GfxBuild $exe.FullName)
 $clientArgs = Get-LaunchArgs $options
 
 if ($options.PrintOnly) {
