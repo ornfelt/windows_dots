@@ -160,7 +160,17 @@ Examples:
   $SCRIPT_INVOCATION debug build probe
   $SCRIPT_INVOCATION capture=felwood-night gl4
   $SCRIPT_INVOCATION worldview at=-9460,62 vk
+
 "@
+	Show-ManualRun
+}
+
+function Show-ManualRun {
+	# Prints how to start the default tree's client by hand, without this script (the
+	# Visual Studio generator this script configures with puts the exe in bin/<Config>/)
+	$treeDir = $TREE_DIRS[$DEFAULT_TREE]
+	Write-Label "Or run it manually (from $REPO_ROOT, once $treeDir/ is built):"
+	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; ./$treeDir/$EXE_SUBDIR/$($TREE_CONFIGS[$DEFAULT_TREE])/$CLIENT_EXE_NAME"
 }
 
 function Read-Options($argList) {
@@ -528,6 +538,7 @@ if ($options.Help) {
 }
 
 Write-Alt "cenilla..."
+if ($args.Count -eq 0) { Show-ManualRun }
 
 if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
 	Write-Err "cenilla repo not found: $REPO_ROOT"
@@ -566,5 +577,6 @@ Test-GfxCopy $gfx $exe.FullName
 
 Write-Host
 
+foreach ($line in Format-EnvLines $runEnv) { Write-Extra $line }
 Write-Extra "$($exe.FullName)"
 Start-Client $exe.FullName $runEnv

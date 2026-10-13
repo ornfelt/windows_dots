@@ -152,7 +152,16 @@ Examples:
   $SCRIPT_INVOCATION play build probe
   $SCRIPT_INVOCATION capture=felwood-night gl4
   $SCRIPT_INVOCATION worldview at=-9460,62 vk
+
 "@
+	Show-ManualRun
+}
+
+function Show-ManualRun {
+	# Prints how to start the default profile's client by hand, without this script
+	$package = [System.IO.Path]::GetFileNameWithoutExtension($CLIENT_EXE_NAME)
+	Write-Label "Or run it manually (from $REPO_ROOT):"
+	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; $BUILD_COMMAND run $($PROFILE_BUILD_ARGS[$DEFAULT_PROFILE] -join ' ') -p $package"
 }
 
 function Read-Options($argList) {
@@ -470,6 +479,7 @@ if ($options.Help) {
 }
 
 Write-Alt "benilla..."
+if ($args.Count -eq 0) { Show-ManualRun }
 
 if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
 	Write-Err "benilla repo not found: $REPO_ROOT"
@@ -503,5 +513,6 @@ Test-GfxCopy $gfx $exeItem.FullName
 
 Write-Host
 
+foreach ($line in Format-EnvLines $runEnv) { Write-Extra $line }
 Write-Extra "$($exeItem.FullName)"
 Start-Client $exeItem.FullName $runEnv
