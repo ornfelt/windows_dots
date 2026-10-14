@@ -1,29 +1,33 @@
-# Usage examples (args in any order, case insensitive; `.cenilla help` lists them all):
-# the optimized build (build-rel) on the gfx library's default window and device:
+# Usage examples (nothing runs without `run` as the first arg; the args after it in any order,
+# case insensitive; `.cenilla help` lists them all):
+# cd into the repo and print how to run it, through this script and by hand (runs nothing):
 # .cenilla
 #
+# the optimized build (build-rel) on the gfx library's default window and device:
+# .cenilla run
+#
 # pick the gfx device and / or window:
-# .cenilla d3d12 win32
-# .cenilla vk sdl
+# .cenilla run d3d12 win32
+# .cenilla run vk sdl
 #
 # the sanitized debug build (build/), rebuilt first, with the debug panel open:
-# .cenilla debug build panel
+# .cenilla run debug build panel
 #
 # log in as the checkout's .probe-identity, on another server and realm:
-# .cenilla probe host=192.168.1.10 realm=Elysium
+# .cenilla run probe host=192.168.1.10 realm=Elysium
 #
 # a server-less capture, and the list of capture scenarios:
-# .cenilla capture=water-noon vk
-# .cenilla capture=list
+# .cenilla run capture=water-noon vk
+# .cenilla run capture=list
 #
 # the engine viewer over Goldshire:
-# .cenilla at=-9460,62
+# .cenilla run at=-9460,62
 #
 # any other env var (an upper-case name with an underscore) as it is:
-# .cenilla WOW_MSAA=4 WOW_FARCLIP=800
+# .cenilla run WOW_MSAA=4 WOW_FARCLIP=800
 #
 # print the PowerShell lines for this run instead of running it:
-# .cenilla vk debug print
+# .cenilla run vk debug print
 
 function Write-Label($text) { Write-Host "$text" -ForegroundColor DarkGray }
 function Write-Alt  ($text) { Write-Host "$text" -ForegroundColor Magenta  }
@@ -94,6 +98,7 @@ $VALIDATE_ENV = @{ "VK_INSTANCE_LAYERS" = "VK_LAYER_KHRONOS_validation" }
 
 # Launch options (Show-Help)
 $SCRIPT_INVOCATION = $MyInvocation.InvocationName
+$RUN_COMMAND = "run"
 $HELP_TOKENS = @("help", "h")
 $PRINT_TOKENS = @("print", "onlyprint", "showcmd")
 $GFX_DEVICES = @("gl4", "gl3", "gles3", "vk", "d3d11", "d3d12")
@@ -106,7 +111,8 @@ function Show-Help {
 	Write-Alt "cenilla - start cenilla from a build tree under $REPO_ROOT (configured and built when missing)"
 	Write-Host @"
 
-Usage: $SCRIPT_INVOCATION [options] [VAR_NAME=value...]
+Usage: $SCRIPT_INVOCATION $RUN_COMMAND [options] [VAR_NAME=value...]
+Nothing runs without $RUN_COMMAND as the first arg; a bare $SCRIPT_INVOCATION cds into the repo and prints how to run it.
 Options are case insensitive, in any order, with or without leading dashes.
 
 Build tree (default $DEFAULT_TREE):
@@ -156,10 +162,10 @@ A sanitized tree gets ASAN_OPTIONS=detect_leaks=0.
 Windows is written but not built in cenilla yet (docs/RUNNING.md).
 
 Examples:
-  $SCRIPT_INVOCATION d3d12 win32 panel
-  $SCRIPT_INVOCATION debug build probe
-  $SCRIPT_INVOCATION capture=felwood-night gl4
-  $SCRIPT_INVOCATION worldview at=-9460,62 vk
+  $SCRIPT_INVOCATION $RUN_COMMAND d3d12 win32 panel
+  $SCRIPT_INVOCATION $RUN_COMMAND debug build probe
+  $SCRIPT_INVOCATION $RUN_COMMAND capture=felwood-night gl4
+  $SCRIPT_INVOCATION $RUN_COMMAND worldview at=-9460,62 vk
 
 "@
 	Show-ManualRun
@@ -171,6 +177,27 @@ function Show-ManualRun {
 	$treeDir = $TREE_DIRS[$DEFAULT_TREE]
 	Write-Label "Or run it manually (from $REPO_ROOT, once $treeDir/ is built):"
 	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; ./$treeDir/$EXE_SUBDIR/$($TREE_CONFIGS[$DEFAULT_TREE])/$CLIENT_EXE_NAME"
+}
+
+function Show-Usage {
+	# A bare call: how to run cenilla from the repo, through this script and by hand
+	Write-Alt "cenilla - $REPO_ROOT"
+	Write-Label "Run it through this script (the options after $RUN_COMMAND; '$SCRIPT_INVOCATION help' lists them):"
+	Write-Extra "$SCRIPT_INVOCATION $RUN_COMMAND"
+	Show-ManualRun
+}
+
+function Read-Command($arg) {
+	# Returns on run; help shows the help, anything else the usage, and exits
+	$name = ([string]$arg).TrimStart("-").ToLowerInvariant()
+	if ($name -eq $RUN_COMMAND) { return }
+	if ($HELP_TOKENS -contains $name) {
+		Show-Help
+		exit 0
+	}
+	Write-Err "Nothing runs without $RUN_COMMAND as the first arg (got: $arg)."
+	Show-Usage
+	exit 1
 }
 
 function Read-Options($argList) {
@@ -531,14 +558,27 @@ function Start-Client($exePath, $runEnv) {
 	exit 1
 }
 
-$options = Read-Options $args
+if ($args.Count -eq 0) {
+	# A bare call cds into the repo (a script's Set-Location stays in the calling shell) and shows
+	# how to run it, running nothing
+	if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
+		Write-Err "cenilla repo not found: $REPO_ROOT"
+		exit 1
+	}
+	Set-Location -Path $REPO_ROOT
+	Show-Usage
+	exit 0
+}
+Read-Command $args[0]
+$runArgs = @($args | Select-Object -Skip 1)
+$options = Read-Options $runArgs
 if ($options.Help) {
 	Show-Help
 	exit 0
 }
 
 Write-Alt "cenilla..."
-if ($args.Count -eq 0) { Show-ManualRun }
+if ($runArgs.Count -eq 0) { Show-ManualRun }
 
 if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
 	Write-Err "cenilla repo not found: $REPO_ROOT"

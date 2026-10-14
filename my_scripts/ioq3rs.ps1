@@ -1,25 +1,29 @@
-# Usage examples (args in any order, case insensitive; `.ioq3rs help` lists them all):
-# start like before (the backends / renderer last used are remembered in q3config.cfg):
+# Usage examples (nothing runs without `run` as the first arg; the args after it in any order,
+# case insensitive; `.ioq3rs help` lists them all):
+# cd into the repo and print how to run it, through this script and by hand (runs nothing):
 # .ioq3rs
 #
+# start like before (the backends / renderer last used are remembered in q3config.cfg):
+# .ioq3rs run
+#
 # pick the gfx device and / or window (ignored by a build without gfx):
-# .ioq3rs vk glfw
-# .ioq3rs d3d11
+# .ioq3rs run vk glfw
+# .ioq3rs run d3d11
 #
 # dev map (q3dm0) in a window:
-# .ioq3rs dev win
+# .ioq3rs run dev win
 #
 # another map with bots, on a fresh config, writing qconsole.log:
-# .ioq3rs map=q3dm17 bots fresh log
+# .ioq3rs run map=q3dm17 bots fresh log
 #
 # timedemo benchmark on d3d12:
-# .ioq3rs bench d3d12
+# .ioq3rs run bench d3d12
 #
 # the QVMs instead of the Rust modules, raw game args after them (from the first + arg on):
-# .ioq3rs qvm dev +set r_mode 6
+# .ioq3rs run qvm dev +set r_mode 6
 #
 # print the PowerShell lines for this run instead of running it:
-# .ioq3rs vk dev print
+# .ioq3rs run vk dev print
 
 function Write-Label($text) { Write-Host "$text" -ForegroundColor DarkGray }
 function Write-Alt  ($text) { Write-Host "$text" -ForegroundColor Magenta  }
@@ -80,6 +84,7 @@ $CONSOLE_TAIL_LINES = 15
 # from an earlier gfx build, so that dll alone says nothing). The branch only decides it for
 # `print` when nothing is built yet.
 $SCRIPT_INVOCATION = $MyInvocation.InvocationName
+$RUN_COMMAND = "run"
 $HELP_TOKENS = @("help", "h")
 $PRINT_TOKENS = @("print", "onlyprint", "showcmd")
 $GFX_DEVICES = @("gl4", "gl3", "gles3", "vk", "d3d11", "d3d12")
@@ -109,7 +114,8 @@ function Show-Help {
 	Write-Alt "ioq3rs - build (when missing) and start the ioq3-rs client from $REPO_ROOT/$DIST_SUBPATH"
 	Write-Host @"
 
-Usage: $SCRIPT_INVOCATION [options] [+game args...]
+Usage: $SCRIPT_INVOCATION $RUN_COMMAND [options] [+game args...]
+Nothing runs without $RUN_COMMAND as the first arg; a bare $SCRIPT_INVOCATION cds into the repo and prints how to run it.
 Options are case insensitive, in any order, with or without leading dashes.
 
 gfx backends (used only when the built client supports gfx, ignored otherwise):
@@ -140,11 +146,38 @@ Other:
   $($HELP_TOKENS -join ' | ') (also -help, --help)  this help
 
 Examples:
-  $SCRIPT_INVOCATION vk glfw dev win
-  $SCRIPT_INVOCATION map=q3dm17 bots fresh log
-  $SCRIPT_INVOCATION bench d3d11
-  $SCRIPT_INVOCATION opengl1 dev +set r_mode 6
+  $SCRIPT_INVOCATION $RUN_COMMAND vk glfw dev win
+  $SCRIPT_INVOCATION $RUN_COMMAND map=q3dm17 bots fresh log
+  $SCRIPT_INVOCATION $RUN_COMMAND bench d3d11
+  $SCRIPT_INVOCATION $RUN_COMMAND opengl1 dev +set r_mode 6
 "@
+}
+
+function Show-Usage {
+	# A bare call: how to run ioq3-rs from the repo, through this script and by hand
+	Write-Alt "ioq3-rs - $REPO_ROOT"
+	Write-Label "Run it through this script (the options after $RUN_COMMAND; '$SCRIPT_INVOCATION help' lists them):"
+	Write-Extra "$SCRIPT_INVOCATION $RUN_COMMAND"
+	Show-ManualRun
+}
+
+function Show-ManualRun {
+	# Prints how to build and start the client by hand, without this script (the pk3 / SDL2.dll checks left out)
+	Write-Label "Or run it manually (from $REPO_ROOT; the build only when $DIST_SUBPATH/$CLIENT_EXE_NAME is missing or old):"
+	Write-Extra "$BUILD_COMMAND $($BUILD_ARGS -join ' '); Push-Location $DIST_SUBPATH; .\$CLIENT_EXE_NAME $(($CLIENT_ARGS | ForEach-Object { Format-ShellArg $_ }) -join ' '); Pop-Location"
+}
+
+function Read-Command($arg) {
+	# Returns on run; help shows the help, anything else the usage, and exits
+	$name = ([string]$arg).TrimStart("-").ToLowerInvariant()
+	if ($name -eq $RUN_COMMAND) { return }
+	if ($HELP_TOKENS -contains $name) {
+		Show-Help
+		exit 0
+	}
+	Write-Err "Nothing runs without $RUN_COMMAND as the first arg (got: $arg)."
+	Show-Usage
+	exit 1
 }
 
 function Read-Options($argList) {
@@ -582,7 +615,20 @@ function Start-Client($exe, $clientArgs) {
 	exit 1
 }
 
-$options = Read-Options $args
+if ($args.Count -eq 0) {
+	# A bare call cds into the repo (a script's Set-Location stays in the calling shell) and shows
+	# how to run it, running nothing
+	if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
+		Write-Err "ioq3-rs repo not found: $REPO_ROOT"
+		exit 1
+	}
+	Set-Location -Path $REPO_ROOT
+	Show-Usage
+	exit 0
+}
+Read-Command $args[0]
+$runArgs = @($args | Select-Object -Skip 1)
+$options = Read-Options $runArgs
 if ($options.Help) {
 	Show-Help
 	exit 0

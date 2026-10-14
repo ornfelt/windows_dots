@@ -1,29 +1,33 @@
-# Usage examples (args in any order, case insensitive; `.benilla help` lists them all):
-# the release build (target/release) on the gfx library's default window and device:
+# Usage examples (nothing runs without `run` as the first arg; the args after it in any order,
+# case insensitive; `.benilla help` lists them all):
+# cd into the repo and print how to run it, through this script and by hand (runs nothing):
 # .benilla
 #
+# the release build (target/release) on the gfx library's default window and device:
+# .benilla run
+#
 # pick the gfx device and / or window:
-# .benilla d3d12 win32
-# .benilla vk sdl
+# .benilla run d3d12 win32
+# .benilla run vk sdl
 #
 # the play profile (release + incremental), rebuilt first, with the debug panel open:
-# .benilla play build panel
+# .benilla run play build panel
 #
 # log in as the checkout's .probe-identity, on another server and realm:
-# .benilla probe host=192.168.1.10 realm=Elysium
+# .benilla run probe host=192.168.1.10 realm=Elysium
 #
 # a server-less capture, and the list of capture scenarios:
-# .benilla capture=water-noon vk
-# .benilla capture=list
+# .benilla run capture=water-noon vk
+# .benilla run capture=list
 #
 # the engine viewer over Goldshire:
-# .benilla at=-9460,62
+# .benilla run at=-9460,62
 #
 # any other env var (an upper-case name with an underscore) as it is:
-# .benilla WOW_MSAA=4 WOW_FARCLIP=800
+# .benilla run WOW_MSAA=4 WOW_FARCLIP=800
 #
 # print the PowerShell lines for this run instead of running it:
-# .benilla vk debug print
+# .benilla run vk debug print
 
 function Write-Label($text) { Write-Host "$text" -ForegroundColor DarkGray }
 function Write-Alt  ($text) { Write-Host "$text" -ForegroundColor Magenta  }
@@ -88,6 +92,7 @@ $VALIDATE_ENV = @{ "VK_INSTANCE_LAYERS" = "VK_LAYER_KHRONOS_validation" }
 
 # Launch options (Show-Help)
 $SCRIPT_INVOCATION = $MyInvocation.InvocationName
+$RUN_COMMAND = "run"
 $HELP_TOKENS = @("help", "h")
 $PRINT_TOKENS = @("print", "onlyprint", "showcmd")
 $GFX_DEVICES = @("gl4", "gl3", "gles3", "vk", "d3d11", "d3d12")
@@ -100,7 +105,8 @@ function Show-Help {
 	Write-Alt "benilla - start benilla from a cargo profile under $REPO_ROOT (built when missing)"
 	Write-Host @"
 
-Usage: $SCRIPT_INVOCATION [options] [VAR_NAME=value...]
+Usage: $SCRIPT_INVOCATION $RUN_COMMAND [options] [VAR_NAME=value...]
+Nothing runs without $RUN_COMMAND as the first arg; a bare $SCRIPT_INVOCATION cds into the repo and prints how to run it.
 Options are case insensitive, in any order, with or without leading dashes.
 
 Profile (default $DEFAULT_PROFILE):
@@ -148,10 +154,10 @@ The gfx library must be built first: $GFX_DLL_ROOT/$($GFX_DIR_NAMES[0])/bin/<Rel
 Windows is written but not built in benilla yet (GFX.md).
 
 Examples:
-  $SCRIPT_INVOCATION d3d12 win32 panel
-  $SCRIPT_INVOCATION play build probe
-  $SCRIPT_INVOCATION capture=felwood-night gl4
-  $SCRIPT_INVOCATION worldview at=-9460,62 vk
+  $SCRIPT_INVOCATION $RUN_COMMAND d3d12 win32 panel
+  $SCRIPT_INVOCATION $RUN_COMMAND play build probe
+  $SCRIPT_INVOCATION $RUN_COMMAND capture=felwood-night gl4
+  $SCRIPT_INVOCATION $RUN_COMMAND worldview at=-9460,62 vk
 
 "@
 	Show-ManualRun
@@ -162,6 +168,27 @@ function Show-ManualRun {
 	$package = [System.IO.Path]::GetFileNameWithoutExtension($CLIENT_EXE_NAME)
 	Write-Label "Or run it manually (from $REPO_ROOT):"
 	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; $BUILD_COMMAND run $($PROFILE_BUILD_ARGS[$DEFAULT_PROFILE] -join ' ') -p $package"
+}
+
+function Show-Usage {
+	# A bare call: how to run benilla from the repo, through this script and by hand
+	Write-Alt "benilla - $REPO_ROOT"
+	Write-Label "Run it through this script (the options after $RUN_COMMAND; '$SCRIPT_INVOCATION help' lists them):"
+	Write-Extra "$SCRIPT_INVOCATION $RUN_COMMAND"
+	Show-ManualRun
+}
+
+function Read-Command($arg) {
+	# Returns on run; help shows the help, anything else the usage, and exits
+	$name = ([string]$arg).TrimStart("-").ToLowerInvariant()
+	if ($name -eq $RUN_COMMAND) { return }
+	if ($HELP_TOKENS -contains $name) {
+		Show-Help
+		exit 0
+	}
+	Write-Err "Nothing runs without $RUN_COMMAND as the first arg (got: $arg)."
+	Show-Usage
+	exit 1
 }
 
 function Read-Options($argList) {
@@ -472,14 +499,27 @@ function Start-Client($exePath, $runEnv) {
 	exit 1
 }
 
-$options = Read-Options $args
+if ($args.Count -eq 0) {
+	# A bare call cds into the repo (a script's Set-Location stays in the calling shell) and shows
+	# how to run it, running nothing
+	if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
+		Write-Err "benilla repo not found: $REPO_ROOT"
+		exit 1
+	}
+	Set-Location -Path $REPO_ROOT
+	Show-Usage
+	exit 0
+}
+Read-Command $args[0]
+$runArgs = @($args | Select-Object -Skip 1)
+$options = Read-Options $runArgs
 if ($options.Help) {
 	Show-Help
 	exit 0
 }
 
 Write-Alt "benilla..."
-if ($args.Count -eq 0) { Show-ManualRun }
+if ($runArgs.Count -eq 0) { Show-ManualRun }
 
 if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
 	Write-Err "benilla repo not found: $REPO_ROOT"
