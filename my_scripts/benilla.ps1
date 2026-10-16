@@ -3,7 +3,8 @@
 # cd into the repo and print how to run it, through this script and by hand (runs nothing):
 # .benilla
 #
-# the release build (target/release) on the gfx library's default window and device:
+# the release build (target/release) on the platform's window (win32 / x11) and the gfx
+# library's default device:
 # .benilla run
 #
 # pick the gfx device and / or window:
@@ -102,6 +103,9 @@ $PRINT_TOKENS = @("print", "onlyprint", "showcmd")
 $GFX_DEVICES = @("gl4", "gl3", "gles3", "vk", "d3d11", "d3d12")
 $GFX_DEVICE_ALIASES = @{ "vulkan" = "vk"; "dx11" = "d3d11"; "dx12" = "d3d12" }
 $GFX_WINDOWS = @("win32", "sdl", "glfw", "x11")
+# The window when none is named and WOW_GFX_WINDOW is not set: the platform's own, win32 on
+# Windows and x11 on Linux (PowerShell 7's $IsLinux); elsewhere the library's first.
+$DEFAULT_GFX_WINDOW = $(if ($env:OS -eq "Windows_NT") { "win32" } elseif ($IsLinux) { "x11" } else { $null })
 $OPTION_VALUE_SEPARATOR = "="
 $ENV_ARG_PATTERN = '^[A-Z][A-Z0-9]*_[A-Z0-9_]*='
 # win / size=: WOW_WIN=<W>x<H> runs the client windowed at that size for this run only (never
@@ -126,7 +130,8 @@ Profile (default $DEFAULT_PROFILE):
 	Write-Host @"
   build                  cargo build first (copies a newer gfx library beside the client too)
 
-gfx backends (WOW_GFX_DEVICE / WOW_GFX_WINDOW; unset, the library's first):
+gfx backends (WOW_GFX_DEVICE / WOW_GFX_WINDOW; the device unset is the library's first, the
+window $(if ($DEFAULT_GFX_WINDOW) { $DEFAULT_GFX_WINDOW } else { "the library's first" }) unless named or WOW_GFX_WINDOW is set):
   $($GFX_DEVICES -join ' | ')   (vulkan = vk, dx11 / dx12 = d3d11 / d3d12)
   $($GFX_WINDOWS -join ' | ')
   x11 is Linux only, d3d11 / d3d12 need win32; a name the library lacks stops the boot, listing its names.
@@ -425,6 +430,7 @@ function Get-RunEnv($opts) {
 
 	if ($opts.Device) { $runEnv["WOW_GFX_DEVICE"] = $opts.Device }
 	if ($opts.Window) { $runEnv["WOW_GFX_WINDOW"] = $opts.Window }
+	elseif (-not $env:WOW_GFX_WINDOW -and $DEFAULT_GFX_WINDOW) { $runEnv["WOW_GFX_WINDOW"] = $DEFAULT_GFX_WINDOW }
 	if ($opts.Size) { $runEnv["WOW_WIN"] = $opts.Size }
 	elseif ($opts.Win) { $runEnv["WOW_WIN"] = $WINDOWED_DEFAULT_SIZE }
 	if ($opts.Panel) { $runEnv["WOW_PANEL"] = "1" }
