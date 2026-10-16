@@ -23,6 +23,10 @@
 # the engine viewer over Goldshire:
 # .benilla run at=-9460,62
 #
+# windowed for this run, at the client's default 1600x900 or a size of your own:
+# .benilla run win
+# .benilla run size=1280x720
+#
 # any other env var (an upper-case name with an underscore) as it is:
 # .benilla run WOW_MSAA=4 WOW_FARCLIP=800
 #
@@ -100,6 +104,11 @@ $GFX_DEVICE_ALIASES = @{ "vulkan" = "vk"; "dx11" = "d3d11"; "dx12" = "d3d12" }
 $GFX_WINDOWS = @("win32", "sdl", "glfw", "x11")
 $OPTION_VALUE_SEPARATOR = "="
 $ENV_ARG_PATTERN = '^[A-Z][A-Z0-9]*_[A-Z0-9_]*='
+# win / size=: WOW_WIN=<W>x<H> runs the client windowed at that size for this run only (never
+# saved; the in-game Windowed Mode, gxWindow 1, is what persists); win alone takes the client's
+# default windowed size (DEFAULT_WINDOWED, gxResolution's default)
+$WINDOWED_DEFAULT_SIZE = "1600x900"
+$WINDOW_SIZE_PATTERN = '^[0-9]+x[0-9]+$'
 
 function Show-Help {
 	Write-Alt "benilla - start benilla from a cargo profile under $REPO_ROOT (built when missing)"
@@ -121,6 +130,10 @@ gfx backends (WOW_GFX_DEVICE / WOW_GFX_WINDOW; unset, the library's first):
   $($GFX_DEVICES -join ' | ')   (vulkan = vk, dx11 / dx12 = d3d11 / d3d12)
   $($GFX_WINDOWS -join ' | ')
   x11 is Linux only, d3d11 / d3d12 need win32; a name the library lacks stops the boot, listing its names.
+
+Window (this run only; the in-game Windowed Mode / gxWindow 1 is what is saved):
+  win                    windowed at $WINDOWED_DEFAULT_SIZE (WOW_WIN; also: windowed)
+  size=<W>x<H>           windowed at that size (WOW_WIN=<W>x<H>)
 
 Dev tools:
   panel                  the debug panel open at boot (WOW_PANEL=1)
@@ -195,7 +208,7 @@ function Read-Options($argList) {
 	# The launch options from the script args; exits on an unknown one
 	$opts = @{
 		Help = $false; PrintOnly = $false; Profile = $DEFAULT_PROFILE; Build = $false
-		Device = $null; Window = $null; Panel = $false; Hud = $false; Worldview = $false; At = $null
+		Device = $null; Window = $null; Win = $false; Size = $null; Panel = $false; Hud = $false; Worldview = $false; At = $null
 		Host = $null; Realm = $null; Char = $null; Probe = $false; NoSound = $false; Unattended = $false
 		Capture = $null; Out = $null; Fps = $null; Exit = $null; Soft = $false; Validate = $false
 		Data = $null; DataSet = $false; Env = @()
@@ -225,6 +238,8 @@ function Read-Options($argList) {
 		elseif ($PROFILE_NAMES -contains $name) { $opts.Profile = $name }
 		elseif ($name -eq "build") { $opts.Build = $true }
 		elseif ($name -eq "panel") { $opts.Panel = $true }
+		elseif ($name -eq "win" -or $name -eq "windowed") { $opts.Win = $true }
+		elseif ($name -eq "size" -and $value) { $opts.Size = $value.ToLowerInvariant() }
 		elseif ($name -eq "hud") { $opts.Hud = $true }
 		elseif ($name -eq "worldview") { $opts.Worldview = $true }
 		elseif ($name -eq "at" -and $value) { $opts.At = $value; $opts.Worldview = $true }
@@ -245,12 +260,16 @@ function Read-Options($argList) {
 			$opts.DataSet = $true
 		}
 		else {
-			Write-Err "Unknown arg: $raw (at= / host= / realm= / char= / capture= / out= / fps= / exit= need a value) - see '$SCRIPT_INVOCATION help'."
+			Write-Err "Unknown arg: $raw (size= / at= / host= / realm= / char= / capture= / out= / fps= / exit= need a value) - see '$SCRIPT_INVOCATION help'."
 			exit 1
 		}
 	}
 
 	if ($opts.Out -and -not $opts.Capture) { Write-Warn "out= is for a capture - ignoring it." }
+	if ($opts.Size -and $opts.Size -notmatch $WINDOW_SIZE_PATTERN) {
+		Write-Err "size= takes <W>x<H>, e.g. size=$WINDOWED_DEFAULT_SIZE (got: $($opts.Size))."
+		exit 1
+	}
 	if ($opts.Worldview -and $opts.Capture) {
 		Write-Warn "A capture runs in the client - ignoring worldview / at=."
 		$opts.Worldview = $false; $opts.At = $null
@@ -406,6 +425,8 @@ function Get-RunEnv($opts) {
 
 	if ($opts.Device) { $runEnv["WOW_GFX_DEVICE"] = $opts.Device }
 	if ($opts.Window) { $runEnv["WOW_GFX_WINDOW"] = $opts.Window }
+	if ($opts.Size) { $runEnv["WOW_WIN"] = $opts.Size }
+	elseif ($opts.Win) { $runEnv["WOW_WIN"] = $WINDOWED_DEFAULT_SIZE }
 	if ($opts.Panel) { $runEnv["WOW_PANEL"] = "1" }
 	if ($opts.Hud) { $runEnv["WOW_PERF_HUD"] = "1" }
 	if ($opts.At) { $runEnv["WOW_WORLDVIEW_AT"] = $opts.At }
