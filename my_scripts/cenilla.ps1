@@ -3,7 +3,8 @@
 # cd into the repo and print how to run it, through this script and by hand (runs nothing):
 # .cenilla
 #
-# the optimized build (build-rel) on the gfx library's default window and device:
+# the first build tree that exists (build-rel, else build/, ...) on the gfx library's default
+# window and device:
 # .cenilla run
 #
 # pick the gfx device and / or window:
@@ -48,6 +49,9 @@ $BUILD_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 $DEFAULT_TREE = "rel"
 $TREE_NAMES = @("rel", "debug", "pgo", "player", "clang")
 $TREE_DIRS = @{ "rel" = "build-rel"; "debug" = "build"; "pgo" = "build-release"; "player" = "build-player"; "clang" = "build-clang" }
+# With no tree named, the first of these that is configured (holds its CMakeCache.txt) runs:
+# build-rel, else build/, else the rest. When none is, $DEFAULT_TREE is configured and built.
+$TREE_AUTO_ORDER = @("rel", "debug", "pgo", "player", "clang")
 $TREE_ALIASES = @{ "release" = "rel"; "relwithdebinfo" = "rel"; "dev" = "debug"; "ship" = "pgo" }
 $TREE_CONFIGS = @{ "rel" = "RelWithDebInfo"; "debug" = "Debug"; "pgo" = "Release"; "player" = "Debug"; "clang" = "Debug" }
 $TREE_INFO = @{
@@ -115,7 +119,7 @@ Usage: $SCRIPT_INVOCATION $RUN_COMMAND [options] [VAR_NAME=value...]
 Nothing runs without $RUN_COMMAND as the first arg; a bare $SCRIPT_INVOCATION cds into the repo and prints how to run it.
 Options are case insensitive, in any order, with or without leading dashes.
 
-Build tree (default $DEFAULT_TREE):
+Build tree (default: the first configured of $($TREE_AUTO_ORDER -join ', '), else $DEFAULT_TREE):
 "@
 	foreach ($name in $TREE_NAMES) {
 		Write-Host ("  {0,-8} {1,-14} {2}" -f $name, "$($TREE_DIRS[$name])/", $TREE_INFO[$name])
@@ -171,12 +175,23 @@ Examples:
 	Show-ManualRun
 }
 
+function Find-Tree {
+	# The first tree of $TREE_AUTO_ORDER that is configured, else $DEFAULT_TREE
+	foreach ($name in $TREE_AUTO_ORDER) {
+		$cachePath = Join-Path -Path (Join-Path -Path $REPO_ROOT -ChildPath $TREE_DIRS[$name]) -ChildPath $CMAKE_CACHE_NAME
+		if (Test-Path -Path $cachePath -PathType Leaf) { return $name }
+	}
+	return $DEFAULT_TREE
+}
+
 function Show-ManualRun {
-	# Prints how to start the default tree's client by hand, without this script (the
-	# Visual Studio generator this script configures with puts the exe in bin/<Config>/)
-	$treeDir = $TREE_DIRS[$DEFAULT_TREE]
-	Write-Label "Or run it manually (from $REPO_ROOT, once $treeDir/ is built):"
-	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; ./$treeDir/$EXE_SUBDIR/$($TREE_CONFIGS[$DEFAULT_TREE])/$CLIENT_EXE_NAME"
+	# Prints how to start the default tree's client by hand, without this script (a Ninja tree
+	# puts the exe in bin/, the Visual Studio generator this script configures with in bin/<Config>/)
+	$treeName = Find-Tree
+	$tree = Resolve-Tree @{ Tree = $treeName; TreeDir = $null; Worldview = $false }
+	$exePath = $tree.ExePath.Substring($REPO_ROOT.Length).TrimStart('\', '/') -replace '\\', '/'
+	Write-Label "Or run it manually (from $REPO_ROOT, once $($TREE_DIRS[$treeName])/ is built):"
+	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; ./$exePath"
 }
 
 function Show-Usage {
@@ -264,7 +279,10 @@ function Read-Options($argList) {
 		Write-Warn "tree=$($opts.TreeDir) is used - ignoring $($opts.Tree)."
 		$opts.Tree = $null
 	}
-	if (-not $opts.Tree -and -not $opts.TreeDir) { $opts.Tree = $DEFAULT_TREE }
+	if (-not $opts.Tree -and -not $opts.TreeDir) {
+		$opts.Tree = Find-Tree
+		if ($opts.Tree -ne $DEFAULT_TREE) { Write-Label "No $($TREE_DIRS[$DEFAULT_TREE])/ - using $($TREE_DIRS[$opts.Tree])/." }
+	}
 	if ($opts.Out -and -not $opts.Capture) { Write-Warn "out= is for a capture - ignoring it." }
 	if ($opts.Worldview -and $opts.Capture) {
 		Write-Warn "A capture runs in the client - ignoring worldview / at=."
