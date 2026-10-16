@@ -101,6 +101,9 @@ $RUN_COMMAND = "run"
 $HELP_TOKENS = @("help", "h")
 $PRINT_TOKENS = @("print", "onlyprint", "showcmd")
 $GFX_DEVICES = @("gl4", "gl3", "gles3", "vk", "d3d11", "d3d12")
+# A d3d device opens only in a win32 window; with any other the window is never created
+$D3D_DEVICES = @("d3d11", "d3d12")
+$D3D_WINDOW = "win32"
 $GFX_DEVICE_ALIASES = @{ "vulkan" = "vk"; "dx11" = "d3d11"; "dx12" = "d3d12" }
 $GFX_WINDOWS = @("win32", "sdl", "glfw", "x11")
 # The window when none is named and WOW_GFX_WINDOW is not set: the platform's own, win32 on
@@ -553,10 +556,31 @@ if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
 	exit 1
 }
 
+function Test-GfxPair($vars) {
+	# Names a WOW_GFX_WINDOW / WOW_GFX_DEVICE the run takes from the environment (the launch line
+	# lists only what this script sets), and warns about a d3d device in a window other than win32
+	$window = $vars["WOW_GFX_WINDOW"]
+	$device = $vars["WOW_GFX_DEVICE"]
+	$hint = ""
+	if (-not $window -and $env:WOW_GFX_WINDOW) {
+		$window = $env:WOW_GFX_WINDOW
+		$hint = ", or Remove-Item Env:WOW_GFX_WINDOW"
+		Write-Label "WOW_GFX_WINDOW=$window (from the environment)"
+	}
+	if (-not $device -and $env:WOW_GFX_DEVICE) {
+		$device = $env:WOW_GFX_DEVICE
+		Write-Label "WOW_GFX_DEVICE=$device (from the environment)"
+	}
+	if ($device -and ($D3D_DEVICES -contains $device.ToLowerInvariant()) -and $window -and $window.ToLowerInvariant() -ne $D3D_WINDOW) {
+		Write-Warn "$device opens only in a $D3D_WINDOW window, not ${window}: its window will not be created - name $D3D_WINDOW$hint."
+	}
+}
+
 $exe = Resolve-Exe $options
 $options.WowData = Resolve-WowData $options
 $gfx = Resolve-GfxLibrary
 $runEnv = Get-RunEnv $options
+Test-GfxPair $runEnv.Vars
 
 if ($options.PrintOnly) {
 	Show-LaunchCommand $exe $runEnv $options $args
