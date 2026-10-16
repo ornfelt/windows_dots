@@ -115,7 +115,8 @@ $D3D_DEVICES = @("d3d11", "d3d12")
 $D3D_WINDOW = "win32"
 $GFX_DEVICE_ALIASES = @{ "vulkan" = "vk"; "dx11" = "d3d11"; "dx12" = "d3d12" }
 $GFX_WINDOWS = @("win32", "sdl", "glfw", "x11")
-# The window when none is named and WOW_GFX_WINDOW is not set: the platform's own, win32 on
+# The window when none is named as an arg (a window option or a WOW_GFX_WINDOW= arg), even over
+# a WOW_GFX_WINDOW left in the environment: the platform's own, win32 on
 # Windows and x11 on Linux (PowerShell 7's $IsLinux); elsewhere the library's first.
 $DEFAULT_GFX_WINDOW = $(if ($env:OS -eq "Windows_NT") { "win32" } elseif ($IsLinux) { "x11" } else { $null })
 $OPTION_VALUE_SEPARATOR = "="
@@ -144,7 +145,7 @@ Build tree (default: the first configured of $($TREE_AUTO_ORDER -join ', '), els
   build                  build the tree first (cmake --build: relinks and copies a newer gfx library)
 
 gfx backends (WOW_GFX_DEVICE / WOW_GFX_WINDOW; the device unset is the library's first, the
-window $(if ($DEFAULT_GFX_WINDOW) { $DEFAULT_GFX_WINDOW } else { "the library's first" }) unless named or WOW_GFX_WINDOW is set):
+window $(if ($DEFAULT_GFX_WINDOW) { $DEFAULT_GFX_WINDOW } else { "the library's first" }) unless named as an arg, even over a WOW_GFX_WINDOW in the environment):
   $($GFX_DEVICES -join ' | ')   (vulkan = vk, dx11 / dx12 = d3d11 / d3d12)
   $($GFX_WINDOWS -join ' | ')
   x11 is Linux only, d3d11 / d3d12 need win32; a name the library lacks stops the boot, listing its names.
@@ -506,7 +507,7 @@ function Get-RunEnv($opts, $tree) {
 
 	if ($opts.Device) { $runEnv["WOW_GFX_DEVICE"] = $opts.Device }
 	if ($opts.Window) { $runEnv["WOW_GFX_WINDOW"] = $opts.Window }
-	elseif (-not $env:WOW_GFX_WINDOW -and $DEFAULT_GFX_WINDOW) { $runEnv["WOW_GFX_WINDOW"] = $DEFAULT_GFX_WINDOW }
+	elseif ($DEFAULT_GFX_WINDOW) { $runEnv["WOW_GFX_WINDOW"] = $DEFAULT_GFX_WINDOW }
 	if ($opts.Size) { $runEnv["WOW_WIN"] = $opts.Size }
 	elseif ($opts.Win) { $runEnv["WOW_WIN"] = $WINDOWED_DEFAULT_SIZE }
 	if ($opts.Panel) { $runEnv["WOW_PANEL"] = "1" }
@@ -634,11 +635,15 @@ if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
 
 function Test-GfxPair($vars) {
 	# Names a WOW_GFX_WINDOW / WOW_GFX_DEVICE the run takes from the environment (the launch line
-	# lists only what this script sets), and warns about a d3d device in a window other than win32
+	# lists only what this script sets) or a WOW_GFX_WINDOW there it overrides, and warns about a
+	# d3d device in a window other than win32
 	$window = $vars["WOW_GFX_WINDOW"]
 	$device = $vars["WOW_GFX_DEVICE"]
 	$hint = ""
-	if (-not $window -and $env:WOW_GFX_WINDOW) {
+	if ($window -and $env:WOW_GFX_WINDOW -and $env:WOW_GFX_WINDOW.ToLowerInvariant() -ne $window.ToLowerInvariant()) {
+		Write-Label "WOW_GFX_WINDOW=$env:WOW_GFX_WINDOW in the environment is not used: the window is $window."
+	}
+	elseif (-not $window -and $env:WOW_GFX_WINDOW) {
 		$window = $env:WOW_GFX_WINDOW
 		$hint = ", or Remove-Item Env:WOW_GFX_WINDOW"
 		Write-Label "WOW_GFX_WINDOW=$window (from the environment)"
