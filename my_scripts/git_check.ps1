@@ -110,6 +110,8 @@ $OTHER_REPOS = @(
     (Join-Path $codeRootDir 'Code2\Sql\my_sql')
     (Join-Path $codeRootDir 'Code2\C\ioq3')
     (Join-Path $codeRootDir 'Code2\Rust\ioq3-rs')
+    (Join-Path $codeRootDir 'Code2\Rust\openjk-rs')
+    (Join-Path $codeRootDir 'Code2\Rust\rim')
     $myNotesPath
 )
 # git_check.sh scans ~/.config here; nothing to scan on Windows
