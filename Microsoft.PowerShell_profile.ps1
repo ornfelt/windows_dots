@@ -304,9 +304,9 @@ Register-ArgumentCompleter -CommandName '.git_check_repos', 'git_check_repos.ps1
     }
 }
 
-# wez, wec and keepawake build their paths from $env:code_root_dir
+# wez, wec, rim and keepawake build their paths from $env:code_root_dir
 if (-not $env:code_root_dir) {
-    Write-ProfileSetupHint "env var code_root_dir is not set - wez and wec are disabled and keepawake will not work. Set it with: setx code_root_dir <dir holding Code2> (then restart the shell)"
+    Write-ProfileSetupHint "env var code_root_dir is not set - wez, wec and rim are disabled and keepawake will not work. Set it with: setx code_root_dir <dir holding Code2> (then restart the shell)"
 }
 
 # `wez` runs the custom wezterm launcher from the wezterm checkout, the same way
@@ -322,6 +322,14 @@ if ($WeztermRunScript -and (Test-Path $WeztermRunScript)) {
 $WectermRunScript = if ($env:code_root_dir) { Join-Path $env:code_root_dir 'Code2\C\WecTerm\run-custom-wecterm.ps1' }
 if ($WectermRunScript -and (Test-Path $WectermRunScript)) {
     Set-Alias -Name wec -Value $WectermRunScript
+}
+
+# `rim` runs rim, the Rust port of Neovim, from its checkout, building the
+# release layout first when there is none. Other arguments go to rim;
+# `rim help` prints the launcher's usage.
+$RimRunScript = if ($env:code_root_dir) { Join-Path $env:code_root_dir 'Code2\Rust\rim\run-rim.ps1' }
+if ($RimRunScript -and (Test-Path $RimRunScript)) {
+    Set-Alias -Name rim -Value $RimRunScript
 }
 
 function RunChatGPT {
