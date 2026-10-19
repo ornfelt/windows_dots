@@ -4,7 +4,7 @@
 # Also lists branches that are behind their upstream (or, without one, the
 # branch of the same name on the remote), i.e. that have something to pull.
 #
-#   git_check.ps1 [-NoFetch] [-All] [CATEGORY|DIR...]
+#   git_check.ps1 [-NoFetch] [-All|-Quiet] [CATEGORY|DIR...]
 #
 #   CATEGORY  which of the known repos to check (case insensitive, can be combined)
 #               all          everything (the default without CATEGORY and DIR)
@@ -16,13 +16,14 @@
 #   -NoFetch, -n   don't fetch first (offline); the ahead/behind counts are then
 #             as of the last fetch, and pushing to a URL (like git_push.ps1 does)
 #             doesn't update them, so pushed commits can still show as not pushed
-#   -All, -a  also list the clean repos
+#   -All, -a  also list the clean repos, with their branch (the default)
+#   -Quiet, -q     list only the repos with something to commit, push or pull
 #   -h, help  show this help
 #
 # Examples:
 #   git_check.ps1                    check every known repo
 #   git_check.ps1 wow -n             the WoW repos, without fetching first
-#   git_check.ps1 -a dots            the dotfiles repos, clean ones too
+#   git_check.ps1 -q dots            the dotfiles repos, without the clean ones
 #   git_check.ps1 wow other          two categories at once
 #   git_check.ps1 C:\src             every repo under C:\src, 4 levels deep
 #
@@ -37,6 +38,8 @@ param(
     [switch]$NoFetch,
     [Alias('a')]
     [switch]$All,
+    [Alias('q')]
+    [switch]$Quiet,
     [Alias('h')]
     [switch]$Help,
     # categories and/or directories; unknown -options end up here as well
@@ -79,6 +82,7 @@ $DOTS_REPOS = @(
 $WOW_REPOS = @(
     (Join-Path $codeRootDir 'Code2\Wow\tools\my_wow')
     (Join-Path $codeRootDir 'Code2\Rust\azerothcore-wotlk-rs')
+    (Join-Path $codeRootDir 'Code2\Rust\mangos-tbc-rs')
     (Join-Path $codeRootDir 'Code2\C#\mangos-tbc-cs')
     (Join-Path $codeRootDir 'Code2\C#\vmangos_cs')
     (Join-Path $codeRootDir 'Code2\C#\azerothcore-wotlk-cs')
@@ -118,7 +122,8 @@ $OTHER_REPOS = @(
 $OTHER_DIRS = @()
 
 $fetch   = -not $NoFetch
-$showAll = [bool]$All
+# list the clean repos too (-All), -Quiet turns it off
+$showAll = -not $Quiet
 $want    = @{}
 $dirs    = New-Object System.Collections.Generic.List[String]
 
@@ -137,6 +142,7 @@ foreach ($arg in $Targets) {
                 switch ($opt) {
                     'n' { $fetch = $false }
                     'a' { $showAll = $true }
+                    'q' { $showAll = $false }
                     'h' { Show-Usage; exit 0 }
                     default {
                         Write-Host "unknown option: $arg`n"
@@ -412,8 +418,10 @@ foreach ($repo in $repos) {
             Write-Host "    $($line.Text)" -ForegroundColor $line.Color
         }
     } elseif ($showAll) {
+        $branch = git -C $repo rev-parse --abbrev-ref HEAD 2>$null
         Write-Host $name -ForegroundColor Blue -NoNewline
-        Write-Host " clean" -ForegroundColor Green
+        Write-Host " ($branch)" -ForegroundColor DarkGray -NoNewline
+        Write-Host " ok, clean and in sync" -ForegroundColor Green
     }
 }
 
