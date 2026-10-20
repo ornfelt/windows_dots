@@ -16,6 +16,7 @@ param(
 #   .\cmake.ps1 r | release     RUN in Release mode
 #   .\cmake.ps1 r foo           Release mode and PRINT-ONLY
 #   .\cmake.ps1 rd | rwdi       RUN in RelWithDebInfo mode
+#   .\cmake.ps1 d | debug       RUN in Debug mode
 #   .\cmake.ps1 h | --help      show help
 
 # ---------- Help ----------
@@ -38,6 +39,9 @@ Usage:
 
   .\cmake.ps1 rd | rwdi | relwithdebinfo
       Run in RelWithDebInfo mode.
+
+  .\cmake.ps1 d | debug
+      Run in Debug mode (PRINT-ONLY with a second arg, like r).
 
   .\cmake.ps1 h | help | -h | --help
       Show this help.
@@ -81,6 +85,10 @@ if (-not [string]::IsNullOrWhiteSpace($Arg)) {
     }
     elseif ($arg_lc -eq 'rwdi' -or $arg_lc -eq 'rd' -or $arg_lc -eq 'relwithdebinfo') {
         $RelWithDebInfo = $true
+        if (-not [string]::IsNullOrWhiteSpace($Arg2)) { $OnlyPrint = 'true' }
+    }
+    elseif ($arg_lc -eq 'd' -or $arg_lc -eq 'debug') {
+        # Debug is the default BuildType
         if (-not [string]::IsNullOrWhiteSpace($Arg2)) { $OnlyPrint = 'true' }
     }
     else {
