@@ -160,13 +160,20 @@ function Replace-FontName {
         [string]$oldFontName,
         [string]$newFontName
     )
-    $content = Get-Content -Path $filePath
-    $updatedContent = $content -replace $oldFontName, $newFontName
-    Set-Content -Path $filePath -Value $updatedContent
+    # ReadAllText/WriteAllText keep the line endings and UTF-8 (Set-Content in PS 5.1 writes ANSI,
+    # which mangles non-ASCII chars); literal Replace, and the file is only written when it changes
+    $fullPath = (Resolve-Path $filePath).ProviderPath
+    $content = [System.IO.File]::ReadAllText($fullPath)
+    $updatedContent = $content.Replace($oldFontName, $newFontName)
+    if ($updatedContent -cne $content) {
+        [System.IO.File]::WriteAllText($fullPath, $updatedContent)
+        return $true
+    }
+    return $false
 }
 
-$fontReplaced = $false
-$alacrittyConfigFile = ".\alacritty\alacritty.toml"
+# The font this pc has, set in the copied alacritty.toml only - the repo file is never changed
+$alacrittyFontName = $null
 $oldFontName = "JetBrainsMono NF"
 $newFontName = "JetBrainsMono Nerd Font" # With spaces
 
@@ -186,15 +193,10 @@ if (-not $settingsItem) {
 
     if ($fontName -eq "JetBrainsMono Nerd Font") {
         Write-Host "Font is set to JetBrainsMono Nerd Font"
-            if (Test-Path $alacrittyConfigFile) {
-                Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
-                    Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile" -ForegroundColor DarkBlue
-                    $fontReplaced = $true
-            } else {
-                Write-Host "$alacrittyConfigFile not found." -ForegroundColor DarkYellow
-            }
+            $alacrittyFontName = $newFontName
     } elseif ($fontName -eq "JetBrainsMono NF") {
         Write-Host "Font is set to JetBrainsMono NF"
+            $alacrittyFontName = $oldFontName
     } else {
         Write-Host "Font wasn't found in profiles.defaults.font.face. Checking file for JetBrainsMono*..." -ForegroundColor DarkYellow
             try {
@@ -203,15 +205,10 @@ if (-not $settingsItem) {
                         $match = $matches[0]
                             if ($match -match "Nerd Font") {
                                 Write-Host "Font is set to JetBrainsMono Nerd Font (second check)"
-                                    if (Test-Path $alacrittyConfigFile) {
-                                        Replace-FontName -filePath $alacrittyConfigFile -oldFontName $oldFontName -newFontName $newFontName
-                                            Write-Host "Replaced '$oldFontName' with '$newFontName' in $alacrittyConfigFile" -ForegroundColor DarkBlue
-                                            $fontReplaced = $true
-                                    } else {
-                                        Write-Host "$alacrittyConfigFile not found." -ForegroundColor DarkYellow
-                                    }
+                                    $alacrittyFontName = $newFontName
                             } elseif ($match -match "NF") {
                                 Write-Host "Font is set to JetBrainsMono NF (second check)"
+                                    $alacrittyFontName = $oldFontName
                             }
                     } else {
                         Write-Host "No JetBrainsMono font found in the settings." -ForegroundColor DarkYellow
@@ -236,10 +233,19 @@ Copy-Item -Path "$srcAlacritty\*" -Destination $destAlacritty -Recurse -Force
 
 Write-Host "`nFiles copied successfully from $srcAlacritty to $destAlacritty" -ForegroundColor Cyan
 
-# If font was replaced, replace it back
-if ($fontReplaced) {
-    Replace-FontName -filePath $alacrittyConfigFile -oldFontName $newFontName -newFontName $oldFontName
-    Write-Host "Replaced '$newFontName' back to '$oldFontName' in $alacrittyConfigFile" -ForegroundColor DarkBlue
+# Set this pc's font in the copied config (whichever of the two names the repo file has)
+$destAlacrittyConfigFile = Join-Path $destAlacritty "alacritty.toml"
+if ($alacrittyFontName) {
+    if (Test-Path $destAlacrittyConfigFile) {
+        $otherFontName = if ($alacrittyFontName -eq $newFontName) { $oldFontName } else { $newFontName }
+        if (Replace-FontName -filePath $destAlacrittyConfigFile -oldFontName $otherFontName -newFontName $alacrittyFontName) {
+            Write-Host "Replaced '$otherFontName' with '$alacrittyFontName' in $destAlacrittyConfigFile" -ForegroundColor DarkBlue
+        } else {
+            Write-Host "$destAlacrittyConfigFile already uses '$alacrittyFontName'" -ForegroundColor DarkBlue
+        }
+    } else {
+        Write-Host "$destAlacrittyConfigFile not found." -ForegroundColor DarkYellow
+    }
 }
 
 # 'oh-my-posh font install' to install JetBrains font...
