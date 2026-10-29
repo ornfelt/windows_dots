@@ -715,6 +715,7 @@ function .cc {
         Remove-Item Env:ANTHROPIC_API_KEY
     }
 
+    $env:CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP = "1"
     claude --permission-mode auto @args
 }
 
