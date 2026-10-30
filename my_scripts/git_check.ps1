@@ -28,6 +28,8 @@
 #   git_check.ps1 C:\src             every repo under C:\src, 4 levels deep
 #
 # Known repos that don't exist (yet) or aren't git repos are skipped with a warning.
+# vmangos (Code2\C++\core) counts as clean when src/shared/Progression.h is its only
+# modified file, and its line says so.
 # A fetch that takes longer than $env:GIT_CHECK_TIMEOUT seconds (default 60) is
 # stopped and warned about.
 # Exits with 1 if any repo has something to commit, push or pull, and with 2 on
@@ -103,6 +105,9 @@ $WOW_REPOS = @(
     (Join-Path $codeRootDir 'Code2\Wow\tools\benilla')
     (Join-Path $codeRootDir 'Code2\Wow\tools\cenilla')
 )
+# vmangos has this file modified locally; when it's the only modified file the repo counts as clean
+$VMANGOS_REPO       = Join-Path $codeRootDir 'Code2\C++\core'
+$VMANGOS_LOCAL_FILE = 'src/shared/Progression.h'
 # 'other' is these plus the repos in OTHER_DIRS that are in no other category
 $OTHER_REPOS = @(
     (Join-Path $codeRootDir 'Code2\General\utils')
@@ -238,13 +243,24 @@ function Get-AheadBehind([string]$Repo, [string]$Left, [string]$Right) {
     return @([int]$counts[0], [int]$counts[1])
 }
 
+# True if the repo is vmangos and $VMANGOS_LOCAL_FILE is its only modified (not staged) file
+function Test-OnlyVmangosLocalFile([string]$Repo) {
+    $fullRepo    = [IO.Path]::GetFullPath($Repo).TrimEnd('\')
+    $fullVmangos = [IO.Path]::GetFullPath($VMANGOS_REPO).TrimEnd('\')
+    if ($fullRepo -ne $fullVmangos) { return $false }
+    $modified = @(git -C $Repo diff --name-only 2>$null)
+    return $modified.Count -eq 1 -and $modified[0] -eq $VMANGOS_LOCAL_FILE
+}
+
 # Returns one line per problem in the repo, nothing if it is clean
 function Get-RepoReport([string]$Repo) {
     $out = New-Object System.Collections.Generic.List[Object]
 
     # 2>$null: git's "LF will be replaced by CRLF" warnings would show up as errors
     $n = @(git -C $Repo diff --name-only 2>$null).Count
-    if ($n -gt 0) { $out.Add((New-Line "$n modified file(s) not staged" DarkYellow)) }
+    if ($n -gt 0 -and -not (Test-OnlyVmangosLocalFile $Repo)) {
+        $out.Add((New-Line "$n modified file(s) not staged" DarkYellow))
+    }
     $n = @(git -C $Repo ls-files --others --exclude-standard).Count
     if ($n -gt 0) { $out.Add((New-Line "$n untracked file(s)" DarkYellow)) }
     $n = @(git -C $Repo diff --cached --name-only 2>$null).Count
@@ -411,7 +427,8 @@ $dirty = 0
 $total = 0
 foreach ($repo in $repos) {
     $total++
-    $report = Get-RepoReport $repo
+    # @(): a one-line report comes back as a lone object, whose .Count is $null in PowerShell 5.1
+    $report = @(Get-RepoReport $repo)
     $name = Get-ShortName $repo
     if ($report.Count -gt 0) {
         $dirty++
@@ -421,11 +438,19 @@ foreach ($repo in $repos) {
         foreach ($line in $report) {
             Write-Host "    $($line.Text)" -ForegroundColor $line.Color
         }
+        if (Test-OnlyVmangosLocalFile $repo) {
+            Write-Dim "    only $VMANGOS_LOCAL_FILE modified, expected for vmangos (not counted)"
+        }
     } elseif ($showAll) {
         $branch = git -C $repo rev-parse --abbrev-ref HEAD 2>$null
         Write-Host $name -ForegroundColor Blue -NoNewline
         Write-Host " ($branch)" -ForegroundColor DarkGray -NoNewline
-        Write-Host " ok, clean and in sync" -ForegroundColor Green
+        if (Test-OnlyVmangosLocalFile $repo) {
+            Write-Host " ok, in sync" -ForegroundColor Green -NoNewline
+            Write-Dim " (only $VMANGOS_LOCAL_FILE modified, expected for vmangos)"
+        } else {
+            Write-Host " ok, clean and in sync" -ForegroundColor Green
+        }
     }
 }
 
