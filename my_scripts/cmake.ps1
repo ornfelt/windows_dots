@@ -13,10 +13,10 @@ param(
 # Usage:
 #   .\cmake.ps1                 detect path and RUN the chosen cmake
 #   .\cmake.ps1 onlyprint       detect path and PRINT commands (no execution)
-#   .\cmake.ps1 r | release     RUN in Release mode
+#   .\cmake.ps1 r | rel | release  RUN in Release mode
 #   .\cmake.ps1 r foo           Release mode and PRINT-ONLY
-#   .\cmake.ps1 rd | rwdi       RUN in RelWithDebInfo mode
-#   .\cmake.ps1 d | debug       RUN in Debug mode
+#   .\cmake.ps1 rd | rwd | rwdi  RUN in RelWithDebInfo mode
+#   .\cmake.ps1 d | dbg | debug  RUN in Debug mode
 #   .\cmake.ps1 h | --help      show help
 
 # ---------- Help ----------
@@ -31,23 +31,23 @@ Usage:
   .\cmake.ps1 onlyprint
       Detect path, pick a pattern, PRINT commands only.
 
-  .\cmake.ps1 r | release
+  .\cmake.ps1 r | rel | release
       Run in Release mode (sets BuildType=Release).
 
   .\cmake.ps1 r foo
       Release mode + PRINT-ONLY (any second arg flips to print-only).
 
-  .\cmake.ps1 rd | rwdi | relwithdebinfo
+  .\cmake.ps1 rd | rwd | rwdi | relwithdebinfo
       Run in RelWithDebInfo mode.
 
-  .\cmake.ps1 d | debug
+  .\cmake.ps1 d | dbg | debug
       Run in Debug mode (PRINT-ONLY with a second arg, like r).
 
   .\cmake.ps1 h | help | -h | --help
       Show this help.
 
 Notes:
-  - BuildType defaults to Debug unless r/release or rd/rwdi is passed.
+  - BuildType defaults to Debug unless r/rel/release or rd/rwd/rwdi is passed.
   - The script picks a cmake template based on the current working directory
     by matching keywords from cmake_patterns.json (ordered substring match,
     case-insensitive).
@@ -79,15 +79,15 @@ $RelWithDebInfo = $false
 if (-not [string]::IsNullOrWhiteSpace($Arg)) {
     $arg_lc = $Arg.ToLowerInvariant()
 
-    if ($arg_lc -eq 'r' -or $arg_lc -eq 'release') {
+    if ($arg_lc -eq 'r' -or $arg_lc -eq 'rel' -or $arg_lc -eq 'release') {
         $Release = $true
         if (-not [string]::IsNullOrWhiteSpace($Arg2)) { $OnlyPrint = 'true' }
     }
-    elseif ($arg_lc -eq 'rwdi' -or $arg_lc -eq 'rd' -or $arg_lc -eq 'relwithdebinfo') {
+    elseif ($arg_lc -eq 'rwdi' -or $arg_lc -eq 'rwd' -or $arg_lc -eq 'rd' -or $arg_lc -eq 'relwithdebinfo') {
         $RelWithDebInfo = $true
         if (-not [string]::IsNullOrWhiteSpace($Arg2)) { $OnlyPrint = 'true' }
     }
-    elseif ($arg_lc -eq 'd' -or $arg_lc -eq 'debug') {
+    elseif ($arg_lc -eq 'd' -or $arg_lc -eq 'dbg' -or $arg_lc -eq 'debug') {
         # Debug is the default BuildType
         if (-not [string]::IsNullOrWhiteSpace($Arg2)) { $OnlyPrint = 'true' }
     }
