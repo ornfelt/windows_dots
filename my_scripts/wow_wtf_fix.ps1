@@ -4,6 +4,22 @@
 # .\wow_wtf_fix.ps1 classic
 # .\wow_wtf_fix.ps1 tbc
 # .\wow_wtf_fix.ps1 wotlk
+
+function Show-Usage {
+    Write-Host @"
+Copies the WTF Account folder of wow_addons (Code2\Wow\addons\wow_addons\<version>\WTF\Account)
+into the WoW install of that version (`$env:wow_dir / `$env:wow_tbc_dir / `$env:wow_classic_dir),
+replacing the install's Account folder.
+
+Usage: .\wow_wtf_fix.ps1 [classic|tbc|wotlk]     (default: wotlk, case insensitive)
+       .\wow_wtf_fix.ps1 help | --help | -h
+"@
+}
+if ($args | Where-Object { "$_" -in @('help', '--help', '-h') }) {
+    Show-Usage
+    exit 0
+}
+
 if ($args.Count -ge 1) {
     $ver = $args[0].ToLower()
 } else {

@@ -260,7 +260,7 @@ $aliases = @(
     ".stk", ".wow", ".wowbot", ".network_devices", ".network_devices_ping",
 	".mangos", ".llama", ".sync_dots", ".docs", ".down", ".cdh", ".clean_shada",
     ".acore_update", ".tcore_update", ".gen_plant", ".gen_merm", ".git_push", ".git_pull",
-    ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".mangos_update",
+    ".cava", ".wc", ".list_mapped_drives", ".wow_wtf_update", ".wow_wtf_fix", ".wow_wtf_sync", ".mangos_update",
     ".cmake", ".cmangos_update", ".mw", ".mww", ".mwr", ".list_colors", ".list_std_colors",
     ".list_all_colors", ".git_ignore", ".help", ".mwd", ".search_conf", ".dump_files",
     ".diff_shader_git", ".build", ".build_py", ".pkg", ".proc", ".copy_git_msg", ".sln",

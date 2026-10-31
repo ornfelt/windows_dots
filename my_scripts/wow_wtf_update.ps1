@@ -23,6 +23,21 @@
 # without params:
 # .\wow_wtf_update.ps1 tbc
 
+function Show-Usage {
+    Write-Host @"
+Copies the WoW install's WTF Account folder and Config.wtf (as <UserDomain>_Config.wtf) of that
+version (`$env:wow_dir / `$env:wow_tbc_dir / `$env:wow_classic_dir) into wow_addons
+(Code2\Wow\addons\wow_addons\<version>\WTF), replacing its Account folder.
+
+Usage: .\wow_wtf_update.ps1 [classic|tbc|wotlk]  (default: wotlk, case insensitive)
+       .\wow_wtf_update.ps1 help | --help | -h
+"@
+}
+if ($args | Where-Object { "$_" -in @('help', '--help', '-h') }) {
+    Show-Usage
+    exit 0
+}
+
 # Use args instead of param (to avoid specifying param key)
 if ($args.Count -ge 1) {
     $ver = $args[0].ToLower()
