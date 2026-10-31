@@ -22,10 +22,36 @@
 #   .cci -MaxAge 0
 # cache files only, never call the API:
 #   .cci -NoNetwork
+# print it like the wezterm status line does (~/.wezterm/claude_usage.lua): 5h left
+# out while there is no such window, Fable left out at 0 %, wezterm's orange:
+#   .cci -Wezterm
+# this help (also help, --help, -h; case insensitive):
+#   .cci -Help
 param(
+    [string]$Command,
     [int]$MaxAge = 300,
-    [switch]$NoNetwork
+    [switch]$NoNetwork,
+    [switch]$Wezterm,
+    [switch]$Help
 )
+
+# The comment block at the top of this file, up to param(
+function Show-Usage {
+    foreach ($line in Get-Content -LiteralPath $PSCommandPath -Encoding UTF8) {
+        if ($line -notmatch '^#') { break }
+        $line -replace '^# ?', ''
+    }
+}
+
+$HelpWords = @('help', '--help', '-h')
+if ($Help -or ($Command -and $HelpWords -contains $Command)) {
+    Show-Usage
+    return
+}
+if ($Command) {
+    Write-Host "cci: unknown argument '$Command' (see -Help)" -ForegroundColor Red
+    exit 2
+}
 
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'  # no Invoke-WebRequest progress bar
@@ -57,6 +83,15 @@ $ColorIcon = '#D97757'
 $ColorWarn = '#D97757'              # same as normal in the theme
 $ColorCrit = '#C8442E'
 $ColorError = '#9C9A93'
+
+# -Wezterm: same as M.hide_zero_fable and CLAUDE_ORANGE in ~/.wezterm/claude_usage.lua
+$HideZeroFable = $true
+$FableName = 'Fable'
+if ($Wezterm) {
+    $ColorNormal = '#C86D50'
+    $ColorIcon = $ColorNormal
+    $ColorWarn = $ColorNormal
+}
 
 $Now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 $Inv = [Globalization.CultureInfo]::InvariantCulture
@@ -334,9 +369,15 @@ function Get-BarText($st) {
         }
         return '--'
     }
-    $parts = @(('5h ' + (Get-PctText $st.five_hour)), ('7d ' + (Get-PctText $st.seven_day)))
+    # -Wezterm: no 5h while there is no such window (the wezterm worker never assumes one)
+    $parts = @()
+    $fivePct = Get-Prop $st.five_hour 'percent'
+    $hasFive = $fivePct -is [ValueType] -and $fivePct -isnot [bool] -and -not (Get-Prop $st.five_hour 'assumed')
+    if (-not $Wezterm -or $hasFive) { $parts += '5h ' + (Get-PctText $st.five_hour) }
+    $parts += '7d ' + (Get-PctText $st.seven_day)
     foreach ($w in @($st.scoped | Where-Object { $null -ne $_ })) {
         $name = [string](Get-Prop $w 'name')
+        if ($Wezterm -and $HideZeroFable -and $name -eq $FableName -and (Get-PctText $w) -eq '0%') { continue }
         $len = if ($name.Length -ge 2 -and [char]::IsHighSurrogate($name[0])) { 2 } else { [math]::Min(1, $name.Length) }
         $parts += $name.Substring(0, $len) + ' ' + (Get-PctText $w)
     }
