@@ -271,7 +271,8 @@ $aliases = @(
     ".audit_diff_commit_info", ".audit_diff_restore", ".gen_commit_msg", ".kill_nvim_servers",
     ".gc", ".gcp", ".gd", ".do_the_thing", ".keycast", ".sql", ".ssms", ".ccs", ".cci",
     ".pc_info", ".display_info", ".cmake_helper", ".module_sync", ".db_helper", ".git_status",
-    ".git_check", ".hash_pc", ".ioq3rs", ".benilla", ".cenilla", ".script_helper", "wezswitch"
+    ".git_check", ".hash_pc", ".ioq3rs", ".benilla", ".cenilla", ".script_helper", "wezswitch",
+    ".opend2"
 )
 
 foreach ($alias in $aliases) {
