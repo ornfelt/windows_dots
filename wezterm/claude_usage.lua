@@ -67,12 +67,6 @@ M.attention_flag = ' ⚑' -- U+2691, same as awesome
 -- Windows in the bar, in order: 'five_hour', 'seven_day', 'scoped' (every per
 -- model limit) or 'scoped:<Model>' (just that one). Same as awesome's default.
 M.bar_windows = { 'five_hour', 'seven_day', 'scoped' }
--- 5h is left out while the API reports no such window ("5h --"); the 5 hour
--- limit is gone from some subscriptions.
-
--- Leave out the Fable limit while it is at 0 % (as the bar would print it)
-M.hide_zero_fable = true
-local FABLE_NAME = 'Fable'
 M.window_separator = ' · '
 
 -- Awesome draws a starburst; ✻ (U+273B) is the one Claude Code spins itself
@@ -282,12 +276,6 @@ local function short_name(name)
   return name:match('^' .. utf8.charpattern) or name
 end
 
---- Whether M.hide_zero_fable leaves this scoped window out
-local function hidden_scoped(w)
-  return M.hide_zero_fable and tostring(w and w.name):lower() == FABLE_NAME:lower()
-      and is_window(w) and round(w.percent) == 0
-end
-
 local function find_scoped(usage, name)
   for _, w in ipairs(scoped_of(usage)) do
     if w.name == name then
@@ -335,26 +323,20 @@ function M.bar_text(usage)
   for _, key in ipairs(M.bar_windows) do
     if key == 'scoped' then
       for _, w in ipairs(scoped_of(usage)) do
-        if not hidden_scoped(w) then
-          table.insert(parts, short_name(w.name) .. ' ' .. pct_text(w))
-        end
+        table.insert(parts, short_name(w.name) .. ' ' .. pct_text(w))
       end
     elseif key == 'five_hour' then
-      if is_window(usage.five_hour) then
-        table.insert(parts, '5h ' .. pct_text(usage.five_hour))
-      end
+      table.insert(parts, '5h ' .. pct_text(usage.five_hour))
     elseif key == 'seven_day' then
       table.insert(parts, '7d ' .. pct_text(usage.seven_day))
     else
       local name = key:match('^scoped:(.+)$')
-      local w = name and find_scoped(usage, name)
-      if name and not hidden_scoped(w) then
-        table.insert(parts, short_name(name) .. ' ' .. pct_text(w))
+      if name then
+        table.insert(parts, short_name(name) .. ' ' .. pct_text(find_scoped(usage, name)))
       end
     end
   end
-  -- Everything left out: still say something
-  local text = #parts > 0 and table.concat(parts, M.window_separator) or '--'
+  local text = table.concat(parts, M.window_separator)
 
   local spend = type(usage.spend) == 'table' and usage.spend or nil
   local used = spend and tonumber(spend.used) or 0
