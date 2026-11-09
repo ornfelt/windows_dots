@@ -28,6 +28,11 @@
 # .cenilla run win
 # .cenilla run size=1280x720
 #
+# Quake 3 movement, from the tree's q3 sibling (build-rel-q3, build-q3, ...; configured and built
+# when missing):
+# .cenilla run q3
+# .cenilla run debug q3 vk
+#
 # any other env var (an upper-case name with an underscore) as it is:
 # .cenilla run WOW_MSAA=4 WOW_FARCLIP=800
 #
@@ -72,6 +77,16 @@ $TREE_CONFIGURE_ARGS = @{
 	"player" = @("-DCENILLA_DEV=OFF")
 	"clang"  = @("-T", "ClangCL")
 }
+# Quake 3 movement (q3, as benilla.ps1 takes it) is a CMake option on every file of the library,
+# so a q3 run takes the named tree's q3 sibling - its dir plus Q3_TREE_SUFFIX (build-rel-q3,
+# build-q3, ...), configured with the tree's args plus Q3_CONFIGURE_ARG - and neither tree is
+# rebuilt when q3 comes and goes. A tree=<dir> is used as is (its cache must have the option on).
+$Q3_CMAKE_OPTION = "CENILLA_Q3_MOVEMENT"
+$Q3_TOKENS = @("q3", "q3_movement")
+$CMAKE_ON = "ON"
+$CMAKE_OFF = "OFF"
+$Q3_CONFIGURE_ARG = "-D$Q3_CMAKE_OPTION=$CMAKE_ON"
+$Q3_TREE_SUFFIX = "-q3"
 $PGO_SCRIPT = "tools/pgo.sh"
 $CMAKE_CACHE_NAME = "CMakeCache.txt"
 $EXE_SUBDIR = "bin"
@@ -144,6 +159,10 @@ Build tree (default: the first configured of $($TREE_AUTO_ORDER -join ', '), els
   tree=<dir>             any other build dir, not configured here
   build                  build the tree first (cmake --build: relinks and copies a newer gfx library)
 
+Features (each in a tree of its own, so switching one rebuilds nothing):
+  q3                     Quake 3 movement for a local server: the tree's $Q3_TREE_SUFFIX sibling ($($TREE_DIRS[$DEFAULT_TREE])$Q3_TREE_SUFFIX, ...),
+                         configured with $Q3_CONFIGURE_ARG (also: $($Q3_TOKENS[1]))
+
 gfx backends (WOW_GFX_DEVICE / WOW_GFX_WINDOW; the device unset is the library's first, the
 window $(if ($DEFAULT_GFX_WINDOW) { $DEFAULT_GFX_WINDOW } else { "the library's first" }) unless named as an arg, even over a WOW_GFX_WINDOW in the environment):
   $($GFX_DEVICES -join ' | ')   (vulkan = vk, dx11 / dx12 = d3d11 / d3d12)
@@ -191,28 +210,38 @@ Examples:
   $SCRIPT_INVOCATION $RUN_COMMAND debug build probe
   $SCRIPT_INVOCATION $RUN_COMMAND capture=felwood-night gl4
   $SCRIPT_INVOCATION $RUN_COMMAND worldview at=-9460,62 vk
+  $SCRIPT_INVOCATION $RUN_COMMAND q3 vk glfw
 
 "@
 	Show-ManualRun
 }
 
-function Find-Tree {
-	# The first tree of $TREE_AUTO_ORDER that is configured, else $DEFAULT_TREE
+function Get-TreeDir($name, $q3) {
+	# A named tree's dir, its q3 sibling's for a q3 run
+	return $TREE_DIRS[$name] + $(if ($q3) { $Q3_TREE_SUFFIX } else { "" })
+}
+
+function Find-Tree($q3) {
+	# The first tree of $TREE_AUTO_ORDER that is configured, else $DEFAULT_TREE. A q3 run takes the
+	# first configured q3 sibling, else the sibling of the tree a plain run would take.
 	foreach ($name in $TREE_AUTO_ORDER) {
-		$cachePath = Join-Path -Path (Join-Path -Path $REPO_ROOT -ChildPath $TREE_DIRS[$name]) -ChildPath $CMAKE_CACHE_NAME
+		$cachePath = Join-Path -Path (Join-Path -Path $REPO_ROOT -ChildPath (Get-TreeDir $name $q3)) -ChildPath $CMAKE_CACHE_NAME
 		if (Test-Path -Path $cachePath -PathType Leaf) { return $name }
 	}
+	if ($q3) { return Find-Tree $false }
 	return $DEFAULT_TREE
 }
 
 function Show-ManualRun {
 	# Prints how to start the default tree's client by hand, without this script (a Ninja tree
 	# puts the exe in bin/, the Visual Studio generator this script configures with in bin/<Config>/)
-	$treeName = Find-Tree
-	$tree = Resolve-Tree @{ Tree = $treeName; TreeDir = $null; Worldview = $false }
+	$treeName = Find-Tree $false
+	$tree = Resolve-Tree @{ Tree = $treeName; TreeDir = $null; Worldview = $false; Q3 = $false }
 	$exePath = $tree.ExePath.Substring($REPO_ROOT.Length).TrimStart('\', '/') -replace '\\', '/'
+	$q3Dir = Get-TreeDir $treeName $true
 	Write-Label "Or run it manually (from $REPO_ROOT, once $($TREE_DIRS[$treeName])/ is built):"
 	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; ./$exePath"
+	Write-Label "  with Quake 3 movement: the same from $q3Dir/ (configured with $Q3_CONFIGURE_ARG; '$SCRIPT_INVOCATION $RUN_COMMAND q3' does both)"
 }
 
 function Show-Usage {
@@ -243,7 +272,7 @@ function Read-Options($argList) {
 		Device = $null; Window = $null; Win = $false; Size = $null; Panel = $false; Hud = $false; Worldview = $false; At = $null
 		Host = $null; Realm = $null; Char = $null; Probe = $false; NoSound = $false; Unattended = $false
 		Capture = $null; Out = $null; Fps = $null; Exit = $null; Soft = $false; Validate = $false
-		Data = $null; DataSet = $false; Env = @()
+		Data = $null; DataSet = $false; Env = @(); Q3 = $false
 	}
 
 	foreach ($item in $argList) {
@@ -288,6 +317,7 @@ function Read-Options($argList) {
 		elseif ($name -eq "exit" -and $value) { $opts.Exit = $value }
 		elseif ($name -eq "soft") { $opts.Soft = $true }
 		elseif ($name -eq "validate") { $opts.Validate = $true }
+		elseif ($Q3_TOKENS -contains $name) { $opts.Q3 = $true }
 		elseif ($name -eq "data" -and $value) {
 			$opts.Data = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($value)
 			$opts.DataSet = $true
@@ -302,9 +332,13 @@ function Read-Options($argList) {
 		Write-Warn "tree=$($opts.TreeDir) is used - ignoring $($opts.Tree)."
 		$opts.Tree = $null
 	}
+	if ($opts.Q3 -and $opts.Worldview) {
+		Write-Warn "q3 is for the client, not the engine viewer - ignoring it."
+		$opts.Q3 = $false
+	}
 	if (-not $opts.Tree -and -not $opts.TreeDir) {
-		$opts.Tree = Find-Tree
-		if ($opts.Tree -ne $DEFAULT_TREE) { Write-Label "No $($TREE_DIRS[$DEFAULT_TREE])/ - using $($TREE_DIRS[$opts.Tree])/." }
+		$opts.Tree = Find-Tree $opts.Q3
+		if ($opts.Tree -ne $DEFAULT_TREE) { Write-Label "No $(Get-TreeDir $DEFAULT_TREE $opts.Q3)/ - using $(Get-TreeDir $opts.Tree $opts.Q3)/." }
 	}
 	if ($opts.Out -and -not $opts.Capture) { Write-Warn "out= is for a capture - ignoring it." }
 	if ($opts.Size -and $opts.Size -notmatch $WINDOW_SIZE_PATTERN) {
@@ -335,7 +369,7 @@ function Resolve-Tree($opts) {
 	if ($opts.TreeDir) {
 		$dir = $(if ([System.IO.Path]::IsPathRooted($opts.TreeDir)) { $opts.TreeDir } else { Join-Path -Path $REPO_ROOT -ChildPath $opts.TreeDir })
 	} else {
-		$dir = Join-Path -Path $REPO_ROOT -ChildPath $TREE_DIRS[$opts.Tree]
+		$dir = Join-Path -Path $REPO_ROOT -ChildPath (Get-TreeDir $opts.Tree $opts.Q3)
 	}
 	$tree = @{ Dir = $dir; CachePath = Join-Path -Path $dir -ChildPath $CMAKE_CACHE_NAME }
 
@@ -408,8 +442,30 @@ function Test-SanitizedTree($tree) {
 }
 
 function Get-ConfigureArgs($tree, $opts) {
-	# cmake's args configuring a named tree
-	return @("-S", $REPO_ROOT, "-B", $tree.Dir) + $CMAKE_GENERATOR_ARGS + $TREE_CONFIGURE_ARGS[$opts.Tree]
+	# cmake's args configuring a named tree (a q3 sibling with the option on)
+	$configureArgs = @("-S", $REPO_ROOT, "-B", $tree.Dir) + $CMAKE_GENERATOR_ARGS + $TREE_CONFIGURE_ARGS[$opts.Tree]
+	if ($opts.Q3) { $configureArgs += $Q3_CONFIGURE_ARG }
+	return $configureArgs
+}
+
+function Get-Q3State($tree, $opts) {
+	# The tree's cached q3 option (OFF when the cache predates it); what a missing tree will get
+	if (-not (Test-Path -Path $tree.CachePath -PathType Leaf)) { return $(if ($opts.Q3) { $CMAKE_ON } else { $CMAKE_OFF }) }
+	$value = Get-CacheValue $tree $Q3_CMAKE_OPTION
+	if ($value) { return $value.ToUpperInvariant() }
+	return $CMAKE_OFF
+}
+
+function Test-Q3Tree($tree, $opts) {
+	# Exits when a q3 run's configured tree (a tree= dir, or a sibling configured by hand) has the
+	# option off; names it when a plain run's tree has it on
+	$state = Get-Q3State $tree $opts
+	if ($opts.Q3 -and $state -ne $CMAKE_ON) {
+		Write-Err "q3 needs $Q3_CMAKE_OPTION on, but $($tree.Dir) has it $state - turn it on there, or drop tree= for the $Q3_TREE_SUFFIX sibling:"
+		Write-Extra "cmake -S $(Format-ShellArg $REPO_ROOT) -B $(Format-ShellArg $tree.Dir) $Q3_CONFIGURE_ARG"
+		exit 1
+	}
+	if (-not $opts.Q3 -and $state -eq $CMAKE_ON) { Write-Label "$($tree.Dir) has $Q3_CMAKE_OPTION on - Quake 3 movement is on in this run." }
 }
 
 function Initialize-Tree($tree, $opts) {
@@ -565,6 +621,7 @@ function Format-EnvLines($runEnv) {
 function Show-LaunchCommand($tree, $runEnv, $opts, $scriptArgs) {
 	# Prints the PowerShell lines reproducing this run (the env vars stay set in that shell)
 	$lines = @("# $SCRIPT_INVOCATION $(($scriptArgs | ForEach-Object { Format-ShellArg ([string]$_) }) -join ' ')")
+	$lines += "# tree: $($tree.Dir), ${Q3_CMAKE_OPTION}: $(Get-Q3State $tree $opts)"
 	if (-not (Test-Path -Path $tree.CachePath -PathType Leaf) -and -not $opts.TreeDir -and $TREE_CONFIGURE_ARGS.ContainsKey($opts.Tree)) {
 		$lines += "cmake $((Get-ConfigureArgs $tree $opts | ForEach-Object { Format-ShellArg $_ }) -join ' ')"
 	}
@@ -658,6 +715,7 @@ function Test-GfxPair($vars) {
 }
 
 $tree = Resolve-Tree $options
+Test-Q3Tree $tree $options
 $options.WowData = Resolve-WowData $options
 $gfx = Resolve-GfxLibrary $tree
 $runEnv = Get-RunEnv $options $tree
@@ -685,7 +743,7 @@ if (-not (Test-Path -Path $tree.ExePath -PathType Leaf)) {
 
 $exe = Get-Item -Path $tree.ExePath
 Write-Label "Using: $($exe.FullName)"
-Write-Label "  built $($exe.LastWriteTime.ToString($BUILD_TIME_FORMAT))"
+Write-Label "  built $($exe.LastWriteTime.ToString($BUILD_TIME_FORMAT)), ${Q3_CMAKE_OPTION}: $(Get-Q3State $tree $options)"
 Test-GfxCopy $gfx $exe.FullName
 
 Write-Host
