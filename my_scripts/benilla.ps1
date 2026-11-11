@@ -1,7 +1,18 @@
-# Usage examples (nothing runs without `run` as the first arg; the args after it in any order,
-# case insensitive; `.benilla help` lists them all):
-# cd into the repo and print how to run it, through this script and by hand (runs nothing):
+# Usage examples (nothing runs without `run` as the first arg, after an optional checkout; the
+# args after it in any order, case insensitive; `.benilla help` lists them all):
+# cd into a benilla checkout (a menu when there are several, Enter = the last one used) and print
+# how to run it, through this script and by hand (runs nothing):
 # .benilla
+# .benilla benilla-gfx
+#
+# a checkout by its dir name (with or without benilla-), its branch or its kind (plain / gfxdll /
+# trimmed), as the first arg or dir=:
+# .benilla trimmed run vk glfw
+# .benilla run dir=benilla-gfx d3d12
+#
+# Quake 3 movement (any checkout, --features q3_movement), and a gfx dll checkout without gfx:
+# .benilla run q3
+# .benilla gfxdll run nogfx q3
 #
 # the release build (target/release) on the platform's window (win32 / x11) and the gfx
 # library's default device:
@@ -41,7 +52,39 @@ function Write-Warn ($text) { Write-Host "$text" -ForegroundColor DarkYellow }
 function Write-Ok   ($text) { Write-Host "$text" -ForegroundColor Green    }
 function Write-Err  ($text) { Write-Host "$text" -ForegroundColor Red      }
 
-$REPO_ROOT = Join-Path -Path $env:code_root_dir -ChildPath "Code2/Wow/tools/benilla"
+# The benilla checkouts: every CHECKOUT_PATTERN dir under TOOLS_ROOT holding the client crate
+# (CLIENT_MANIFEST; other benilla-named projects are skipped). The kind comes from what is checked
+# out, not from the dir or branch name: no GFX_CRATE_DIR is plain benilla (main), GFX_CRATE_DIR
+# with a gfx feature on the client is the gfx dll branch (gfx opt-in, --features gfx), and
+# GFX_CRATE_DIR without one is trimmed-bevy (gfx always). The checkout of a run is dir= (or a
+# checkout as the first arg), else $env:BENILLA_DIR, else the only one, else picked from a menu
+# (Enter = the last one used, kept in LAST_DIR_FILE).
+$TOOLS_ROOT = Join-Path -Path $env:code_root_dir -ChildPath "Code2/Wow/tools"
+$CHECKOUT_PATTERN = "benilla*"
+$CHECKOUT_PREFIX = "benilla-"
+$CLIENT_MANIFEST = "crates/benilla/Cargo.toml"
+$GFX_CRATE_DIR = "crates/benilla-gfx"
+$GFX_FEATURE = "gfx"
+$GFX_FEATURE_PATTERN = "^\s*$GFX_FEATURE\s*="
+$Q3_FEATURE = "q3_movement"
+$Q3_TOKENS = @("q3", $Q3_FEATURE)
+$KIND_PLAIN = "plain"
+$KIND_GFX_DLL = "gfxdll"
+$KIND_TRIMMED = "trimmed"
+$KIND_NAMES = @($KIND_PLAIN, $KIND_GFX_DLL, $KIND_TRIMMED)
+$KIND_INFO = @{ $KIND_PLAIN = "no gfx"; $KIND_GFX_DLL = "gfx opt-in (--features $GFX_FEATURE)"; $KIND_TRIMMED = "gfx always" }
+# What a selector is matched against, in order (the first that matches any checkout wins)
+$SELECTOR_PROPERTIES = @("Name", "Short", "Branch", "Kind")
+$DETACHED_PREFIX = "detached@"
+$UNKNOWN_BRANCH = "?"
+$DIR_ENV_VAR = "BENILLA_DIR"
+$LAST_DIR_FILE = Join-Path -Path ([Environment]::GetFolderPath("LocalApplicationData")) -ChildPath "benilla/last-dir"
+# The cargo features a client was built with, in a file beside it (other features rebuild it)
+$FEATURES_STAMP_EXT = ".features"
+$FEATURE_SEPARATOR = ","
+$NO_FEATURES = "none"
+$REPO_ROOT = $null
+$CHECKOUT = $null
 $BUILD_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
 # The cargo profiles (RUNNING.md), picked by name. The player build has no `dev` feature, so it
@@ -119,12 +162,25 @@ $WINDOWED_DEFAULT_SIZE = "1600x900"
 $WINDOW_SIZE_PATTERN = '^[0-9]+x[0-9]+$'
 
 function Show-Help {
-	Write-Alt "benilla - start benilla from a cargo profile under $REPO_ROOT (built when missing)"
+	Write-Alt "benilla - start benilla from a checkout under $TOOLS_ROOT and a cargo profile (built when missing)"
 	Write-Host @"
 
-Usage: $SCRIPT_INVOCATION $RUN_COMMAND [options] [VAR_NAME=value...]
-Nothing runs without $RUN_COMMAND as the first arg; a bare $SCRIPT_INVOCATION cds into the repo and prints how to run it.
+Usage: $SCRIPT_INVOCATION [<checkout>] $RUN_COMMAND [options] [VAR_NAME=value...]
+Nothing runs without $RUN_COMMAND as the first arg (after an optional checkout); a bare $SCRIPT_INVOCATION [<checkout>] cds into the checkout and prints how to run it.
 Options are case insensitive, in any order, with or without leading dashes.
+
+Checkout (a $CHECKOUT_PATTERN dir holding $CLIENT_MANIFEST; its kind comes from what is checked out, not its name):
+  <checkout> first, or dir=<checkout>   a path, the dir name (with or without $CHECKOUT_PREFIX), the branch or the kind
+  none named             `$env:$DIR_ENV_VAR, else the only checkout, else a menu (Enter = the last one used)
+"@
+	foreach ($kind in $KIND_NAMES) { Write-Host ("  {0,-22} {1}" -f $kind, $KIND_INFO[$kind]) }
+	Write-Host "Found:"
+	Show-CheckoutList $CHECKOUTS
+	Write-Host @"
+
+Features (a client built with other features is built again):
+  q3                     Quake 3 movement for a local server (--features $Q3_FEATURE; also: $Q3_FEATURE)
+  nogfx                  a $KIND_GFX_DLL checkout without gfx (no --features $GFX_FEATURE)
 
 Profile (default $DEFAULT_PROFILE):
 "@
@@ -134,7 +190,7 @@ Profile (default $DEFAULT_PROFILE):
 	Write-Host @"
   build                  cargo build first (copies a newer gfx library beside the client too)
 
-gfx backends (WOW_GFX_DEVICE / WOW_GFX_WINDOW; the device unset is the library's first, the
+gfx backends ($KIND_GFX_DLL / $KIND_TRIMMED checkouts; WOW_GFX_DEVICE / WOW_GFX_WINDOW; the device unset is the library's first, the
 window $(if ($DEFAULT_GFX_WINDOW) { $DEFAULT_GFX_WINDOW } else { "the library's first" }) unless named as an arg, even over a WOW_GFX_WINDOW in the environment):
   $($GFX_DEVICES -join ' | ')   (vulkan = vk, dx11 / dx12 = d3d11 / d3d12)
   $($GFX_WINDOWS -join ' | ')
@@ -172,7 +228,7 @@ Other:
   $($PRINT_TOKENS -join ' | ')  print the PowerShell lines for this run instead of running it
   $($HELP_TOKENS -join ' | ') (also -help, --help)  this help
 
-The gfx library must be built first: $GFX_DLL_ROOT/$($GFX_DIR_NAMES[0])/bin/<Release|Debug>_x64/$GFX_LIB_NAME.
+A gfx run needs the gfx library built first: $GFX_DLL_ROOT/$($GFX_DIR_NAMES[0])/bin/<Release|Debug>_x64/$GFX_LIB_NAME.
 Windows is written but not built in benilla yet (GFX.md).
 
 Examples:
@@ -180,24 +236,193 @@ Examples:
   $SCRIPT_INVOCATION $RUN_COMMAND play build probe
   $SCRIPT_INVOCATION $RUN_COMMAND capture=felwood-night gl4
   $SCRIPT_INVOCATION $RUN_COMMAND worldview at=-9460,62 vk
+  $SCRIPT_INVOCATION $KIND_TRIMMED $RUN_COMMAND q3 vk glfw
+  $SCRIPT_INVOCATION $RUN_COMMAND dir=benilla-gfx nogfx
 
 "@
-	Show-ManualRun
+	foreach ($checkout in $CHECKOUTS) { Show-ManualRun $checkout }
 }
 
-function Show-ManualRun {
-	# Prints how to start the default profile's client by hand, without this script
+function Show-ManualRun($checkout) {
+	# Prints how to start the checkout's default-profile client by hand, without this script
 	$package = [System.IO.Path]::GetFileNameWithoutExtension($CLIENT_EXE_NAME)
-	Write-Label "Or run it manually (from $REPO_ROOT):"
-	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; $BUILD_COMMAND run $($PROFILE_BUILD_ARGS[$DEFAULT_PROFILE] -join ' ') -p $package"
+	$features = @(Get-KindFeatures $checkout.Kind)
+	$featureArg = $(if ($features.Count -gt 0) { " --features $($features -join $FEATURE_SEPARATOR)" } else { "" })
+	$cargoRun = "$BUILD_COMMAND run $($PROFILE_BUILD_ARGS[$DEFAULT_PROFILE] -join ' ') -p $package"
+	Write-Label "Or run it manually (from $($checkout.Path), $($checkout.Kind)):"
+	Write-Extra "`$env:$WOW_DATA_VAR=`"`$env:wow_classic_dir/$WOW_DATA_SUBDIR`"; $cargoRun$featureArg"
+	Write-Label "  with Quake 3 movement: $cargoRun --features $(($features + $Q3_FEATURE) -join $FEATURE_SEPARATOR)"
 }
 
 function Show-Usage {
-	# A bare call: how to run benilla from the repo, through this script and by hand
-	Write-Alt "benilla - $REPO_ROOT"
+	# A bare call: how to run benilla from the checkout, through this script and by hand
+	Write-Alt "benilla - $REPO_ROOT ($($CHECKOUT.Branch), $($CHECKOUT.Kind): $($KIND_INFO[$CHECKOUT.Kind]))"
 	Write-Label "Run it through this script (the options after $RUN_COMMAND; '$SCRIPT_INVOCATION help' lists them):"
-	Write-Extra "$SCRIPT_INVOCATION $RUN_COMMAND"
-	Show-ManualRun
+	Write-Extra "$SCRIPT_INVOCATION $(if ($CHECKOUTS.Count -gt 1) { "$($CHECKOUT.Name) " })$RUN_COMMAND"
+	Show-ManualRun $CHECKOUT
+}
+
+function Get-KindFeatures($kind) {
+	# The cargo features a gfx run of a checkout of that kind builds with
+	if ($kind -eq $KIND_GFX_DLL) { return @($GFX_FEATURE) }
+	return @()
+}
+
+function Test-CheckoutDir($dir) {
+	return Test-Path -LiteralPath (Join-Path -Path $dir -ChildPath $CLIENT_MANIFEST) -PathType Leaf
+}
+
+function Get-CheckoutKind($dir) {
+	# The kind from what is checked out (see TOOLS_ROOT above)
+	if (-not (Test-Path -LiteralPath (Join-Path -Path $dir -ChildPath $GFX_CRATE_DIR) -PathType Container)) { return $KIND_PLAIN }
+	if (Select-String -LiteralPath (Join-Path -Path $dir -ChildPath $CLIENT_MANIFEST) -Pattern $GFX_FEATURE_PATTERN -Quiet) { return $KIND_GFX_DLL }
+	return $KIND_TRIMMED
+}
+
+function Get-CheckoutBranch($dir) {
+	# The checked-out branch, detached@<commit> without one
+	if (-not (Get-Command git -ErrorAction SilentlyContinue)) { return $UNKNOWN_BRANCH }
+	$branch = git -C $dir branch --show-current 2>$null
+	if ($branch) { return $branch }
+	$head = git -C $dir rev-parse --short HEAD 2>$null
+	if ($head) { return "$DETACHED_PREFIX$head" }
+	return $UNKNOWN_BRANCH
+}
+
+function New-Checkout($dir) {
+	$item = Get-Item -LiteralPath $dir
+	$short = $(if ($item.Name.StartsWith($CHECKOUT_PREFIX)) { $item.Name.Substring($CHECKOUT_PREFIX.Length) } else { $item.Name })
+	return [pscustomobject]@{ Name = $item.Name; Short = $short; Path = $item.FullName; Branch = Get-CheckoutBranch $item.FullName; Kind = Get-CheckoutKind $item.FullName }
+}
+
+function Find-Checkouts {
+	# Every checkout under TOOLS_ROOT, by name
+	if (-not (Test-Path -LiteralPath $TOOLS_ROOT -PathType Container)) { return @() }
+	return @(Get-ChildItem -LiteralPath $TOOLS_ROOT -Directory -Filter $CHECKOUT_PATTERN | Where-Object { Test-CheckoutDir $_.FullName } |
+		Sort-Object Name | ForEach-Object { New-Checkout $_.FullName })
+}
+
+function Find-CheckoutMatches($token) {
+	# The checkouts a selector names: a path to a checkout, else the SELECTOR_PROPERTIES in order
+	# (case insensitive), the first that matches any
+	if (-not $token) { return @() }
+	if ((Test-Path -LiteralPath $token -PathType Container) -and (Test-CheckoutDir $token)) {
+		$path = (Get-Item -LiteralPath $token).FullName
+		$known = @($CHECKOUTS | Where-Object { $_.Path -eq $path })
+		if ($known.Count -gt 0) { return $known }
+		return @(New-Checkout $path)
+	}
+	foreach ($property in $SELECTOR_PROPERTIES) {
+		$found = @($CHECKOUTS | Where-Object { $_.$property -eq $token })
+		if ($found.Count -gt 0) { return $found }
+	}
+	return @()
+}
+
+function Format-Checkout($checkout) {
+	return "{0,-22} {1,-18} {2,-8} {3}" -f $checkout.Name, $checkout.Branch, $checkout.Kind, $KIND_INFO[$checkout.Kind]
+}
+
+function Show-CheckoutList($list) {
+	if (@($list).Count -eq 0) { Write-Label "  none under $TOOLS_ROOT"; return }
+	foreach ($checkout in $list) { Write-Label "  $(Format-Checkout $checkout)" }
+}
+
+function Read-LastCheckout {
+	# The path of the checkout used last (nothing when unknown)
+	try {
+		if (Test-Path -LiteralPath $LAST_DIR_FILE -PathType Leaf) { return ([string](Get-Content -LiteralPath $LAST_DIR_FILE -TotalCount 1 -ErrorAction Stop)).Trim() }
+	} catch {}
+	return $null
+}
+
+function Save-LastCheckout($checkout) {
+	try {
+		New-Item -ItemType Directory -Force -Path (Split-Path -Path $LAST_DIR_FILE -Parent) -ErrorAction Stop | Out-Null
+		Set-Content -LiteralPath $LAST_DIR_FILE -Value $checkout.Path -Encoding ascii -ErrorAction Stop
+	} catch {}
+}
+
+function Select-CheckoutFromMenu {
+	# Several checkouts and none named: a numbered menu, Enter = the last one used (a number or
+	# a selector picks one)
+	$last = Read-LastCheckout
+	$default = $null
+	Write-Alt "benilla checkouts under ${TOOLS_ROOT}:"
+	for ($i = 0; $i -lt $CHECKOUTS.Count; $i++) {
+		$mark = " "
+		if ($last -and $CHECKOUTS[$i].Path -eq $last) { $default = $i; $mark = "*" }
+		Write-Host ("{0} {1,2}) {2}" -f $mark, ($i + 1), (Format-Checkout $CHECKOUTS[$i]))
+	}
+	if ([Console]::IsInputRedirected) {
+		Write-Err "Several checkouts and no terminal to pick one - name one first or as dir=<checkout> (or set `$env:$DIR_ENV_VAR)."
+		exit 1
+	}
+
+	$prompt = "Pick 1-$($CHECKOUTS.Count)$(if ($null -ne $default) { " (Enter = $($CHECKOUTS[$default].Name))" })"
+	$answer = ([string](Read-Host $prompt)).Trim()
+	if (-not $answer -and $null -ne $default) { return $CHECKOUTS[$default] }
+	$index = 0
+	if ([int]::TryParse($answer, [ref]$index) -and $index -ge 1 -and $index -le $CHECKOUTS.Count) { return $CHECKOUTS[$index - 1] }
+	$found = @(Find-CheckoutMatches $answer)
+	if ($found.Count -eq 1) { return $found[0] }
+	Write-Err "No such checkout: $answer"
+	exit 1
+}
+
+function Resolve-Checkout($selector) {
+	# The checkout of the run: the selector (dir= or a checkout as the first arg), else
+	# $env:BENILLA_DIR, else the only one, else the menu; remembered as the last one used
+	$source = "the args"
+	if (-not $selector -and [Environment]::GetEnvironmentVariable($DIR_ENV_VAR)) {
+		$selector = [Environment]::GetEnvironmentVariable($DIR_ENV_VAR); $source = "`$env:$DIR_ENV_VAR"
+	}
+
+	if ($selector) {
+		$found = @(Find-CheckoutMatches $selector)
+		if ($found.Count -eq 0) {
+			Write-Err "No benilla checkout matches $selector (from $source):"
+			Show-CheckoutList $CHECKOUTS
+			exit 1
+		}
+		if ($found.Count -gt 1) {
+			Write-Err "$selector (from $source) matches several checkouts - name one by its dir:"
+			Show-CheckoutList $found
+			exit 1
+		}
+		$checkout = $found[0]
+	} elseif ($CHECKOUTS.Count -eq 0) {
+		Write-Err "No benilla checkout (a $CHECKOUT_PATTERN dir holding $CLIENT_MANIFEST) under $TOOLS_ROOT."
+		exit 1
+	} elseif ($CHECKOUTS.Count -eq 1) {
+		$checkout = $CHECKOUTS[0]
+	} else {
+		$checkout = Select-CheckoutFromMenu
+	}
+
+	Save-LastCheckout $checkout
+	return $checkout
+}
+
+function Set-CheckoutOptions($opts, $checkout) {
+	# What the checkout's kind makes of the options: UseGfx, and Features (the build's)
+	$opts.UseGfx = ($checkout.Kind -eq $KIND_TRIMMED) -or ($checkout.Kind -eq $KIND_GFX_DLL -and -not $opts.NoGfx)
+	if ($opts.NoGfx -and $checkout.Kind -ne $KIND_GFX_DLL) {
+		Write-Warn "nogfx is for a $KIND_GFX_DLL checkout ($($checkout.Name) is $($checkout.Kind)) - ignoring it."
+	}
+	if (-not $opts.UseGfx -and ($opts.Device -or $opts.Window)) {
+		Write-Warn "$($checkout.Name) runs without gfx ($($checkout.Kind)) - ignoring the gfx device / window."
+		$opts.Device = $null; $opts.Window = $null
+	}
+	if ($opts.Q3 -and $opts.Worldview) {
+		Write-Warn "q3 is for the client, not the engine viewer - ignoring it."
+		$opts.Q3 = $false
+	}
+
+	$features = @()
+	if ($opts.UseGfx) { $features += @(Get-KindFeatures $checkout.Kind) }
+	if ($opts.Q3) { $features += $Q3_FEATURE }
+	$opts.Features = $features
 }
 
 function Read-Command($arg) {
@@ -208,8 +433,9 @@ function Read-Command($arg) {
 		Show-Help
 		exit 0
 	}
-	Write-Err "Nothing runs without $RUN_COMMAND as the first arg (got: $arg)."
-	Show-Usage
+	Write-Err "Nothing runs without $RUN_COMMAND as the first arg, after an optional checkout (got: $arg)."
+	Write-Label "The checkouts ('$SCRIPT_INVOCATION help' lists the options):"
+	Show-CheckoutList $CHECKOUTS
 	exit 1
 }
 
@@ -221,6 +447,7 @@ function Read-Options($argList) {
 		Host = $null; Realm = $null; Char = $null; Probe = $false; NoSound = $false; Unattended = $false
 		Capture = $null; Out = $null; Fps = $null; Exit = $null; Soft = $false; Validate = $false
 		Data = $null; DataSet = $false; Env = @()
+		Dir = $null; Q3 = $false; NoGfx = $false; UseGfx = $false; Features = @()
 	}
 
 	foreach ($item in $argList) {
@@ -264,12 +491,15 @@ function Read-Options($argList) {
 		elseif ($name -eq "exit" -and $value) { $opts.Exit = $value }
 		elseif ($name -eq "soft") { $opts.Soft = $true }
 		elseif ($name -eq "validate") { $opts.Validate = $true }
+		elseif ($name -eq "dir" -and $value) { $opts.Dir = $value }
+		elseif ($Q3_TOKENS -contains $name) { $opts.Q3 = $true }
+		elseif ($name -eq "nogfx") { $opts.NoGfx = $true }
 		elseif ($name -eq "data" -and $value) {
 			$opts.Data = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($value)
 			$opts.DataSet = $true
 		}
 		else {
-			Write-Err "Unknown arg: $raw (size= / at= / host= / realm= / char= / capture= / out= / fps= / exit= need a value) - see '$SCRIPT_INVOCATION help'."
+			Write-Err "Unknown arg: $raw (dir= / size= / at= / host= / realm= / char= / capture= / out= / fps= / exit= need a value) - see '$SCRIPT_INVOCATION help'."
 			exit 1
 		}
 	}
@@ -349,8 +579,31 @@ function Test-GfxCopy($gfx, $exePath) {
 }
 
 function Get-BuildArgs($exe, $opts) {
-	# cargo's args building the binary of the profile
-	return @("build") + $PROFILE_BUILD_ARGS[$opts.Profile] + @("-p", $exe.Package)
+	# cargo's args building the binary of the profile, with the run's features
+	$buildArgs = @("build") + $PROFILE_BUILD_ARGS[$opts.Profile] + @("-p", $exe.Package)
+	if ($opts.Features.Count -gt 0) { $buildArgs += @("--features", ($opts.Features -join $FEATURE_SEPARATOR)) }
+	return $buildArgs
+}
+
+function Get-WantedFeatures($opts) {
+	return $opts.Features -join $FEATURE_SEPARATOR
+}
+
+function Get-BuiltFeatures($exe) {
+	# The features the binary was built with (its stamp; none without one)
+	$stamp = "$($exe.ExePath)$FEATURES_STAMP_EXT"
+	if (-not (Test-Path -LiteralPath $stamp -PathType Leaf)) { return "" }
+	return ([string](Get-Content -LiteralPath $stamp -TotalCount 1)).Trim()
+}
+
+function Test-FeaturesChanged($exe, $opts) {
+	# True when the binary exists but was built with other features than this run takes
+	return (Test-Path -LiteralPath $exe.ExePath -PathType Leaf) -and ((Get-BuiltFeatures $exe) -ne (Get-WantedFeatures $opts))
+}
+
+function Format-Features($features) {
+	if ($features) { return $features }
+	return $NO_FEATURES
 }
 
 function Build-Client($exe, $opts) {
@@ -373,6 +626,7 @@ function Build-Client($exe, $opts) {
 		Write-Err "Build failed (exit code $exitCode)."
 		exit 1
 	}
+	Set-Content -LiteralPath "$($exe.ExePath)$FEATURES_STAMP_EXT" -Value (Get-WantedFeatures $opts) -Encoding ascii
 	Write-Ok "Build done."
 }
 
@@ -434,7 +688,7 @@ function Get-RunEnv($opts) {
 
 	if ($opts.Device) { $runEnv["WOW_GFX_DEVICE"] = $opts.Device }
 	if ($opts.Window) { $runEnv["WOW_GFX_WINDOW"] = $opts.Window }
-	elseif ($DEFAULT_GFX_WINDOW) { $runEnv["WOW_GFX_WINDOW"] = $DEFAULT_GFX_WINDOW }
+	elseif ($DEFAULT_GFX_WINDOW -and $opts.UseGfx) { $runEnv["WOW_GFX_WINDOW"] = $DEFAULT_GFX_WINDOW }
 	if ($opts.Size) { $runEnv["WOW_WIN"] = $opts.Size }
 	elseif ($opts.Win) { $runEnv["WOW_WIN"] = $WINDOWED_DEFAULT_SIZE }
 	if ($opts.Panel) { $runEnv["WOW_PANEL"] = "1" }
@@ -492,7 +746,8 @@ function Format-EnvLines($runEnv) {
 function Show-LaunchCommand($exe, $runEnv, $opts, $scriptArgs) {
 	# Prints the PowerShell lines reproducing this run (the env vars stay set in that shell)
 	$lines = @("# $SCRIPT_INVOCATION $(($scriptArgs | ForEach-Object { Format-ShellArg ([string]$_) }) -join ' ')")
-	if ($opts.Build -or -not (Test-Path -Path $exe.ExePath -PathType Leaf)) {
+	$lines += "# checkout: $($CHECKOUT.Name) ($($CHECKOUT.Branch), $($CHECKOUT.Kind)), features: $(Format-Features (Get-WantedFeatures $opts))"
+	if ($opts.Build -or -not (Test-Path -Path $exe.ExePath -PathType Leaf) -or (Test-FeaturesChanged $exe $opts)) {
 		$lines += "Push-Location $(Format-ShellArg $REPO_ROOT); $BUILD_COMMAND $((Get-BuildArgs $exe $opts) -join ' '); Pop-Location"
 	}
 	$lines += Format-EnvLines $runEnv
@@ -530,27 +785,42 @@ function Start-Client($exePath, $runEnv) {
 	exit 1
 }
 
-if ($args.Count -eq 0) {
-	# A bare call cds into the repo (a script's Set-Location stays in the calling shell) and shows
-	# how to run it, running nothing
-	if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
-		Write-Err "benilla repo not found: $REPO_ROOT"
-		exit 1
+$CHECKOUTS = @(Find-Checkouts)
+# A checkout as the first arg (anything but run / help that names one)
+$commandArgs = @($args)
+$selector = $null
+if ($commandArgs.Count -gt 0) {
+	$first = ([string]$commandArgs[0]).TrimStart("-")
+	$firstName = $first.ToLowerInvariant()
+	if ($firstName -ne $RUN_COMMAND -and $HELP_TOKENS -notcontains $firstName -and @(Find-CheckoutMatches $first).Count -gt 0) {
+		$selector = $first
+		$commandArgs = @($commandArgs | Select-Object -Skip 1)
 	}
+}
+
+if ($commandArgs.Count -eq 0) {
+	# A bare call cds into the checkout (a script's Set-Location stays in the calling shell) and
+	# shows how to run it, running nothing
+	$CHECKOUT = Resolve-Checkout $selector
+	$REPO_ROOT = $CHECKOUT.Path
 	Set-Location -Path $REPO_ROOT
 	Show-Usage
 	exit 0
 }
-Read-Command $args[0]
-$runArgs = @($args | Select-Object -Skip 1)
+Read-Command $commandArgs[0]
+$runArgs = @($commandArgs | Select-Object -Skip 1)
 $options = Read-Options $runArgs
 if ($options.Help) {
 	Show-Help
 	exit 0
 }
+if ($options.Dir) { $selector = $options.Dir }
+$CHECKOUT = Resolve-Checkout $selector
+$REPO_ROOT = $CHECKOUT.Path
+Set-CheckoutOptions $options $CHECKOUT
 
-Write-Alt "benilla..."
-if ($runArgs.Count -eq 0) { Show-ManualRun }
+Write-Alt "benilla... $($CHECKOUT.Name) ($($CHECKOUT.Branch), $($CHECKOUT.Kind): $($KIND_INFO[$CHECKOUT.Kind])), features: $(Format-Features (Get-WantedFeatures $options))"
+if ($runArgs.Count -eq 0) { Show-ManualRun $CHECKOUT }
 
 if (-not (Test-Path -Path $REPO_ROOT -PathType Container)) {
 	Write-Err "benilla repo not found: $REPO_ROOT"
@@ -585,16 +855,18 @@ $exe = Resolve-Exe $options
 $options.WowData = Resolve-WowData $options
 $gfx = Resolve-GfxLibrary
 $runEnv = Get-RunEnv $options
-Test-GfxPair $runEnv.Vars
+if ($options.UseGfx) { Test-GfxPair $runEnv.Vars }
 
 if ($options.PrintOnly) {
 	Show-LaunchCommand $exe $runEnv $options $args
 	exit 0
 }
 
-Test-GfxLibrary $gfx
-if ($options.Build -or -not (Test-Path -Path $exe.ExePath -PathType Leaf)) {
+if ($options.UseGfx) { Test-GfxLibrary $gfx }
+$featuresChanged = Test-FeaturesChanged $exe $options
+if ($options.Build -or $featuresChanged -or -not (Test-Path -Path $exe.ExePath -PathType Leaf)) {
 	if (-not (Test-Path -Path $exe.ExePath -PathType Leaf)) { Write-Warn "No $($exe.ExePath) yet - building it." }
+	elseif ($featuresChanged) { Write-Warn "$($exe.ExePath) was built with features: $(Format-Features (Get-BuiltFeatures $exe)), this run takes: $(Format-Features (Get-WantedFeatures $options)) - building it." }
 	Build-Client $exe $options
 }
 if (-not (Test-Path -Path $exe.ExePath -PathType Leaf)) {
@@ -604,8 +876,8 @@ if (-not (Test-Path -Path $exe.ExePath -PathType Leaf)) {
 
 $exeItem = Get-Item -Path $exe.ExePath
 Write-Label "Using: $($exeItem.FullName)"
-Write-Label "  built $($exeItem.LastWriteTime.ToString($BUILD_TIME_FORMAT))"
-Test-GfxCopy $gfx $exeItem.FullName
+Write-Label "  built $($exeItem.LastWriteTime.ToString($BUILD_TIME_FORMAT)), features: $(Format-Features (Get-BuiltFeatures $exe))"
+if ($options.UseGfx) { Test-GfxCopy $gfx $exeItem.FullName }
 
 Write-Host
 
