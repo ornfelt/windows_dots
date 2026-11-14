@@ -93,3 +93,23 @@ foreach ($moduleFile in $weztermModuleFiles) {
     Write-Ok "$($moduleFile.Name) has been copied to $weztermModulesTargetDir."
 }
 
+# Sync the session manager's .lua files into ~/.wezterm/wezterm-session-manager
+# (only .lua, so the saved wezterm_state_*.json files there are left alone)
+$sessionManagerDirName = "wezterm-session-manager"
+$sessionManagerSourceDir = Join-Path -Path $weztermModulesSourceDir -ChildPath $sessionManagerDirName
+$sessionManagerTargetDir = Join-Path -Path $weztermModulesTargetDir -ChildPath $sessionManagerDirName
+
+if (-Not (Test-Path -Path $sessionManagerTargetDir)) {
+    New-Item -ItemType Directory -Path $sessionManagerTargetDir | Out-Null
+}
+
+$sessionManagerFiles = @(Get-ChildItem -Path $sessionManagerSourceDir -Filter "*.lua" -File -ErrorAction SilentlyContinue)
+if ($sessionManagerFiles.Count -eq 0) {
+    Write-Warn "No wezterm .lua files found in $sessionManagerSourceDir."
+}
+
+foreach ($sessionManagerFile in $sessionManagerFiles) {
+    Copy-Item -Path $sessionManagerFile.FullName -Destination $sessionManagerTargetDir -Force
+    Write-Ok "$($sessionManagerFile.Name) has been copied to $sessionManagerTargetDir."
+}
+
