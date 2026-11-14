@@ -84,6 +84,8 @@ if string.lower(user_domain):find("lenovo2") then
   config.font_size = 10.0
   -- https://wezfurlong.org/wezterm/config/lua/config/max_fps.html
   config.max_fps = 240
+elseif string.lower(user_domain):find("jonasus") then
+  config.font_size = 10.0
 else
   config.font_size = 11.0
   config.max_fps = 60 -- default
@@ -2009,6 +2011,7 @@ wezterm.on("update-right-status", function(window, pane)
     -- Not a git repo: show hostname in default color
     table.insert(segments, { Text = wezterm.hostname() })
   end
+  table.insert(segments, { Text = " " })
 
   -- Draw/expire status messages in front of the branch (see status.lua)
   status.render(window, segments)
