@@ -1784,6 +1784,8 @@ wezterm.on("format-tab-title", function(tab)
   -- Normalize slashes
   new_title = new_title:gsub("\\", "/")
   new_title = new_title:gsub("//+", "/")
+  -- Drop a trailing slash (the cwd on Linux ends in one), a drive root like C:/ kept
+  new_title = new_title:gsub("([^:/])/$", "%1")
 
   -- Replace home dir with ~
   local home = is_linux and os.getenv("HOME") or os.getenv("USERPROFILE")
