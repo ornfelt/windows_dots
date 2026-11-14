@@ -1802,7 +1802,7 @@ wezterm.on("format-tab-title", function(tab)
     new_title = new_title:match("([^/]+)/?$") or new_title
   end
 
-  new_title = new_title .. " "
+  new_title = " " .. new_title .. " "
 
   -- Claude Code: robot icon while a finished response hasn't been visited yet,
   -- a dead robot in the warning color when it ended on an API error
@@ -1814,20 +1814,23 @@ wezterm.on("format-tab-title", function(tab)
 
   if #new_title > max_title_len then
     --new_title = ".." .. new_title:sub(-(max_title_len-3)) -- If use_fancy_tab_bar
-    -- "…" is one column but 3 bytes, so keep max_title_len-2 bytes of the path
-    new_title = "…" .. new_title:sub(-(max_title_len-2))
+    -- "…" is one column but 3 bytes, so keep max_title_len-3 bytes of the path after " …"
+    new_title = " …" .. new_title:sub(-(max_title_len-3))
   end
 
   -- Pad and center if too short. The width is in columns (#new_title counted
-  -- bytes), the Claude icon is centered along with the path, and the trailing
-  -- space is left out (it pushed the path a column or so left of center).
+  -- bytes), the Claude icon is centered along with the path, and the leading
+  -- and trailing spaces are left out (the padding takes their place).
   local pad_left = ""
-  local content = new_title:gsub(" $", "")
+  local content = (new_title:gsub("^ ", ""):gsub(" $", ""))
   local content_width = wezterm.column_width((claude_icon or "") .. content)
   if content_width < min_title_len then
     local pad_total = min_title_len - content_width
     pad_left  = string.rep(" ", math.floor(pad_total / 2))
     new_title = content .. string.rep(" ", pad_total - #pad_left)
+  else
+    -- Leading space in front of the Claude icon too
+    pad_left, new_title = " ", content .. " "
   end
 
   if claude_icon and claude_icon_color then
@@ -2011,7 +2014,9 @@ wezterm.on("update-right-status", function(window, pane)
     -- Not a git repo: show hostname in default color
     table.insert(segments, { Text = wezterm.hostname() })
   end
-  table.insert(segments, { Text = " " })
+  if is_windows then
+    table.insert(segments, { Text = " " })
+  end
 
   -- Draw/expire status messages in front of the branch (see status.lua)
   status.render(window, segments)
