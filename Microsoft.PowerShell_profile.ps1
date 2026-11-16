@@ -272,7 +272,7 @@ $aliases = @(
     ".gc", ".gcp", ".gd", ".do_the_thing", ".keycast", ".sql", ".ssms", ".ccs", ".cci",
     ".pc_info", ".display_info", ".cmake_helper", ".module_sync", ".db_helper", ".git_status",
     ".git_check", ".hash_pc", ".ioq3rs", ".benilla", ".cenilla", ".script_helper", "wezswitch",
-    ".opend2"
+    ".opend2", ".d2x"
 )
 
 foreach ($alias in $aliases) {
