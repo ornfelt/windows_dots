@@ -159,8 +159,7 @@ if ($GenerateDiffs) {
         $commands.Add('git commit -m "update diff files"')
     }
 
-    #if ($cleanedRepoName -eq 'TrinityCore-3.3.5-with-NPCBots') {
-    if ($cleanedRepoName -eq 'Trinitycore-3.3.5-with-NPCBots') {
+    if ($cleanedRepoName -eq 'TrinityCore-3.3.5-with-NPCBots') {
         Add-UpstreamIfMissing -UpstreamUrl "https://github.com/trickerer/TrinityCore-3.3.5-with-NPCBots"
         $commands.Add('git fetch upstream')
         $commands.Add('git diff --output=tcore.diffx upstream/npcbots_3.3.5...npcbots_3.3.5 -- . ":(exclude)*.conf" ":(exclude)*.patch" ":(exclude)*.diffx"')
