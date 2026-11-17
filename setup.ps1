@@ -1,7 +1,7 @@
 # setup.ps1 - sets up a new machine from a mounted HDD (the reverse of {my_notes_path}/sync_hdd.ps1).
 #
 # Finds a mounted drive holding my_files\my_docs\local (D:\, E:\, ... any letter) and then:
-#   - copies env_JONAS-LENOVO2.ps1 to $env:ps_profile_path\env.ps1, unless env.ps1 exists
+#   - copies env_DESKTOP-I3H2E12.ps1 to $env:ps_profile_path\env.ps1, unless env.ps1 exists
 #   - copies config_DESKTOP-I3H2E12.txt to C:\local\config.txt, unless it exists
 #   - copies sqls_config_DESKTOP-I3H2E12.txt to C:\local\sqls_config.txt, unless it exists
 #   - copies my_files\my_docs\img\Wallpapers into ~\Pictures\Wallpapers, only the files missing there
@@ -24,7 +24,7 @@ $HDD_DOCS_SUBPATH  = 'my_files\my_docs'
 $HDD_LOCAL_SUBPATH = "$HDD_DOCS_SUBPATH\local"
 $HDD_WALLPAPERS    = "$HDD_DOCS_SUBPATH\img\Wallpapers"
 $LOCAL_BASE        = 'C:\local'
-$ENV_SOURCE_PC     = 'JONAS-LENOVO2'
+$ENV_SOURCE_PC     = 'DESKTOP-I3H2E12'
 $CONFIG_SOURCE_PC  = 'DESKTOP-I3H2E12'
 $PICTURES_DIR      = Join-Path $env:USERPROFILE 'Pictures'
 # Mounted drives that are searched (network drives are skipped: they can hang when offline)
