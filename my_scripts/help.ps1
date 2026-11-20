@@ -33,17 +33,17 @@ function Write-CommandWithDescription {
         [ConsoleColor]$Color = [ConsoleColor]::Cyan
     )
 
-    Write-Host "  " -NoNewline
-    Write-Host $Command -ForegroundColor $Color -NoNewline
+    # The description goes on its own line above the command, grayed out like
+    # a code comment
     if ($Description) {
-        Write-Host " - $Description"
+        Write-Host "  # $Description" -ForegroundColor DarkGray
     }
-    else {
-        Write-Host ""
-    }
+    Write-Host "  " -NoNewline
+    Write-Host $Command -ForegroundColor $Color
 }
 
-# Helper: write a code line, with any comment part ('#...') in gray
+# Helper: write a code line, with any comment part ('#...') in gray on its own
+# line above the command, at the command's indentation
 function Write-CodeLine {
     param(
         [string]$Text,
@@ -58,14 +58,18 @@ function Write-CodeLine {
         # The regex includes the whitespace before #.
         $hashIndex = $commentMatch.Index + $commentMatch.Length - 1
 
-        $before  = $Text.Substring(0, $hashIndex)
+        $before  = $Text.Substring(0, $hashIndex).TrimEnd()
         $comment = $Text.Substring($hashIndex)
 
-        if ($before.Length -gt 0) {
-            Write-Host $before -ForegroundColor $CommandColor -NoNewline
+        if ($before.Trim().Length -gt 0) {
+            $indent = $before.Substring(0, $before.Length - $before.TrimStart().Length)
+            Write-Host "$indent$comment" -ForegroundColor $CommentColor
+            Write-Host $before -ForegroundColor $CommandColor
         }
-
-        Write-Host $comment -ForegroundColor $CommentColor
+        else {
+            # Only whitespace before the #: the whole line is a comment
+            Write-Host $Text -ForegroundColor $CommentColor
+        }
     }
     else {
         Write-Host $Text -ForegroundColor $CommandColor
