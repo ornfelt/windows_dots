@@ -106,6 +106,7 @@ $WOW_REPOS = @(
     (Join-Path $codeRootDir 'Code2\Wow\tools\cenilla')
     (Join-Path $codeRootDir 'Code2\C#\mangos-zero-cs')
     (Join-Path $codeRootDir 'Code2\C++\mangoszero_database')
+    (Join-Path $codeRootDir 'Code2\C++\tbc-db')
     (Join-Path $codeRootDir 'Code2\Wow\tools\my_wow_docs')
     (Join-Path $codeRootDir 'Code2\Wow\tools\WebWoWViewer')
     (Join-Path $codeRootDir 'Code2\Wow\tools\WebWowViewerCpp')
