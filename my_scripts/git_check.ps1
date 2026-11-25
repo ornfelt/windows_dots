@@ -30,6 +30,8 @@
 # Known repos that don't exist (yet) or aren't git repos are skipped with a warning.
 # vmangos (Code2\C++\core) counts as clean when src/shared/Progression.h is its only
 # modified file, and its line says so.
+# Branches in $BEHIND_IGNORED (benilla's gfx-dll-backend and trimmed-bevy) aren't
+# reported as behind their remote unless they are checked out.
 # A fetch that takes longer than $env:GIT_CHECK_TIMEOUT seconds (default 60) is
 # stopped and warned about.
 # Exits with 1 if any repo has something to commit, push or pull, and with 2 on
@@ -124,6 +126,10 @@ $WOW_REPOS = @(
 # vmangos has this file modified locally; when it's the only modified file the repo counts as clean
 $VMANGOS_REPO       = Join-Path $codeRootDir 'Code2\C++\core'
 $VMANGOS_LOCAL_FILE = 'src/shared/Progression.h'
+# Side branches that are left behind their remote on purpose: not reported as behind unless checked out
+$BEHIND_IGNORED = @{
+    (Join-Path $codeRootDir 'Code2\Wow\tools\benilla') = @('gfx-dll-backend', 'trimmed-bevy')
+}
 # 'other' is these plus the repos in OTHER_DIRS that are in no other category
 $OTHER_REPOS = @(
     (Join-Path $codeRootDir 'Code2\General\utils')
@@ -280,6 +286,14 @@ function Test-OnlyVmangosLocalFile([string]$Repo) {
     return $modified.Count -eq 1 -and $modified[0] -eq $VMANGOS_LOCAL_FILE
 }
 
+# The branches of the repo in $BEHIND_IGNORED, nothing if it has none
+function Get-BehindIgnored([string]$Repo) {
+    $fullRepo = [IO.Path]::GetFullPath($Repo).TrimEnd('\')
+    foreach ($key in $BEHIND_IGNORED.Keys) {
+        if ([IO.Path]::GetFullPath($key).TrimEnd('\') -eq $fullRepo) { return $BEHIND_IGNORED[$key] }
+    }
+}
+
 # Returns one line per problem in the repo, nothing if it is clean
 function Get-RepoReport([string]$Repo) {
     $out = New-Object System.Collections.Generic.List[Object]
@@ -308,6 +322,8 @@ function Get-RepoReport([string]$Repo) {
     if ($remotes.Count -eq 0) {
         $out.Add((New-Line "no remote, nothing is pushed anywhere" Red))
     } else {
+        $behindIgnored = @(Get-BehindIgnored $Repo)
+        $current = git -C $Repo symbolic-ref -q --short HEAD 2>$null
         $refs = @(git -C $Repo for-each-ref refs/heads --format='%(refname:short)%09%(upstream)%09%(upstream:short)')
         foreach ($line in $refs) {
             $branch, $upstreamRef, $upstream = $line -split "`t"
@@ -342,6 +358,7 @@ function Get-RepoReport([string]$Repo) {
                     }
                 }
             }
+            if ($branch -in $behindIgnored -and $branch -ne $current) { $behind = 0 }
             if ($behind -gt 0) { $out.Add((New-Line "${branch}: $behind commit(s) behind $upstream" Magenta)) }
         }
         # commits made on a detached HEAD are on no branch, so the loop above misses them
